@@ -17,24 +17,48 @@
 import './commands';
 import { addMatchImageSnapshotCommand } from '@simonsmith/cypress-image-snapshot/command';
 
+export type Endpoint = {
+    [key: string]: {
+        url: string,
+        blackout: string[]
+    }
+}
+
+
 // cypress/support/index.ts
 declare global {
 	namespace Cypress {
 		interface Chainable {
 			/**
-			 * Custom command to select DOM element by data-cy attribute.
+			 * Custom command to set the viewport to a specific device preset or [width, height].
 			 * @example cy.setResolution('samsung-s10' | [1920, 1080])
 			 */
 			setResolution(value: ViewportPreset | number[]): Chainable<JQuery<HTMLElement>>;
+
+			/**
+			 * Custom command to set the fixture data to globalThis
+			 * @example cy.setFixtureData()
+			 */
+			setFixtureData(): Chainable<JQuery<HTMLElement>>;
+
+			/**
+			 * Custom command to capture the full page
+			 * @example cy.prepareForCapture('/home', 'samsung-s10' | [1920, 1080])
+			 */
+			prepareForCapture(url: string, size: ViewportPreset | number[]): Chainable<JQuery<HTMLElement>>;
+
+			// parseSnapConfigFromName(name: string): { url: string, size: ViewportPreset | number[], title: string, } | null;
+			parseSnapConfigFromName(name: string, pages: Endpoint[]): Cypress.Chainable<{ url: string, size: ViewportPreset | number[], title: string }> | null;
 		}
 	}
+
 }
 
 addMatchImageSnapshotCommand({
 	failureThreshold: 0.1,
 	failureThresholdType: 'percent',
-	customDiffConfig: { threshold: 0.0 },
 	capture: 'fullPage',
+	blackout: [''],
 	// e2eSpecDir: 'cypress/e2e/'
 });
 
@@ -46,10 +70,3 @@ Cypress.on('uncaught:exception', (err, runnable) => {
 	return false
 })
 
-Cypress.Commands.add("setResolution", (size) => {
-	if (Cypress._.isArray(size)) {
-		cy.viewport(size[ 0 ], size[ 1 ]);
-	} else {
-		cy.viewport(size);
-	}
-});

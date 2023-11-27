@@ -7,10 +7,6 @@ import * as fs from 'fs';
 export default defineConfig({
 	e2e: {
 		setupNodeEvents(on, config) {
-			/**
-			 * Perhaps I don't need this, and can do it this way instead: 
-			 * https://docs.cypress.io/api/cypress-api/screenshot-api#Scale-viewport-and-fullPage-captures
-			 */
 			on('before:browser:launch', (browser, launchOptions) => {
 				if (browser.name === 'chrome' && browser.isHeadless) {
 					// fullPage screenshot size is 1920x1080 on non-retina screens and 3840x2160 on retina screens
@@ -33,22 +29,22 @@ export default defineConfig({
 			});
 
 			on('task', {
-				filenamesInDirectory(directoryPath) {
-					const dirpath = './cypress' + directoryPath;
-					return fs.existsSync(dirpath) ? fs.readdirSync(dirpath) : [];
+				getDiffingFilenames() {
+					if (!fs.existsSync('./cypress/support/diff_list.txt')) return [];
+					const filenames = fs.readFileSync('./cypress/support/diff_list.txt', 'utf8')
+					return filenames.split('\n');
+				},
+				readFileMaybe(filename) {
+					if (!fs.existsSync('./cypress/snapshots/' + filename)) return null;
+					return fs.readFileSync(filename, 'utf8');
 				},
 			})
 
 			addMatchImageSnapshotPlugin(on);
 		},
-		// specPattern: 'cypress/e2e/*.cy.{js,jsx,ts,tsx}',
 		viewportWidth: 1920,
 		viewportHeight: 1080,
 		responseTimeout: 60000,
 		screenshotOnRunFailure: false,
-		env: {
-			baseUrlProduction: 'https://www.atosmedical.com',
-			// failOnSnapshotDiff: false,
-		},
 	},
 });

@@ -4,7 +4,13 @@
 	"description": "",
 	"main": "index.js",
 	"scripts": {
-		"test": "npx cypress run --env failOnSnapshotDiff=false && ./process_images.sh",
+		"full-suite": "./review_diffs.sh --full-suite",
+		"retest-only-diffs": "./review_diffs.sh --retest-diffs",
+		"assess-existing-diffs": "./review_diffs.sh --assess-diffs",
+
+
+		"full-regression-test": "npx cypress run --spec cypress/e2e/production.cy.ts --env failOnSnapshotDiff=false; npx cypress run --spec cypress/e2e/updated-snapshots.cy.ts --env failOnSnapshotDiff=false; ./review_diffs.sh",
+		"test": "npx cypress run --spec cypress/e2e/review-diffs.cy.ts --env failOnSnapshotDiff=false; ./review_diffs.sh",
 		"test-with-browser": "npx cypress run --headed --env failOnSnapshotDiff=false",
 		"test-interactive": "npx cypress open --env failOnSnapshotDiff=false",
 		"requirements": "node ./tools/requirements.js"
