@@ -1,60 +1,39 @@
-import { endpoints } from './endpoints.js';
-import { viewports } from './viewports.js';
+import { endpoints } from './endpoints.ts';
+import { viewports } from './viewports.ts';
+import { diffs } from './diff_list.ts';
+import { runDiffingTest, runTest } from '../helpers.cy.ts';
+
+const suiteName = 'Stage';
+const baseUrl = 'https://draft.stage.atosmedical.24hr.se';
 
 
-describe('Visual regression (Stage)', () => {
-    before(() => {
-        cy.setFixtureData();
-    });
+describe(`Visual regression (${suiteName})`, () => {
+
+    const formatUrl = (path: string) => {
+        return `${baseUrl}${path}?noexternal=true`;
+    }
+
+    const onPageVisit = () => {
+        cy.get('header').invoke('css', 'opacity', 0);
+    }
 
     if (Cypress.env('test-all')) {
-        viewports.forEach((size) => {
-            Object.keys(endpoints).forEach((pageKey) => {
-                const title = pageKey;
-                const path = endpoints[pageKey].url;
-                const blackout = endpoints[pageKey].blackout;
-    
-                it(`Test page '${title}' @ ${size}`, () => {
-                    const { stageBaseUrl } = globalThis.urls;
-                    cy.prepareForCapture(stageBaseUrl, path, size);
-                    cy.matchImageSnapshot(`'${title}' @ ${size}`, {
-                        storeReceivedOnFailure: true,
-                        blackout,
-                    });
-                });
-            });
+        runTest({
+            endpoints,
+            viewports,
+            formatUrl,
+            onPageVisit,
         });
     }
 
-
-    it('Test only diffing pages', () => {
-        if (!Cypress.env('retest-diffs')) return;
-
-        cy.task('getDiffingFilenames')
-            .then((diffingPageSnapshots: string[]) => {
-                diffingPageSnapshots.forEach(diffSnapName => {
-                    cy.parseSnapConfigFromName(diffSnapName, endpoints)
-                        .then((snapDetails) => {
-                            if (!snapDetails) {
-                                return;
-                            }
-        
-                            const { url, size, title } = snapDetails;
-                            const endpoint = endpoints[title];
-                            const blackout = endpoint.blackout;
-
-                            const { stageBaseUrl } = globalThis.urls;
-                            cy.prepareForCapture(stageBaseUrl, url, size)
-        
-                            cy.matchImageSnapshot(`'${title}' @ ${size}`, {
-                                snapFilenameExtension: '.snap',
-                                storeReceivedOnFailure: true,
-                                blackout,
-                            });
-                        })
-
-                });
-            })
-    });
+    if (Cypress.env('retest-diffs')) {
+        runDiffingTest({
+            endpoints,
+            formatUrl,
+            onPageVisit,
+            diffs,
+        });
+    }
 
 });
+

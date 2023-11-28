@@ -1,7 +1,6 @@
-
-export const endpoints = {
+export const endpoints: Cypress.Endpoints = {
     'My page title': {
-        url: '/path-to-page',
+        path: '/path-to-page',
         blackout: ['.selector-to-blackout', '#another-selector-to-blackout']
     },
 }

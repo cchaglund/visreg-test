@@ -138,13 +138,13 @@ printf "\n\e[4m\e[1mRunning $test_type_slug on $clean_target_name\e[0m\e[0m\n\n"
 BASELINE_DIR="./cypress/snapshots/$clean_target_name/snaps.cy.ts/";
 DIFF_DIR="./cypress/snapshots/$clean_target_name/snaps.cy.ts/__diff_output__/";
 RECEIVED_DIR="./cypress/snapshots/$clean_target_name/snaps.cy.ts/__received_output__/";
-DIFF_LIST_DIR="./cypress/support/";
+DIFF_JAVASCRIPT_LIST_DIR="./cypress/e2e/$clean_target_name/";
 
 
 remove_diff_list() {
-    # Removes diff_list.txt file if it exists
-    if [[ -f "$DIFF_LIST_DIR"diff_list.txt ]]; then
-        rm "$DIFF_LIST_DIR"diff_list.txt;
+    # If the diff_list.ts exists, empty out the diff_list.ts file's array
+    if [[ -f "$DIFF_JAVASCRIPT_LIST_DIR"diff_list.ts ]]; then
+        echo 'export const diffs: string[] = [];' > "$DIFF_JAVASCRIPT_LIST_DIR"diff_list.ts;
     fi
 }
 
@@ -163,13 +163,20 @@ remove_received() {
 }
 
 create_list_of_diffs() {
-    # If there are diffs in the diff directory, loop through them and create a list of the filenames in the diff_list.txt file. Otherwise do nothing:
+    # If there are diffs in the diff directory, loop through them and create a list of the filenames in the diff_list.ts file. Otherwise do nothing:
     if [ "$(ls -A $DIFF_DIR)" ]; then
-        touch "$DIFF_LIST_DIR"diff_list.txt;
+        touch "$DIFF_JAVASCRIPT_LIST_DIR"diff_list.ts;
+
+        # "Open" the js file and write the contents of the array to it
+        echo 'export const diffs: string[] = [' > "$DIFF_JAVASCRIPT_LIST_DIR"diff_list.ts;
 
         for file in "$DIFF_DIR"*.diff.png; do
-            echo "$(basename "$file")" >> "$DIFF_LIST_DIR"diff_list.txt;
+            # Also write the filenames to the txt file
+            echo "\"$(basename "$file")\"," >> "$DIFF_JAVASCRIPT_LIST_DIR"diff_list.ts;
         done
+
+        # "Close" the js array and file
+        echo '];' >> "$DIFF_JAVASCRIPT_LIST_DIR"diff_list.ts;
     fi
 }
 
@@ -288,7 +295,7 @@ if [[ $test_type_slug == "full-suite" ]]; then
     remove_diffs;
     remove_received;
 
-    npx cypress run --spec "$spec_path" --env test-all=true;
+    npx cypress run --spec "$spec_path" --env test-all=true,failOnSnapshotDiff=false;
     assess_existing_diff_images;
     create_list_of_diffs; # these are the new, if any, diffs that were created in the cypress test (used in the next run)
 fi
@@ -299,7 +306,7 @@ if [[ $test_type_slug == "retest-diffs" ]]; then
     remove_diffs;
     remove_received;
 
-    npx cypress run --spec "$spec_path" --env retest-diffs=true;
+    npx cypress run --spec "$spec_path" --env retest-diffs=true,failOnSnapshotDiff=false;
     remove_diff_list; # remove the old list of diffs
     assess_existing_diff_images;
     create_list_of_diffs; # these are the new, if any, diffs that were created in the cypress test (used in the next run)

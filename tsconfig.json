@@ -2,8 +2,11 @@
     "compilerOptions": {
       "target": "es5",
       "lib": ["es5", "dom"],
-      "types": ["cypress", "node"]
+      "types": ["cypress", "node"],
+      "allowImportingTsExtensions": true,
+      "noEmit": true
     },
-    "include": ["**/*.ts"],
-    "types": ["@simonsmith/cypress-image-snapshot/types"]
+    "include": ["**/*.ts", "**/**/*.ts", "cypress/e2e/_example_/viewports.js", "cypress/e2e/_example_/endpoints.js"],
+    "types": ["@simonsmith/cypress-image-snapshot/types"],
+
 }

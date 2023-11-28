@@ -1,5 +1,3 @@
-
-// Add all the fixtures command here
 Cypress.Commands.add('setFixtureData', () => {
     cy.fixture('urls').as('urlFixture');
     cy.get('@urlFixture').then((urls) => {
@@ -7,39 +5,12 @@ Cypress.Commands.add('setFixtureData', () => {
     });
 });
 
-Cypress.Commands.add('prepareForCapture', (baseUrl, path, size) => {
-    cy.log(`Preparing for capture of ${path} @ ${size}`);
+Cypress.Commands.add('prepareForCapture', (fullUrl, size, onPageVisit) => {
     cy.setResolution(size);
-    cy.visit(`${baseUrl}${path}?noexternal=true`);
-    cy.get('header').invoke('css', 'opacity', 0);
+    cy.visit(fullUrl);
+    onPageVisit && onPageVisit();
     cy.scrollTo('bottom', { duration: 1000, ensureScrollable: false });
     cy.scrollTo('top', { ensureScrollable: false });
-});
-
-
-Cypress.Commands.add("parseSnapConfigFromName", (name, pages) => {
-    let titleMatch = name.match(/'([^']*)'/);
-    const title = titleMatch ? titleMatch[ 1 ] : '';
-
-    const deviceOrDimensionsStringMatch = name.match(/@ (.*)\.diff/); // match anything after "@ " and before ".snap"
-    const deviceOrDimensionString = deviceOrDimensionsStringMatch ? deviceOrDimensionsStringMatch[ 1 ] : '';
-
-    const isDeviceString = !deviceOrDimensionString.includes(',');
-    const viewportPreset = isDeviceString && deviceOrDimensionString as Cypress.ViewportPreset;
-    const dimensionArray = !isDeviceString && deviceOrDimensionString.split(',').map(dimension => parseInt(dimension));
-
-    const page = pages[title];
-
-    if (page) {
-        const result = {
-            url: page.url,
-            size: viewportPreset || dimensionArray,
-            title,
-        };
-    
-        return cy.wrap(result);
-    }
-    
 });
 
 Cypress.Commands.add("setResolution", (size) => {

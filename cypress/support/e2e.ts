@@ -17,12 +17,6 @@
 import './commands';
 import { addMatchImageSnapshotCommand } from '@simonsmith/cypress-image-snapshot/command';
 
-export type Endpoint = {
-    [key: string]: {
-        url: string,
-        blackout: string[]
-    }
-}
 
 
 // cypress/support/index.ts
@@ -45,11 +39,23 @@ declare global {
 			 * Custom command to capture the full page
 			 * @example cy.prepareForCapture('/home', 'samsung-s10' | [1920, 1080])
 			 */
-			prepareForCapture(baseUrl: string, path: string, size: ViewportPreset | number[]): Chainable<JQuery<HTMLElement>>;
-
-			// parseSnapConfigFromName(name: string): { url: string, size: ViewportPreset | number[], title: string, } | null;
-			parseSnapConfigFromName(name: string, pages: Endpoint[]): Cypress.Chainable<{ url: string, size: ViewportPreset | number[], title: string }> | null;
+			prepareForCapture(fullUrl: string, size: ViewportConfig, onPageVisit: () => void): Chainable<JQuery<HTMLElement>>;
 		}
+
+		export type Endpoints = {
+			[key: string]: {
+				path: string,
+				blackout: string[]
+			}
+		}
+		
+		export type SnapConfig = {
+			path: string;
+			size: ViewportPreset | number[];
+			title: string
+		}
+
+		export type ViewportConfig = ViewportPreset | number[];
 	}
 
 }

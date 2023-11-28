@@ -1,6 +1,3 @@
 {
-    "exampleBaseUrl" : "https://www.example.com",
-    "productionBaseUrl" : "https://www.atosmedical.com",
-    "stageBaseUrl" : "https://draft.stage.atosmedical.24hr.se",
-    "testBaseUrl" : "http://draft.atos.local"
+
 }

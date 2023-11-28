@@ -1,60 +1,47 @@
-import { endpoints } from './endpoints.js';
-import { viewports } from './viewports.js';
+import { endpoints } from './endpoints.ts';
+import { viewports } from './viewports.ts';
+import { diffs } from './diff_list.ts';
+import { runDiffingTest, runTest } from '../helpers.cy.ts';
 
+const suiteName = 'Example';
+const baseUrl = 'https://www.example.com'; // No trailing slash
 
-describe('Visual regression (Example)', () => {
-    before(() => {
-        cy.setFixtureData();
-    });
+describe(`Visual regression (${suiteName})`, () => {
+
+    const formatUrl = (path: string) => {
+        /**
+         * Can be used to format the URL, e.g. to add query params
+         */
+        return `${baseUrl}${path}`;
+    }
+
+    const onPageVisit = () => {
+        /**
+         * Optional
+         * After page load, prepare page for snapshot, e.g. by hiding elements
+         * 
+         * Example:
+         * cy.get('header').invoke('css', 'opacity', 0);
+         */
+    }
 
     if (Cypress.env('test-all')) {
-        viewports.forEach((size) => {
-            Object.keys(endpoints).forEach((pageKey) => {
-                const title = pageKey;
-                const path = endpoints[pageKey].url;
-                const blackout = endpoints[pageKey].blackout;
-    
-                it(`Test page '${title}' @ ${size}`, () => {
-                    const { exampleBaseUrl } = globalThis.urls;
-                    cy.prepareForCapture(exampleBaseUrl, path, size);
-                    cy.matchImageSnapshot(`'${title}' @ ${size}`, {
-                        storeReceivedOnFailure: true,
-                        blackout,
-                    });
-                });
-            });
+        runTest({
+            endpoints,
+            viewports,
+            formatUrl,
+            onPageVisit,
         });
     }
 
-
-    it('Test only diffing pages', () => {
-        if (!Cypress.env('retest-diffs')) return;
-
-        cy.task('getDiffingFilenames')
-            .then((diffingPageSnapshots: string[]) => {
-                diffingPageSnapshots.forEach(diffSnapName => {
-                    cy.parseSnapConfigFromName(diffSnapName, endpoints)
-                        .then((snapDetails) => {
-                            if (!snapDetails) {
-                                return;
-                            }
-        
-                            const { url, size, title } = snapDetails;
-                            const endpoint = endpoints[title];
-                            const blackout = endpoint.blackout;
-
-                            const { exampleBaseUrl } = globalThis.urls;
-                            cy.prepareForCapture(exampleBaseUrl, url, size)
-        
-                            cy.matchImageSnapshot(`'${title}' @ ${size}`, {
-                                snapFilenameExtension: '.snap',
-                                storeReceivedOnFailure: true,
-                                blackout,
-                            });
-                        })
-
-                });
-            })
-    });
+    if (Cypress.env('retest-diffs')) {
+        runDiffingTest({
+            endpoints,
+            formatUrl,
+            onPageVisit,
+            diffs,
+        });
+    }
 
 });
+
