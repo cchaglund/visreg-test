@@ -45,7 +45,7 @@ declare global {
 			 * Custom command to capture the full page
 			 * @example cy.prepareForCapture('/home', 'samsung-s10' | [1920, 1080])
 			 */
-			prepareForCapture(url: string, size: ViewportPreset | number[]): Chainable<JQuery<HTMLElement>>;
+			prepareForCapture(baseUrl: string, path: string, size: ViewportPreset | number[]): Chainable<JQuery<HTMLElement>>;
 
 			// parseSnapConfigFromName(name: string): { url: string, size: ViewportPreset | number[], title: string, } | null;
 			parseSnapConfigFromName(name: string, pages: Endpoint[]): Cypress.Chainable<{ url: string, size: ViewportPreset | number[], title: string }> | null;

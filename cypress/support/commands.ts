@@ -7,11 +7,10 @@ Cypress.Commands.add('setFixtureData', () => {
     });
 });
 
-Cypress.Commands.add('prepareForCapture', (url, size) => {
-    cy.log(`Preparing for capture of ${url} @ ${size}`);
+Cypress.Commands.add('prepareForCapture', (baseUrl, path, size) => {
+    cy.log(`Preparing for capture of ${path} @ ${size}`);
     cy.setResolution(size);
-    const { baseUrlProduction } = globalThis.urls;
-    cy.visit(`${baseUrlProduction}${url}?noexternal=true`);
+    cy.visit(`${baseUrl}${path}?noexternal=true`);
     cy.get('header').invoke('css', 'opacity', 0);
     cy.scrollTo('bottom', { duration: 1000 });
     cy.scrollTo('top');
@@ -29,7 +28,6 @@ Cypress.Commands.add("parseSnapConfigFromName", (name, pages) => {
     const viewportPreset = isDeviceString && deviceOrDimensionString as Cypress.ViewportPreset;
     const dimensionArray = !isDeviceString && deviceOrDimensionString.split(',').map(dimension => parseInt(dimension));
 
-    cy.log('viewport preset: ' + viewportPreset);
     const page = pages[title];
 
     if (page) {

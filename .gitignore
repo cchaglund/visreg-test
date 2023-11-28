@@ -1,5 +1,5 @@
 node_modules
 .DS_Store
-/cypress/snapshots/production.cy.ts/*
-/cypress/snapshots/stage.cy.ts/*
-/cypress/snapshots/test.cy.ts/*
+/cypress/snapshots/*
+/cypress/snapshots/*
+/cypress/snapshots/*

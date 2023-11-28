@@ -12,25 +12,30 @@
 
 # Locate and iterate through all .diff.png files in DIFF_DIR.
 # Open each image for preview and prompt the user to decide whether to set it as a new baseline.
-# If the user accepts, the script will replace the existing baseline image with the updated image and delete the diff file.
+# If the user accepts, the script will replace the existing baseline image with the received image and delete the diff file.
 # If the user rejects, the script will move on to the next file.
 # Continue this process until all files are assessed.
 
 
 printf "\e[36m\e[1m
- _  _  __  ____      ____  ____  ___ 
-/ )( \(  )/ ___) ___(  _ \(  __)/ __)
-\ \/ / )( \___ \(___))   / ) _)( (_ \ 
- \__/ (__)(____/    (__\_)(____)\___/
+ _  _  __  ____  ____  ____  ___ 
+/ )( \(  )/ ___)(  _ \(  __)/ __)
+\ \/ / )( \___ \ )   / ) _)( (_ \ 
+ \__/ (__)(____/(__\_)(____)\___/
 \e[0m\e[0m\n";
 
 
 suite_target=0;
+selected_target_name="";
+clean_target_name="";
 targets=()
 
-while IFS= read -r -d '' target; do
-    targets+=("$target")
-done < <(find ./cypress/e2e -maxdepth 1 -type f -print0)
+for dir in ./cypress/e2e/*/ ; do
+    dir_name=$(basename "$dir")
+    if [ "$dir_name" != "_example_" ]; then
+        targets+=("$dir_name")
+    fi
+done
 
 load_suite_target() {
     # Get a list of all files in ./cypress/e2e
@@ -39,7 +44,10 @@ load_suite_target() {
 
     # Printf all targets with a number for selection.
     for ((i=0; i<${#targets[@]}; i++)); do
-        echo "$((i+1)). ${targets[$i]}"
+        current=${targets[$i]}
+        # clean="${current//.\/cypress\/e2e\//}";
+        # echo "$((i+1)). ${clean}"
+        echo "$((i+1)). ${current}"
     done
 
     # Read user input
@@ -50,9 +58,9 @@ load_suite_target() {
     suite_target_num=$((suite_target_num-1))
 
     # Store the selected file name 
-    selected_target=${targets[$suite_target_num]}
-
-    printf "\nSelected suite: $selected_target\n\n"
+    selected_target_name=${targets[$suite_target_num]}
+    # clean_target_name="${selected_target_name//.\/cypress\/e2e\//}";
+    clean_target_name=$selected_target_name;
 
     suite_target=$suite_target_num
 }
@@ -62,26 +70,26 @@ load_suite_target() {
 full_suite__id=1
 full_suite__name="Full suite"
 full_suite__slug="full-suite"
-full_suite__description="Run the full suite of tests"
+full_suite__description="Run the full suite of tests (previous diffs are deleted)"
 
 # Retest diffs
 retest_diffs__id=2
 retest_diffs__name="Retest diffs"
 retest_diffs__slug="retest-diffs"
-retest_diffs__description="Run the full suite of tests and retest diffs"
+retest_diffs__description="Run only the tests which failed in the last run"
 
 # Assess diffs
 assess_diffs__id=3
 assess_diffs__name="Assess diffs"
 assess_diffs__slug="assess-diffs"
-assess_diffs__description="Assess existing diffs"
+assess_diffs__description="Assess the existing diffs (no tests are run)"
 
 test_type_num=0;
 
 select_test_type() {
     test_types=("full_suite" "retest_diffs" "assess_diffs")
 
-    printf "Please select test type:\n"
+    printf "\nPlease select test type:\n"
 
     # loop through the 3 test types and printf them with a number for selection.
     for ((i=0; i<${#test_types[@]}; i++)); do
@@ -106,44 +114,35 @@ select_test_type() {
     # Store the selected test type name in a variable
     selected_test_type=${test_types[$type_num]}
 
-    printf "\nSelected test type: $selected_test_type\n"
-
     # $type_num
     test_type_num=$type_num
 }
 
-load_suite_target
+load_suite_target;
 select_test_type;
 
-printf "\nWill run:\n"
-
-target_name="";
+selected_target_name="";
 
 if [[ $suite_target == 0 ]]; then
-    echo "On target: ${targets[0]}";
-    target_name="${targets[0]}";
+    selected_target_name="${targets[0]}";
 elif [[ $suite_target == 1 ]]; then
-    echo "On target: ${targets[1]}";
-    target_name="${targets[1]}";
+    selected_target_name="${targets[1]}";
 elif [[ $suite_target == 2 ]]; then
-    echo "On target: ${targets[2]}";
-    target_name="${targets[2]}";
+    selected_target_name="${targets[2]}";
 fi
 
 test_type_slug="";
 
 if [[ $test_type_num == 0 ]]; then
-    echo "Test type: $full_suite__name";
     test_type_slug=$full_suite__slug;
 elif [[ $test_type_num == 1 ]]; then
-    echo "Test type: $retest_diffs__name";
     test_type_slug=$retest_diffs__slug;
 elif [[ $test_type_num == 2 ]]; then
-    echo "Test type: $assess_diffs__name";
     test_type_slug=$assess_diffs__slug;
 fi
 
-printf "\n\n";
+# clean_target_name="${selected_target_name//.\/cypress\/e2e\//}";
+printf "\n\e[4m\e[1mRunning $test_type_slug on $clean_target_name\e[0m\e[0m\n\n";
 
 
 
@@ -151,18 +150,11 @@ printf "\n\n";
 
 
 
-clean_target_name="${target_name//.\/cypress\/e2e\//}";
-
-BASELINE_DIR="./cypress/snapshots/$clean_target_name/";
-DIFF_DIR="./cypress/snapshots/$clean_target_name/__diff_output__/";
+BASELINE_DIR="./cypress/snapshots/$clean_target_name/snaps.cy.ts/";
+DIFF_DIR="./cypress/snapshots/$clean_target_name/snaps.cy.ts/__diff_output__/";
+RECEIVED_DIR="./cypress/snapshots/$clean_target_name/snaps.cy.ts/__received_output__/";
 DIFF_LIST_DIR="./cypress/support/";
 
-remove_updated_snaps() {
-    # Removes all updated snaps in the BASELINE_DIR if there are any
-    if [ "$(ls -A $BASELINE_DIR*.updated.png)" ]; then
-        rm "$BASELINE_DIR"*.updated.png;
-    fi
-}
 
 remove_diff_list() {
     # Removes diff_list.txt file if it exists
@@ -178,43 +170,36 @@ remove_diffs() {
     fi
 }
 
-create_list_of_diffs() {
-    echo "Capturing complete screenshots of diffs";
-
-    # loop through all the filenames in the DIFF_DIR and add them to the diff_list.txt file. But first, delete the contents of the diff_list.txt file. Also, if the diff_list.txt file does not exist, create it:
-    touch "$DIFF_LIST_DIR"diff_list.txt;
-
-    for file in "$DIFF_DIR"*.diff.png; do
-        # Make a list of the filenames in the diff_list.txt file:
-        echo "$(basename "$file")" >> "$DIFF_LIST_DIR"diff_list.txt;
-
-        # show the user the list of filenames in the diff_list.txt file:
-        echo "The following files are in the diff_list.txt file:";
-        cat "$DIFF_LIST_DIR"diff_list.txt;
-
-        # for each of the files, find the corresponding baseline image (with .span.png extension) and make a copy with the extension .original.png:
-        # local image_name="${file//.diff.png/}";
-        # local baseline_name="$image_name.snap.png";
-        # local original_name="$image_name.original.png";
-        # cp "$BASELINE_DIR$baseline_name" "$BASELINE_DIR$original_name";
-    done
-
-    # rm -r "$DIFF_DIR"/*;
-    # # delete all files with the .updated.png extension in the BASELINE_DIR:
-    # rm "$BASELINE_DIR"*.updated.png;
-    # npx cypress run --spec cypress/e2e/production.cy.ts --env rerun_diffs=true;
+remove_received() {
+    # Removes all diffs in the DIFF_DIR if there are any
+    if [ "$(ls -A $RECEIVED_DIR)" ]; then
+        rm -r "$RECEIVED_DIR"/*;
+    fi
 }
 
-assess_existing_diffs() {
+create_list_of_diffs() {
+    # If there are diffs in the diff directory, loop through them and create a list of the filenames in the diff_list.txt file. Otherwise do nothing:
+    if [ "$(ls -A $DIFF_DIR)" ]; then
+        echo "Capturing complete screenshots of diffs";
+
+        touch "$DIFF_LIST_DIR"diff_list.txt;
+
+        for file in "$DIFF_DIR"*.diff.png; do
+            cat "$DIFF_LIST_DIR"diff_list.txt;
+        done
+    fi
+}
+
+assess_existing_diff_images() {
     local -a approved_files;
     local -a rejected_files;
 
     # Instructions:
     printf "\e[2m
-    - This script will open each diffing snapshot and prompt you to accept or reject it as the new baseline.
-    - If you approve the changes, the script will replace the existing baseline image with the updated image and delete the diff file.
-    - If you reject the changes, the script will move on to the next file (changes should be rejected if they are not expected and the test re-run after making the necessary fixes).
-    - Continue this process until all files are assessed.
+- This script will open each diffing snapshot and prompt you to accept or reject it as the new baseline.
+- If you approve the changes, the script will replace the existing baseline image with the received image and delete the diff file.
+- If you reject the changes, the script will move on to the next file (changes should be rejected if they are not expected and the test re-run after making the necessary fixes).
+- Continue this process until all files are assessed.
     \e[0m\n\n";
 
 
@@ -245,11 +230,11 @@ assess_existing_diffs() {
 
             local baseline_name="$image_name.snap.png";
             local diff_name="$image_name.diff.png";
-            local updated_name="$image_name.updated.png";
+            local received_name="$image_name-received.png";
 
-            # Replace baseline image with updated image
+            # Replace baseline image with received image
             rm "$BASELINE_DIR$baseline_name";
-            mv "$BASELINE_DIR$updated_name" "$BASELINE_DIR$baseline_name";
+            mv "$RECEIVED_DIR$received_name" "$BASELINE_DIR$baseline_name";
             rm "$DIFF_DIR$image_file";
 
         elif [[ $answer == " " ]]; then
@@ -267,7 +252,7 @@ assess_existing_diffs() {
     # Main loop to process images
     for file in "$DIFF_DIR"*.diff.png; do
         if [[ ! -e $file ]]; then
-            echo "🎉 Visual regression passed!";
+            echo "🎉 Visual regression passed! (No diffs found)";
             exit 1;
         fi
 
@@ -312,32 +297,36 @@ assess_existing_diffs() {
 
 
 
+spec_path="./cypress/e2e/$selected_target_name/snaps.cy.ts";
 
 if [[ $test_type_slug == "full-suite" ]]; then
     # Clean up
     remove_diff_list;
     remove_diffs;
-    remove_updated_snaps;
+    remove_received;
 
-    npx cypress run --spec "$target_name" --env test-all=true;
-    create_list_of_diffs; # these are the new, if any, diffs that were created in the previous step
-    npx cypress run --spec "$target_name" --env capture-full-res-of-diffs=true;
-    assess_existing_diffs;
+    npx cypress run --spec "$spec_path" --env test-all=true;
+    assess_existing_diff_images;
+    create_list_of_diffs; # these are the new, if any, diffs that were created in the cypress test (used in the next run)
 fi
 
 
 if [[ $test_type_slug == "retest-diffs" ]]; then
     # Clean up
     remove_diffs;
-    remove_updated_snaps;
+    remove_received;
 
-    npx cypress run --spec "$target_name" --env retest-diffs=true;
-    create_list_of_diffs; # these are the new, if any, diffs that were created in the previous step
-    npx cypress run --spec "$target_name" --env capture-full-res-of-diffs=true;
-    assess_existing_diffs;
+    npx cypress run --spec "$spec_path" --env retest-diffs=true;
+    remove_diff_list; # remove the old list of diffs
+    assess_existing_diff_images;
+    create_list_of_diffs; # these are the new, if any, diffs that were created in the cypress test (used in the next run)
 fi
 
 
 if [[ $test_type_slug == "assess-diffs" ]]; then
-    assess_existing_diffs;
+    remove_diff_list; # remove the old list of diffs
+    assess_existing_diff_images;
+    create_list_of_diffs; # these are the new, if any, diffs that were created in the cypress test (used in the next run)
 fi
+
+exit 1;
