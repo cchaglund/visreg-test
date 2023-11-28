@@ -5,14 +5,13 @@
 1. Install dependencies: `npm install`
 2. Give execute permissions to the script: chmod +x visreg.sh
 3. Run the script: ./visreg.sh and follow the instructions
-4. Add suite folder to cypress/e2e directory (read more below)
-5. Add the base urls to the fixtures/urls.json file
+4. Add suite folder(s) to cypress/e2e directory
 
 The script will use cypress to generate snapshots of the different **suites**, located in cypress/e2e (use the _example_ folder as a reference):
 
-- endpoints.js contains the list of endpoints to test, including elements to black out (optional)
-- viewport.js contains the list of viewports to test
-- snaps.cy.ts contains the cypress code to generate the snapshots
+- **endpoints.ts** contains the list of endpoints to test, including elements to black out (optional)
+- **viewport.ts** contains the list of viewports to test
+- **snaps.cy.ts** contains the cypress code to generate the snapshots
 
 There are 3 **types** of test:
 
@@ -29,7 +28,7 @@ After running the tests, the script will prompt you to accept or reject the new 
 - Continue this process until all files are assessed.
 
 
-### Important Notes:
+### Important Notes
 Does not work on Windows.
 Ensure that you have the necessary permissions to read, write, and execute in the directories and with the files you are manipulating.
 This script does not handle edge cases like file name conflicts beyond the basic replacement. If you need more robust handling, additional checks and features can be added.
