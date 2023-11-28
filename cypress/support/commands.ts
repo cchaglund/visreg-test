@@ -12,8 +12,8 @@ Cypress.Commands.add('prepareForCapture', (baseUrl, path, size) => {
     cy.setResolution(size);
     cy.visit(`${baseUrl}${path}?noexternal=true`);
     cy.get('header').invoke('css', 'opacity', 0);
-    cy.scrollTo('bottom', { duration: 1000 });
-    cy.scrollTo('top');
+    cy.scrollTo('bottom', { duration: 1000, ensureScrollable: false });
+    cy.scrollTo('top', { ensureScrollable: false });
 });
 
 

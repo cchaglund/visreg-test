@@ -165,12 +165,10 @@ remove_received() {
 create_list_of_diffs() {
     # If there are diffs in the diff directory, loop through them and create a list of the filenames in the diff_list.txt file. Otherwise do nothing:
     if [ "$(ls -A $DIFF_DIR)" ]; then
-        echo "Capturing complete screenshots of diffs";
-
         touch "$DIFF_LIST_DIR"diff_list.txt;
 
         for file in "$DIFF_DIR"*.diff.png; do
-            cat "$DIFF_LIST_DIR"diff_list.txt;
+            echo "$(basename "$file")" >> "$DIFF_LIST_DIR"diff_list.txt;
         done
     fi
 }
