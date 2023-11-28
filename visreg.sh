@@ -1,21 +1,6 @@
 #!/bin/bash
 
 
-# Instructions to use the script:
-# Give execute permissions to the script: chmod +x process_images.sh.
-# Run the script: ./process_images.sh.
-
-# Important Notes:
-# Does not work on Windows.
-# Ensure that you have the necessary permissions to read, write, and execute in the directories and with the files you are manipulating.
-# This script does not handle edge cases like file name conflicts beyond the basic replacement. If you need more robust handling, additional checks and features can be added.
-
-# Locate and iterate through all .diff.png files in DIFF_DIR.
-# Open each image for preview and prompt the user to decide whether to set it as a new baseline.
-# If the user accepts, the script will replace the existing baseline image with the received image and delete the diff file.
-# If the user rejects, the script will move on to the next file.
-# Continue this process until all files are assessed.
-
 
 printf "\e[36m\e[1m
  _  _  __  ____  ____  ____  ___ 

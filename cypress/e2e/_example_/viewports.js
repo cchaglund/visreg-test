@@ -1,3 +1,5 @@
 export const viewports = [
-    "iphone-6",
+    "cypress-valid-viewport",
+    "or-viewport-array",
+    [1920, 1080]
 ]
