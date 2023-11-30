@@ -8,19 +8,9 @@ export default defineConfig({
 	e2e: {
 		setupNodeEvents(on, config) {
 			on('before:browser:launch', (browser, launchOptions) => {
-				if (browser.name === 'chrome' && browser.isHeadless) {
-					// fullPage screenshot size is 1920x1080 on non-retina screens and 3840x2160 on retina screens
-					launchOptions.args.push('--window-size=1920,1080');
-
-					// force screen to be non-retina
-					launchOptions.args.push('--force-device-scale-factor=1');
-
-					// force screen to be retina
-					// launchOptions.args.push('--force-device-scale-factor=2')
-				}
 
 				if (browser.name === 'electron' && browser.isHeadless) {
-					// fullPage screenshot size is 1920x1080
+					// Max possible screenshot size is 1920x1080. For larger screenshots this needs to be increased.
 					launchOptions.preferences.width = 1920;
 					launchOptions.preferences.height = 1080;
 				}
@@ -42,8 +32,6 @@ export default defineConfig({
 
 			addMatchImageSnapshotPlugin(on);
 		},
-		viewportWidth: 1920,
-		viewportHeight: 1080,
 		responseTimeout: 60000,
 		screenshotOnRunFailure: false,
 	},

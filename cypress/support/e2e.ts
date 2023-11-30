@@ -22,28 +22,26 @@ declare global {
 		interface Chainable {
 			/**
 			 * Custom command to set the viewport to a specific device preset or [width, height].
-			 * @example cy.setResolution('samsung-s10' | [1920, 1080])
+			 * @example cy.setResolution('samsung-s10')
 			 */
 			setResolution(value: ViewportPreset | number[]): Chainable<JQuery<HTMLElement>>;
 
 			/**
 			 * Custom command to set the fixture data to globalThis
-			 * @example cy.setFixtureData()
 			 */
 			setFixtureData(): Chainable<JQuery<HTMLElement>>;
 
 			/**
 			 * Custom command to capture the full page
-			 * @example cy.prepareForCapture('/home', 'samsung-s10' | [1920, 1080])
+			 * @example cy.prepareForCapture('/home', 'samsung-s10')
 			 */
 			prepareForCapture(fullUrl: string, size: ViewportConfig, onPageVisit: () => void): Chainable<JQuery<HTMLElement>>;
 		}
 
 		export type Endpoints = {
-			[key: string]: {
-				path: string,
-				blackout: string[]
-			}
+			title: string,
+			path: string,
+			blackout: string[]
 		}
 		
 		export type SnapConfig = {
@@ -60,8 +58,11 @@ declare global {
 addMatchImageSnapshotCommand({
 	failureThreshold: 1,
 	failureThresholdType: 'percent',
+	// scale: true,
 	capture: 'fullPage',
+	// capture: 'viewport',
 	blackout: [''],
+	snapFilenameExtension: '.base',
 });
 
 Cypress.on('uncaught:exception', (err, runnable) => {

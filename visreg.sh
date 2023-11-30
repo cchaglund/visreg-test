@@ -43,13 +43,13 @@ select_test_target() {
         done
 
         printf "\n"
-        read -p "Enter the number of the target you want to select: " suite_target_num
+        read -p "Enter the number of the target you want to select: " target_num
 
-        suite_target_num=$((suite_target_num-1))
-        selected_target_name=${targets[$suite_target_num]}
+        target_num=$((target_num-1))
+        selected_target_name=${targets[$target_num]}
         clean_target_name=$selected_target_name
 
-        selected_target_id=$suite_target_num
+        selected_target_id=$target_num
     fi
 }
 
@@ -165,80 +165,78 @@ assess_existing_diff_images() {
     local -a approved_files;
     local -a rejected_files;
 
-    # Instructions:
-    printf "\e[2m
-- This script will open each diffing snapshot and prompt you to accept or reject it as the new baseline.
-- If you approve the changes, the script will replace the existing baseline image with the received image and delete the diff file.
-- If you reject the changes, the script will move on to the next file (changes should be rejected if they are not expected and the test re-run after making the necessary fixes).
-- Continue this process until all files are assessed.
-    \e[0m\n\n";
+#     # Instructions:
+#     printf "\e[2m
+# - This script will open each diffing snapshot and prompt you to accept or reject it as the new baseline.
+# - If you approve the changes, the script will replace the existing baseline image with the received image and delete the diff file.
+# - If you reject the changes, the script will move on to the next file (changes should be rejected if they are not expected and the test re-run after making the necessary fixes).
+# - Continue this process until all files are assessed.
+#     \e[0m\n\n";
 
 
 
-process_image() {
-    local image_file=$1;
-    local image_name="${image_file//.diff.png/}";
-    
-    printf "\e[4m$image_name\e[0m\n";
+    process_image() {
+        local image_file=$1;
+        local image_name="${image_file//.diff.png/}";
+        
+        printf "\e[4m$image_name\e[0m\n";
 
-    # Open image preview
-    open_image() {
-        if [[ $(uname -s) == "Darwin" ]]; then
-            open -g "$DIFF_DIR$image_file";
-        else
-            xdg-open "$DIFF_DIR$image_file";
-        fi
+        # Open image preview
+        open_image() {
+            if [[ $(uname -s) == "Darwin" ]]; then
+                open -g "$DIFF_DIR$image_file";
+            else
+                xdg-open "$DIFF_DIR$image_file";
+            fi
+        }
+
+        open_image
+
+        printf "\e[2mENTER to approve, SPACEBAR to reject, R to reopen image\e[0m";
+        
+        while true; do
+            IFS= read -r -n 1 -p "" answer;
+
+            # On Linux we close the image preview for each image, on macOS we close the entire application at the end
+            if [[ $(uname -s) == "Linux" ]]; then
+                pkill -f "$DIFF_DIR$image_file";
+            fi
+
+            if [[ $answer == "" ]]; then
+                approved_files+=("$image_name");
+                printf "\e[32m✅  Approved changes\e[0m\e[2m - updating baseline\e[0m\n";
+
+                local baseline_name="$image_name.base.png";
+                local diff_name="$image_name.diff.png";
+                local received_name="$image_name-received.png";
+
+                # Replace baseline image with received image
+                rm "$BASELINE_DIR$baseline_name";
+                mv "$RECEIVED_DIR$received_name" "$BASELINE_DIR$baseline_name";
+                rm "$DIFF_DIR$image_file";
+
+                break
+            elif [[ $answer == "r" ]]; then
+                open_image
+            elif [[ $answer == " " ]]; then
+                rejected_files+=("$image_name");
+                printf "\e[33m\nRejected changes\e[0m\e[2m - run test again after fixes\e[0m\n";
+                break
+            fi
+        done
+
+        printf "\n\n";
     }
-
-    open_image
-
-    printf "\e[2mENTER to approve, SPACEBAR to reject, R to reopen image\e[0m";
-    
-    while true; do
-        IFS= read -r -n 1 -p "" answer;
-
-        # On Linux we close the image preview for each image, on macOS we close the entire application at the end
-        if [[ $(uname -s) == "Linux" ]]; then
-            pkill -f "$DIFF_DIR$image_file";
-        fi
-
-        if [[ $answer == "" ]]; then
-            approved_files+=("$image_name");
-            printf "\e[32m✅ Approved changes\e[0m\e[2m - updating baseline\e[0m\n";
-
-            local baseline_name="$image_name.snap.png";
-            local diff_name="$image_name.diff.png";
-            local received_name="$image_name-received.png";
-
-            # Replace baseline image with received image
-            rm "$BASELINE_DIR$baseline_name";
-            mv "$RECEIVED_DIR$received_name" "$BASELINE_DIR$baseline_name";
-            rm "$DIFF_DIR$image_file";
-
-            break
-        elif [[ $answer == "r" ]]; then
-            open_image
-        elif [[ $answer == " " ]]; then
-            rejected_files+=("$image_name");
-            printf "\e[33m\nRejected changes\e[0m\e[2m - run test again after fixes\e[0m\n";
-            break
-        # else
-        #     rejected_files+=("$image_name");
-        #     printf "\e[33m\nRejected changes\e[0m\e[2m - run test again after fixes\e[0m\n";
-        #     break
-        fi
-    done
-
-    printf "\n\n";
-}
 
 
 
 
     # Main loop to process images
+    printf "Opening preview...\n\n";
+
     for file in "$DIFF_DIR"*.diff.png; do
         if [[ ! -e $file ]]; then
-            echo "🎉 Visual regression passed! (No diffs found)";
+            echo "🎉  Visual regression passed! (No diffs found)";
             exit 1;
         fi
 
@@ -304,11 +302,11 @@ if [[ $test_type_slug == "full-regression-test" ]]; then
     fi
     
     assess_existing_diff_images;
-    create_list_of_diffs; # these are the new, if any, diffs that were created in the cypress test (used in the next run)
 fi
 
 
 if [[ $test_type_slug == "retest-diffs-only" ]]; then
+    create_list_of_diffs; # these are the new, if any, diffs that were created in the cypress test (used in the next run)
     remove_diffs;
     remove_received;
 
@@ -318,16 +316,14 @@ if [[ $test_type_slug == "retest-diffs-only" ]]; then
         npx cypress run --spec "$spec_path" --env retest-diffs-only=true,failOnSnapshotDiff=false;
     fi
 
-    remove_diff_list; # remove the old list of diffs
+    remove_diff_list;
     assess_existing_diff_images;
-    create_list_of_diffs; # these are the new, if any, diffs that were created in the cypress test (used in the next run)
 fi
 
 
 if [[ $test_type_slug == "assess-existing-diffs" ]]; then
-    remove_diff_list; # remove the old list of diffs
+    remove_diff_list;
     assess_existing_diff_images;
-    create_list_of_diffs; # these are the new, if any, diffs that were created in the cypress test (used in the next run)
 fi
 
 exit 1;
