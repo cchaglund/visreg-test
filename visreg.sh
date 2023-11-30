@@ -1,7 +1,6 @@
 #!/bin/bash
 
 
-
 printf "\e[36m\e[1m
  _  _  __  ____  ____  ____  ___ 
 / )( \(  )/ ___)(  _ \(  __)/ __)
@@ -173,52 +172,6 @@ assess_existing_diff_images() {
 - If you reject the changes, the script will move on to the next file (changes should be rejected if they are not expected and the test re-run after making the necessary fixes).
 - Continue this process until all files are assessed.
     \e[0m\n\n";
-
-
-    # process_image() {
-    #     local image_file=$1;
-    #     local image_name="${image_file//.diff.png/}";
-        
-    #     printf "\e[4m$image_name\e[0m\n";
-
-    #     # Open image preview
-    #     if [[ $(uname -s) == "Darwin" ]]; then
-    #         open -g "$DIFF_DIR$image_file";
-    #     else
-    #         xdg-open "$DIFF_DIR$image_file";
-    #     fi
-
-    #     printf "\e[2mENTER to approve, SPACEBAR to reject\e[0m";
-    #     IFS= read -r -n 1 -p "" answer;
-
-    #     # On Linux we close the image preview for each image, on macOS we close the entire application at the end
-    #     if [[ $(uname -s) == "Linux" ]]; then
-    #         pkill -f "$DIFF_DIR$image_file";
-    #     fi
-
-    #     if [[ $answer == "" ]]; then
-    #         approved_files+=("$image_name");
-    #         printf "\e[32m✅ Approved changes\e[0m\e[2m - updating baseline\e[0m\n";
-
-    #         local baseline_name="$image_name.snap.png";
-    #         local diff_name="$image_name.diff.png";
-    #         local received_name="$image_name-received.png";
-
-    #         # Replace baseline image with received image
-    #         rm "$BASELINE_DIR$baseline_name";
-    #         mv "$RECEIVED_DIR$received_name" "$BASELINE_DIR$baseline_name";
-    #         rm "$DIFF_DIR$image_file";
-
-    #     elif [[ $answer == " " ]]; then
-    #         rejected_files+=("$image_name");
-    #         printf "\e[33m\nRejected changes\e[0m\e[2m - run test again after fixes\e[0m\n";
-    #     else
-    #         rejected_files+=("$image_name");
-    #         printf "\e[33m\nRejected changes\e[0m\e[2m - run test again after fixes\e[0m\n";
-    #     fi
-
-    #     printf "\n\n";
-    # }
 
 
 
