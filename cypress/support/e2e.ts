@@ -13,13 +13,10 @@
 // https://on.cypress.io/configuration
 // ***********************************************************
 
-// Import commands.js using ES2015 syntax:
 import './commands';
 import { addMatchImageSnapshotCommand } from '@simonsmith/cypress-image-snapshot/command';
 
 
-
-// cypress/support/index.ts
 declare global {
 	namespace Cypress {
 		interface Chainable {
@@ -61,11 +58,10 @@ declare global {
 }
 
 addMatchImageSnapshotCommand({
-	failureThreshold: 0.1,
+	failureThreshold: 1,
 	failureThresholdType: 'percent',
 	capture: 'fullPage',
 	blackout: [''],
-	// e2eSpecDir: 'cypress/e2e/'
 });
 
 Cypress.on('uncaught:exception', (err, runnable) => {

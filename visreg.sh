@@ -10,7 +10,7 @@ printf "\e[36m\e[1m
 \e[0m\e[0m\n";
 
 
-suite_target=0;
+selected_target_id=0;
 selected_target_name="";
 clean_target_name="";
 targets=()
@@ -22,111 +22,100 @@ for dir in ./cypress/e2e/*/ ; do
     fi
 done
 
-load_suite_target() {
-    # Get a list of all files in ./cypress/e2e
+select_test_target() {
+    if [[ ${#targets[@]} == 0 ]]; then
+        # No test targets found
+        printf "\e[31mNo test targets found - see README \e[0m\n";
+        exit 1;
+    fi
 
-    printf "Please select suite target:\n\n"
+    if [[ ${#targets[@]} == 1 ]]; then
+        # Only one test target found
+        selected_target_name=${targets[0]}
+        clean_target_name=$selected_target_name
+        selected_target_id=0
+    else
+        # Multiple test targets found
+        printf "Select target:\n\n"
 
-    # Printf all targets with a number for selection.
-    for ((i=0; i<${#targets[@]}; i++)); do
-        current=${targets[$i]}
-        # clean="${current//.\/cypress\/e2e\//}";
-        # echo "$((i+1)). ${clean}"
-        echo "$((i+1)). ${current}"
-    done
+        for ((i=0; i<${#targets[@]}; i++)); do
+            current=${targets[$i]}
+            echo "$((i+1)). ${current}"
+        done
 
-    # Read user input
-    printf "\n"
-    read -p "Enter the number of the suite you want to select: " suite_target_num
+        printf "\n"
+        read -p "Enter the number of the target you want to select: " suite_target_num
 
-    # Decrement suite_target_num because bash arrays are 0-indexed
-    suite_target_num=$((suite_target_num-1))
+        suite_target_num=$((suite_target_num-1))
+        selected_target_name=${targets[$suite_target_num]}
+        clean_target_name=$selected_target_name
 
-    # Store the selected file name 
-    selected_target_name=${targets[$suite_target_num]}
-    # clean_target_name="${selected_target_name//.\/cypress\/e2e\//}";
-    clean_target_name=$selected_target_name;
-
-    suite_target=$suite_target_num
+        selected_target_id=$suite_target_num
+    fi
 }
 
 
-# Full suite
-full_suite__id=1
-full_suite__name="Full suite"
-full_suite__slug="full-suite"
-full_suite__description="Run the full suite of tests (previous diffs are deleted)"
+full_regression_test__name="Full"
+full_regression_test__slug="full-regression-test"
+full_regression_test__description="Run a full visual regression test of all endpoints and viewports (previous diffs are deleted)"
 
-# Retest diffs
-retest_diffs__id=2
-retest_diffs__name="Retest diffs"
-retest_diffs__slug="retest-diffs"
-retest_diffs__description="Run only the tests which failed in the last run"
+retest_diffs_only__name="Retest diffs only"
+retest_diffs_only__slug="retest-diffs-only"
+retest_diffs_only__description="Run only the tests which failed in the last run"
 
-# Assess diffs
-assess_diffs__id=3
-assess_diffs__name="Assess diffs"
-assess_diffs__slug="assess-diffs"
-assess_diffs__description="Assess the existing diffs (no tests are run)"
+assess_existing_diffs__name="Assess diffs"
+assess_existing_diffs__slug="assess-existing-diffs"
+assess_existing_diffs__description="Assess the existing diffs (no tests are run)"
 
 test_type_num=0;
 
 select_test_type() {
-    test_types=("full_suite" "retest_diffs" "assess_diffs")
+    test_types=("full_regression_test" "retest_diffs_only" "assess_existing_diffs")
 
-    printf "\nPlease select test type:\n"
+    printf "\nSelect test type:\n\n"
 
-    # loop through the 3 test types and printf them with a number for selection.
     for ((i=0; i<${#test_types[@]}; i++)); do
-        # Construct the name and description variable names
         name_var="${test_types[$i]}__name"
         desc_var="${test_types[$i]}__description"
 
-        # Use indirect variable references to get the values
         name_val="${!name_var}"
         desc_val="${!desc_var}"
 
         echo "$((i+1)). $name_val - $desc_val"
     done
 
-    # Read user input
     printf "\n"
     read -p "Enter the number of the type of test you want to run: " type_num
 
-    # Decrement folder_num because bash arrays are 0-indexed
     type_num=$((type_num-1))
-
-    # Store the selected test type name in a variable
     selected_test_type=${test_types[$type_num]}
 
-    # $type_num
     test_type_num=$type_num
 }
 
-load_suite_target;
+select_test_target;
 select_test_type;
 
 selected_target_name="";
 
-if [[ $suite_target == 0 ]]; then
+if [[ $selected_target_id == 0 ]]; then
     selected_target_name="${targets[0]}";
-elif [[ $suite_target == 1 ]]; then
+elif [[ $selected_target_id == 1 ]]; then
     selected_target_name="${targets[1]}";
-elif [[ $suite_target == 2 ]]; then
+elif [[ $selected_target_id == 2 ]]; then
     selected_target_name="${targets[2]}";
 fi
 
 test_type_slug="";
 
 if [[ $test_type_num == 0 ]]; then
-    test_type_slug=$full_suite__slug;
+    test_type_slug=$full_regression_test__slug;
 elif [[ $test_type_num == 1 ]]; then
-    test_type_slug=$retest_diffs__slug;
+    test_type_slug=$retest_diffs_only__slug;
 elif [[ $test_type_num == 2 ]]; then
-    test_type_slug=$assess_diffs__slug;
+    test_type_slug=$assess_existing_diffs__slug;
 fi
 
-# clean_target_name="${selected_target_name//.\/cypress\/e2e\//}";
 printf "\n\e[4m\e[1mRunning $test_type_slug on $clean_target_name\e[0m\e[0m\n\n";
 
 
@@ -142,40 +131,33 @@ DIFF_JAVASCRIPT_LIST_DIR="./cypress/e2e/$clean_target_name/";
 
 
 remove_diff_list() {
-    # If the diff_list.ts exists, empty out the diff_list.ts file's array
     if [[ -f "$DIFF_JAVASCRIPT_LIST_DIR"diff_list.ts ]]; then
         echo 'export const diffs: string[] = [];' > "$DIFF_JAVASCRIPT_LIST_DIR"diff_list.ts;
     fi
 }
 
 remove_diffs() {
-    # Removes all diffs in the DIFF_DIR if there are any
-    if [ "$(ls -A $DIFF_DIR)" ]; then
+    if [ -d "$DIFF_DIR" ] && [ "$(ls -A $DIFF_DIR)" ]; then
         rm -r "$DIFF_DIR"/*;
     fi
 }
 
 remove_received() {
-    # Removes all diffs in the DIFF_DIR if there are any
-    if [ "$(ls -A $RECEIVED_DIR)" ]; then
+    if [ -d "$RECEIVED_DIR" ] && [ "$(ls -A $RECEIVED_DIR)" ]; then
         rm -r "$RECEIVED_DIR"/*;
     fi
 }
 
 create_list_of_diffs() {
-    # If there are diffs in the diff directory, loop through them and create a list of the filenames in the diff_list.ts file. Otherwise do nothing:
     if [ "$(ls -A $DIFF_DIR)" ]; then
         touch "$DIFF_JAVASCRIPT_LIST_DIR"diff_list.ts;
 
-        # "Open" the js file and write the contents of the array to it
         echo 'export const diffs: string[] = [' > "$DIFF_JAVASCRIPT_LIST_DIR"diff_list.ts;
 
         for file in "$DIFF_DIR"*.diff.png; do
-            # Also write the filenames to the txt file
             echo "\"$(basename "$file")\"," >> "$DIFF_JAVASCRIPT_LIST_DIR"diff_list.ts;
         done
 
-        # "Close" the js array and file
         echo '];' >> "$DIFF_JAVASCRIPT_LIST_DIR"diff_list.ts;
     fi
 }
@@ -193,20 +175,73 @@ assess_existing_diff_images() {
     \e[0m\n\n";
 
 
-    process_image() {
-        local image_file=$1;
-        local image_name="${image_file//.diff.png/}";
+    # process_image() {
+    #     local image_file=$1;
+    #     local image_name="${image_file//.diff.png/}";
         
-        printf "\e[4m$image_name\e[0m\n";
+    #     printf "\e[4m$image_name\e[0m\n";
 
-        # Open image preview
+    #     # Open image preview
+    #     if [[ $(uname -s) == "Darwin" ]]; then
+    #         open -g "$DIFF_DIR$image_file";
+    #     else
+    #         xdg-open "$DIFF_DIR$image_file";
+    #     fi
+
+    #     printf "\e[2mENTER to approve, SPACEBAR to reject\e[0m";
+    #     IFS= read -r -n 1 -p "" answer;
+
+    #     # On Linux we close the image preview for each image, on macOS we close the entire application at the end
+    #     if [[ $(uname -s) == "Linux" ]]; then
+    #         pkill -f "$DIFF_DIR$image_file";
+    #     fi
+
+    #     if [[ $answer == "" ]]; then
+    #         approved_files+=("$image_name");
+    #         printf "\e[32m✅ Approved changes\e[0m\e[2m - updating baseline\e[0m\n";
+
+    #         local baseline_name="$image_name.snap.png";
+    #         local diff_name="$image_name.diff.png";
+    #         local received_name="$image_name-received.png";
+
+    #         # Replace baseline image with received image
+    #         rm "$BASELINE_DIR$baseline_name";
+    #         mv "$RECEIVED_DIR$received_name" "$BASELINE_DIR$baseline_name";
+    #         rm "$DIFF_DIR$image_file";
+
+    #     elif [[ $answer == " " ]]; then
+    #         rejected_files+=("$image_name");
+    #         printf "\e[33m\nRejected changes\e[0m\e[2m - run test again after fixes\e[0m\n";
+    #     else
+    #         rejected_files+=("$image_name");
+    #         printf "\e[33m\nRejected changes\e[0m\e[2m - run test again after fixes\e[0m\n";
+    #     fi
+
+    #     printf "\n\n";
+    # }
+
+
+
+process_image() {
+    local image_file=$1;
+    local image_name="${image_file//.diff.png/}";
+    
+    printf "\e[4m$image_name\e[0m\n";
+
+    # Open image preview
+    open_image() {
         if [[ $(uname -s) == "Darwin" ]]; then
             open -g "$DIFF_DIR$image_file";
         else
             xdg-open "$DIFF_DIR$image_file";
         fi
+    }
 
-        printf "\e[2mENTER to approve, SPACEBAR to reject\e[0m";
+    open_image
+
+    printf "\e[2mENTER to approve, SPACEBAR to reject, R to reopen image\e[0m";
+    
+    while true; do
         IFS= read -r -n 1 -p "" answer;
 
         # On Linux we close the image preview for each image, on macOS we close the entire application at the end
@@ -227,16 +262,24 @@ assess_existing_diff_images() {
             mv "$RECEIVED_DIR$received_name" "$BASELINE_DIR$baseline_name";
             rm "$DIFF_DIR$image_file";
 
+            break
+        elif [[ $answer == "r" ]]; then
+            open_image
         elif [[ $answer == " " ]]; then
             rejected_files+=("$image_name");
             printf "\e[33m\nRejected changes\e[0m\e[2m - run test again after fixes\e[0m\n";
-        else
-            rejected_files+=("$image_name");
-            printf "\e[33m\nRejected changes\e[0m\e[2m - run test again after fixes\e[0m\n";
+            break
+        # else
+        #     rejected_files+=("$image_name");
+        #     printf "\e[33m\nRejected changes\e[0m\e[2m - run test again after fixes\e[0m\n";
+        #     break
         fi
+    done
 
-        printf "\n\n";
-    }
+    printf "\n\n";
+}
+
+
 
 
     # Main loop to process images
@@ -256,7 +299,7 @@ assess_existing_diff_images() {
     fi
 
 
-    # Printf summary
+    # Summary
     printf "\e[1mDone!\e[0m\n\n";
 
     if [[ ${#approved_files[@]} -gt 0 ]]; then
@@ -287,33 +330,48 @@ assess_existing_diff_images() {
 
 
 
+
+cypress_flag=$1;
+
+if [[ $cypress_flag == "--gui" ]]; then
+    printf "\e[2mRunning in GUI mode - Assessment of eventual diffs must be done manually\e[0m\n\n";
+fi
+
 spec_path="./cypress/e2e/$selected_target_name/snaps.cy.ts";
 
-if [[ $test_type_slug == "full-suite" ]]; then
-    # Clean up
+if [[ $test_type_slug == "full-regression-test" ]]; then
     remove_diff_list;
     remove_diffs;
     remove_received;
 
-    npx cypress run --spec "$spec_path" --env test-all=true,failOnSnapshotDiff=false;
+    if [[ $cypress_flag == "--gui" ]]; then
+        npx cypress open --env test-all=true,failOnSnapshotDiff=false;
+    else
+        npx cypress run --spec "$spec_path" --env test-all=true,failOnSnapshotDiff=false;
+    fi
+    
     assess_existing_diff_images;
     create_list_of_diffs; # these are the new, if any, diffs that were created in the cypress test (used in the next run)
 fi
 
 
-if [[ $test_type_slug == "retest-diffs" ]]; then
-    # Clean up
+if [[ $test_type_slug == "retest-diffs-only" ]]; then
     remove_diffs;
     remove_received;
 
-    npx cypress run --spec "$spec_path" --env retest-diffs=true,failOnSnapshotDiff=false;
+    if [[ $cypress_flag == "--gui" ]]; then
+        npx cypress open --env retest-diffs-only=true,failOnSnapshotDiff=false;
+    else
+        npx cypress run --spec "$spec_path" --env retest-diffs-only=true,failOnSnapshotDiff=false;
+    fi
+
     remove_diff_list; # remove the old list of diffs
     assess_existing_diff_images;
     create_list_of_diffs; # these are the new, if any, diffs that were created in the cypress test (used in the next run)
 fi
 
 
-if [[ $test_type_slug == "assess-diffs" ]]; then
+if [[ $test_type_slug == "assess-existing-diffs" ]]; then
     remove_diff_list; # remove the old list of diffs
     assess_existing_diff_images;
     create_list_of_diffs; # these are the new, if any, diffs that were created in the cypress test (used in the next run)

@@ -16,7 +16,7 @@ export const runTest = (props: TestProps): void => {
             const path = endpoints[key].path;
             const blackout = endpoints[key].blackout;
 
-            it(`Test page '${title}' @ ${size}`, () => {
+            describe(`Test page '${title}' @ ${size}`, () => {
                 const fullUrl = formatUrl(path);
 
                 cy.prepareForCapture(fullUrl, size, onPageVisit);
@@ -51,7 +51,7 @@ export const runDiffingTest = (props: DiffingTestProps): void => {
         const endpoint = endpoints[title];
         const blackout = endpoint.blackout;
 
-        it('Test only diffing pages', () => {
+        describe(`'${title}' @ ${size}`, () => {
             const fullUrl = formatUrl(path);
             cy.prepareForCapture(fullUrl, size, onPageVisit);
 

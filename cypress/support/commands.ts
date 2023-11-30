@@ -8,7 +8,7 @@ Cypress.Commands.add('setFixtureData', () => {
 Cypress.Commands.add('prepareForCapture', (fullUrl, size, onPageVisit) => {
     cy.setResolution(size);
     cy.visit(fullUrl);
-    onPageVisit && onPageVisit();
+    onPageVisit();
     cy.scrollTo('bottom', { duration: 1000, ensureScrollable: false });
     cy.scrollTo('top', { ensureScrollable: false });
 });

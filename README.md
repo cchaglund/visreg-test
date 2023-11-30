@@ -4,8 +4,9 @@
 
 1. Install dependencies: `npm install`
 2. Give execute permissions to the script: chmod +x visreg.sh
-3. Run the script: ./visreg.sh and follow the instructions
-4. Add suite folder(s) to cypress/e2e directory
+3. Run the script: `./visreg.sh` and follow the instructions
+4. Add suite folder(s) to `cypress/e2e` directory
+5. Run with the Cypress GUI by adding the gui flag: `./visreg.sh --gui` (in this mode, the script will not prompt you to accept or reject the new baseline for each diff)
 
 The script will use cypress to generate snapshots of the different **suites**, located in cypress/e2e (use the _example_ folder as a reference):
 
