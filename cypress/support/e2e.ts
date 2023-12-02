@@ -35,13 +35,13 @@ declare global {
 			 * Custom command to capture the full page
 			 * @example cy.prepareForCapture('/home', 'samsung-s10')
 			 */
-			prepareForCapture(fullUrl: string, size: ViewportConfig, onPageVisit: () => void): Chainable<JQuery<HTMLElement>>;
+			prepareForCapture(fullUrl: string, size: ViewportConfig, onPageVisit?: () => void): Chainable<JQuery<HTMLElement>>;
 		}
 
 		export type Endpoints = {
 			title: string,
 			path: string,
-			blackout: string[]
+			blackout?: string[]
 		}
 		
 		export type SnapConfig = {
@@ -63,6 +63,7 @@ addMatchImageSnapshotCommand({
 	// capture: 'viewport',
 	blackout: [''],
 	snapFilenameExtension: '.base',
+	e2eSpecDir: '/Users/christoferhaglund/Code/misc/suites/',
 });
 
 Cypress.on('uncaught:exception', (err, runnable) => {

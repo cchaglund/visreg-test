@@ -1,3 +1,5 @@
+import { delimiter } from '../../shared';
+
 const parseSnapConfigFromName = (name: string, pages: Cypress.Endpoints[]): Cypress.SnapConfig | null => {
     const divider = ' @ ';
     const nameParts = name.split(divider);
@@ -23,36 +25,44 @@ const parseSnapConfigFromName = (name: string, pages: Cypress.Endpoints[]): Cypr
     };    
 };
 
+const defaultViewports: Cypress.ViewportConfig[] = [
+    'iphone-6',
+    'ipad-2',
+    [1920, 1080],
+];
 
 type TestProps = {
     suiteName: string;
+    baseUrl: string;
     endpoints: Cypress.Endpoints[];
-    viewports: Cypress.ViewportConfig[];
-    formatUrl: (path: string) => string;
-    onPageVisit: () => void;
-    diffs: string[];
+    viewports?: Cypress.ViewportConfig[];
+    formatUrl?: (path: string) => string;
+    onPageVisit?: () => void;
 };
 
 export const runTest = (props: TestProps): void => {
-    const { suiteName, endpoints, viewports, formatUrl, onPageVisit, diffs } = props;
+    const { suiteName, baseUrl, endpoints, viewports, formatUrl, onPageVisit } = props;
 
-    describe(`Visual regression (${suiteName})`, () => {
+    const sanitizedBaseUrl = baseUrl.replace(/\/$/, '');
+    const views = viewports ? viewports : defaultViewports;
 
-        if (Cypress.env('test-all')) {
+    describe(`Visual regression ${suiteName && '- ' + suiteName}`, () => {
+
+        if (Cypress.env('testType') === 'test-all') {
             describe('Full visual regression test', () => {
-                viewports.forEach((size) => {
+                views.forEach((size) => {
                     endpoints.forEach((endpoint) => {
                         const { path, title, blackout } = endpoint;
                 
                         const snapName = `${title} @ ${size}`;
-                        const fullUrl = formatUrl(path);
+                        const fullUrl = formatUrl ? formatUrl(path) : `${sanitizedBaseUrl}${path}`;
                 
                         it(snapName, () => {
                             cy.prepareForCapture(fullUrl, size, onPageVisit);
                 
                             cy.matchImageSnapshot( snapName, {
                                 storeReceivedOnFailure: true,
-                                blackout,
+                                blackout: blackout ? blackout : [],
                             });
                         });
                     });
@@ -61,8 +71,15 @@ export const runTest = (props: TestProps): void => {
         }
         
         
-        if (Cypress.env('retest-diffs-only')) {
+        if (Cypress.env('testType') === 'retest-diffs-only') {
             describe('Retesting diffing snapshots only', () => {
+                if(!Cypress.env('diffListString')) {
+                    return;
+                }
+
+                const decodedString = Buffer.from(Cypress.env('diffListString'), 'base64').toString('utf8');
+                const diffs = decodedString.split(delimiter);
+
                 diffs.forEach(diffSnapName => {
                     const { path, size, title }: Cypress.SnapConfig = parseSnapConfigFromName(diffSnapName, endpoints)
         
@@ -77,7 +94,7 @@ export const runTest = (props: TestProps): void => {
                         cy.matchImageSnapshot(snapName, {
                             snapFilenameExtension: '.base',
                             storeReceivedOnFailure: true,
-                            blackout,
+                            blackout: blackout ? blackout : [],
                         });
                     });
                 });

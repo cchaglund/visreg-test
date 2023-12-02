@@ -4,9 +4,10 @@
       "lib": ["es5", "dom"],
       "types": ["cypress", "node"],
       "allowImportingTsExtensions": true,
-      "noEmit": true
+      "noEmit": true,
+      "baseUrl": ".",
     },
-    "include": ["**/*.ts", "**/**/*.ts", "cypress/e2e/_example_/viewports.js", "cypress/e2e/_example_/endpoints.js"],
+    "include": ["**/*.ts", "**/**/*.ts", "visreg.ts"],
     "types": ["@simonsmith/cypress-image-snapshot/types"],
 
 }

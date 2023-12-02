@@ -14,12 +14,11 @@ const endpoints: Cypress.Endpoints[] = [
     {
         title: 'Cypress',
         path: '/guides/overview/why-cypress',
-        blackout: []
+        blackout: ['#sidebar']
     },
     {
         title: 'Core Concepts',
         path: '/guides/core-concepts/introduction-to-cypress',
-        blackout: []
     }
 ]
 

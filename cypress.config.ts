@@ -2,10 +2,19 @@ import {defineConfig} from 'cypress'
 import {addMatchImageSnapshotPlugin} from '@simonsmith/cypress-image-snapshot/plugin'
 import * as fs from 'fs';
 
-// If you want to see the browser's internal logs, prefix your "npx cypress [...]" command with "ELECTRON_ENABLE_LOGGING=1 
 
 export default defineConfig({
 	e2e: {
+		/**
+		 * This folder is not used, but we need to set it to something to be able to place images
+		 * in the correct folder. But Cypress/the snapshot plugin will not use it (it will create 
+		 * a folder structure dynamically instead).
+		*/
+		screenshotsFolder: '/Users/christoferhaglund/Code/misc/suites/._this_folder_is_not_used_',
+		specPattern: '/Users/christoferhaglund/Code/misc/suites/**/*.cy.js',
+		responseTimeout: 60000,
+		screenshotOnRunFailure: false,
+
 		setupNodeEvents(on, config) {
 			on('before:browser:launch', (browser, launchOptions) => {
 
@@ -32,7 +41,5 @@ export default defineConfig({
 
 			addMatchImageSnapshotPlugin(on);
 		},
-		responseTimeout: 60000,
-		screenshotOnRunFailure: false,
 	},
 });
