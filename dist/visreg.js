@@ -57,14 +57,21 @@ const main = async () => {
 const getDirectories = (source) => fs.readdirSync(source, { withFileTypes: true })
     .filter(dirent => dirent.isDirectory())
     .map(dirent => dirent.name);
-const targets = getDirectories(projectDir)
-    .filter(dirName => dirName !== 'snapshots')
-    .filter(dirName => dirName !== 'node_modules');
+const configPath = path.join(projectDir, 'visreg.config.json');
+let testDirectory = projectDir;
+let ignoreDirectories = ['node_modules'];
+if (fs.existsSync(configPath)) {
+    const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+    if (config.testDirectory) {
+        testDirectory = path.isAbsolute(config.testDirectory) ? config.testDirectory : path.resolve(projectDir, config.testDirectory);
+    }
+    if (config.ignoreDirectories) {
+        ignoreDirectories.push(...config.ignoreDirectories);
+    }
+}
+const targets = getDirectories(testDirectory)
+    .filter(dirName => !ignoreDirectories.includes(dirName));
 const selectTarget = async () => {
-    const displayTargetArray = targets.map((target, index) => {
-        return `${index + 1}) ${target}`;
-    });
-    console.log('displayTargetArray', displayTargetArray);
     if (targets.length === 0) {
         printColorText('No test targets found - see README', '31');
         process.exit(1);
