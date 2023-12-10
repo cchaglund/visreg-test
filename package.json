@@ -1,6 +1,6 @@
 {
-	"name": "@haglund/visreg",
-	"version": "1.0.0",
+	"name": "visreg-test", 
+	"version": "1.0.1",
 	"description": "",
 	"main": "dist/run-test.js",
 	"types": "dist/visreg.d.ts",
@@ -13,12 +13,12 @@
 		"prepublish": "npm run build"
 	},
 	"bin": {
-		"visreg": "dist/visreg.js"
+		"visreg-test": "dist/visreg.js"
 	},
 	"author": "Christofer Haglund <cchaglund@users.noreply.github.com>",
 	"license": "ISC",
 	"dependencies": {
-        "@simonsmith/cypress-image-snapshot": "9.0.1",
+		"cypress-image-snapshot-fork-2": "9.0.1-2",
         "local-cypress": "1.2.6"
     },
     "devDependencies": {

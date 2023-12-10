@@ -1,21 +1,6 @@
-// ***********************************************************
-// This example support/e2e.js is processed and
-// loaded automatically before your test files.
-//
-// This is a great place to put global configuration and
-// behavior that modifies Cypress.
-//
-// You can change the location of this file or turn off
-// automatically serving support files with the
-// 'supportFile' configuration option.
-//
-// You can read more here:
-// https://on.cypress.io/configuration
-// ***********************************************************
-
 import './commands';
-import { addMatchImageSnapshotCommand } from '@simonsmith/cypress-image-snapshot/command';
-
+import { addMatchImageSnapshotCommand } from 'cypress-image-snapshot-fork-2/command';
+import { Cypress } from 'local-cypress'
 
 declare global {
 	namespace Cypress {
@@ -25,11 +10,6 @@ declare global {
 			 * @example cy.setResolution('samsung-s10')
 			 */
 			setResolution(value: ViewportPreset | number[]): Chainable<JQuery<HTMLElement>>;
-
-			/**
-			 * Custom command to set the fixture data to globalThis
-			 */
-			setFixtureData(): Chainable<JQuery<HTMLElement>>;
 
 			/**
 			 * Custom command to capture the full page
@@ -55,18 +35,37 @@ declare global {
 
 }
 
+console.log('--- Does process.env.PROJECT_DIR exist here?', process.env.PROJECT_DIR);
+
+
 addMatchImageSnapshotCommand({
 	failureThreshold: 1,
 	failureThresholdType: 'percent',
-	// scale: true,
 	capture: 'fullPage',
-	// capture: 'viewport',
 	blackout: [''],
 	snapFilenameExtension: '.base',
-	e2eSpecDir: '/Users/christoferhaglund/Code/misc/suites/',
+	// e2eSpecDir: '/Users/christoferhaglund/Code/misc/suites/',
+	// e2eSpecDir: '/Users/christoferhaglund/Code/misc/suites/wtf',
+	// e2eSpecDir: '24hr',
+
+	// e2eSpecDir: Cypress.env('projectDir'),
+	// customSnapshotsDir: Cypress.env('projectDir') + '/snapshots',
+
+	useRelativeSnapshotsDir: true,
+	
+	
+	// e2eSpecDir: "suites",
+	// customSnapshotsDir: "snapshots",
+
+	// e2eSpecDir: "../../suites",
+	// customSnapshotsDir: "snapshots",
 });
 
-Cypress.on('uncaught:exception', (err, runnable) => {
+// let e2eSpecDir = /.*\/(.*)\/.*/;
+// let str = "../../suites/24hr/snaps.cy.js";
+// let result = str.replace(e2eSpecDir, '$1');
+
+Cypress.on('uncaught:exception', () => {
 	/**
 	 * returning false here prevents Cypress from failing the test if an error 
 	 * in the console of the application which is being tested is found

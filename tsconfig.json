@@ -1,13 +1,19 @@
 {
-    "compilerOptions": {
-      "target": "es5",
-      "lib": ["es5", "dom"],
-      "types": ["cypress", "node"],
-      "allowImportingTsExtensions": true,
-      "noEmit": true,
-      "baseUrl": ".",
-    },
-    "include": ["**/*.ts", "**/**/*.ts", "visreg.ts"],
-    "types": ["@simonsmith/cypress-image-snapshot/types"],
-
+	"compilerOptions": {
+		"strict": true,
+		"outDir": "dist",
+		"rootDir": "src",
+		"target": "es6",
+        "module": "commonjs",
+        "declaration": true,
+        "lib": ["es6", "dom"],
+		"baseUrl": ".",
+	},
+	"include": [
+		"src/*.ts",
+		"src/**/*.ts",
+	],
+	"exclude": [
+		"src/e2e/_example_/*.ts"
+	]
 }

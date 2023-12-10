@@ -1,13 +1,12 @@
-import { runTest } from '../visual-regression-tests.cy.ts';
-import endpoints from './endpoints.ts';
-import viewports from './viewports.ts';
+import { runTest } from '../visual-regression-tests.cy';
+import endpoints from './endpoints';
+import viewports from './viewports';
 
 /**
  * 
  * Only the baseUrl and endpoints are required.
  * 
  */
-
 const suiteName: string | undefined = 'Example';
 const baseUrl: string = 'https://docs.cypress.io';
 

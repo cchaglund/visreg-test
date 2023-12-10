@@ -1,0 +1,1 @@
+- add warning/error if no file is found (we already handle if no folders are found)

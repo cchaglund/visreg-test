@@ -1,4 +1,5 @@
 import { delimiter } from '../../shared';
+import { cy, Cypress, describe, it } from 'local-cypress'
 
 const parseSnapConfigFromName = (name: string, pages: Cypress.Endpoints[]): Cypress.SnapConfig | null => {
     const divider = ' @ ';
@@ -45,8 +46,9 @@ export const runTest = (props: TestProps): void => {
 
     const sanitizedBaseUrl = baseUrl.replace(/\/$/, '');
     const views = viewports ? viewports : defaultViewports;
+    const name = suiteName ? suiteName : Cypress.env('target');
 
-    describe(`Visual regression ${suiteName && '- ' + suiteName}`, () => {
+    describe(`Visual regression - ${name}`, () => {
 
         if (Cypress.env('testType') === 'test-all') {
             describe('Full visual regression test', () => {
@@ -57,12 +59,12 @@ export const runTest = (props: TestProps): void => {
                         const snapName = `${title} @ ${size}`;
                         const fullUrl = formatUrl ? formatUrl(path) : `${sanitizedBaseUrl}${path}`;
                 
-                        it(snapName, () => {
+                        it('hej??: ' + fullUrl, () => {
                             cy.prepareForCapture(fullUrl, size, onPageVisit);
                 
                             cy.matchImageSnapshot( snapName, {
                                 storeReceivedOnFailure: true,
-                                blackout: blackout ? blackout : [],
+                                blackout: blackout ?? [],
                             });
                         });
                     });
@@ -73,20 +75,24 @@ export const runTest = (props: TestProps): void => {
         
         if (Cypress.env('testType') === 'retest-diffs-only') {
             describe('Retesting diffing snapshots only', () => {
-                if(!Cypress.env('diffListString')) {
-                    return;
-                }
+                if(!Cypress.env('diffListString')) return;
 
                 const decodedString = Buffer.from(Cypress.env('diffListString'), 'base64').toString('utf8');
                 const diffs = decodedString.split(delimiter);
 
                 diffs.forEach(diffSnapName => {
-                    const { path, size, title }: Cypress.SnapConfig = parseSnapConfigFromName(diffSnapName, endpoints)
-        
+                    const config = parseSnapConfigFromName(diffSnapName, endpoints)
+
+                    if (!config) return;
+
+                    const { path, size, title }: Cypress.SnapConfig = config;
                     const endpoint = endpoints.find(endpoint => endpoint.title === title);
+
+                    if (!endpoint) return;
+
                     const snapName = `${title} @ ${size}`;
                     const blackout = endpoint.blackout;
-                    const fullUrl = formatUrl(path);
+                    const fullUrl = formatUrl ? formatUrl(path) : `${sanitizedBaseUrl}${path}`;
         
                     it(snapName, () => {
                         cy.prepareForCapture(fullUrl, size, onPageVisit);

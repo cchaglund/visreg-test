@@ -15,16 +15,17 @@ const path = require("path");
 const child_process_1 = require("child_process");
 const readline = require("readline");
 const shared_1 = require("./shared");
-console.log('TEST 3');
-// print the working directory so I know where the script is running from:
-console.log('CWD', process.cwd());
-// const suites_dir="/Users/christoferhaglund/Code/misc/suites"; // when developing
-const suites_dir = "../../"; // when running as an npm package, goes up two levels from node_modules
+// console.log('TEST 3');
+// // print the working directory so I know where the script is running from:
+// console.log('CWD', process.cwd());
+const projectDir = process.cwd();
+process.env.PROJECT_DIR = projectDir;
+console.log('projectDir', projectDir);
 let clean_target_name = "";
 let approvedFiles = [];
 let rejectedFiles = [];
 let diffFiles = [];
-const SUITE_SNAPS_DIR = () => path.join(suites_dir, 'suites', clean_target_name, 'snaps.cy.js');
+const SUITE_SNAPS_DIR = () => path.join(projectDir, clean_target_name, 'snapshots', 'snaps'); // TODO: snaps is the name of the test file, improvement could be to make it dynamic and allow for multiple test files
 console.log('SUITE_SNAPS_DIR()', SUITE_SNAPS_DIR());
 const DIFF_DIR = () => path.join(SUITE_SNAPS_DIR(), '__diff_output__');
 const RECEIVED_DIR = () => path.join(SUITE_SNAPS_DIR(), '__received_output__');
@@ -45,7 +46,6 @@ const typesList = [
         description: 'Assess the existing diffs (no tests are run)'
     }
 ];
-const suitesDir = "/Users/christoferhaglund/Code/misc/suites"; // TODO: this can't be hardcoded.
 // Function to print color text
 const printColorText = (text, colorCode) => {
     console.log(`\x1b[${colorCode}m${text}\x1b[0m`);
@@ -69,12 +69,17 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
 });
 // Function to get directories in the suites directory
 const getDirectories = (source) => fs.readdirSync(source, { withFileTypes: true })
-    .filter(dirent => dirent.isDirectory())
+    .filter(dirent => {
+    console.log('dirent', dirent);
+    return dirent.isDirectory();
+})
     .map(dirent => dirent.name);
-const targets = getDirectories(suitesDir)
+const targets = getDirectories(projectDir)
     .filter(dirName => dirName !== 'suites')
+    .filter(dirName => dirName !== 'node_modules')
     .filter(dirName => dirName !== '._this_folder_is_not_used_but_is_needed_for_cypress_to_work');
 const selectTarget = () => __awaiter(void 0, void 0, void 0, function* () {
+    console.log('targets: ', targets);
     if (targets.length === 0) {
         printColorText('No test targets found - see README', '31');
         process.exit(1);
@@ -121,7 +126,7 @@ const selectType = () => __awaiter(void 0, void 0, void 0, function* () {
 const runCypressTest = (target, type, diffListString) => __awaiter(void 0, void 0, void 0, function* () {
     printColorText(`\nStarting Cypress\n`, '2');
     return new Promise((resolve, reject) => {
-        const specPath = path.join(suitesDir, target, 'snaps.cy.js');
+        const specPath = path.join(projectDir, target, 'snaps.cy.js');
         console.log('--------specPath', specPath);
         const gui = process.argv.includes('--gui');
         let encodedDiff = '';
@@ -133,6 +138,7 @@ const runCypressTest = (target, type, diffListString) => __awaiter(void 0, void 
             'failOnSnapshotDiff=false',
             `target=${target}`,
             `diffListString=${diffListString ? encodedDiff : 'false'}`,
+            `projectDir=${projectDir}`
         ];
         let cypressCommand;
         if (gui) {
@@ -140,8 +146,10 @@ const runCypressTest = (target, type, diffListString) => __awaiter(void 0, void 
             cypressCommand = `npx cypress open --env ${envs.join(',')}`;
         }
         else {
-            cypressCommand = `npx cypress run --spec "${specPath}" --env ${envs.join(',')} --config-file dist/cypress.config.js`; // when run as a local script
-            // cypressCommand = `npx cypress run --spec "${specPath}" --env ${envs.join(',')} --config-file node_modules/visreg/dist/cypress.config.js`; // when run as an npm package
+            process.chdir(__dirname); // __dirname is the directory where the current file is located
+            // cypressCommand = `npx cypress run --spec "${specPath}" --env ${envs.join(',')} --config-file dist/cypress.config.js`; // when run as a local script
+            // cypressCommand = `../node_modules/.bin/cypress run --spec "${specPath}" --env ${envs.join(',')} `; // when run as a locally-installed module
+            cypressCommand = `npx cypress run --spec "${specPath}" --env ${envs.join(',')} `; // when run as a locally-installed module
         }
         console.log('cypressCommand', cypressCommand);
         const parts = cypressCommand.split(' ');

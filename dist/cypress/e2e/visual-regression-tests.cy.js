@@ -40,7 +40,7 @@ const runTest = (props) => {
                         const { path, title, blackout } = endpoint;
                         const snapName = `${title} @ ${size}`;
                         const fullUrl = formatUrl ? formatUrl(path) : `${sanitizedBaseUrl}${path}`;
-                        (0, local_cypress_1.it)(snapName, () => {
+                        (0, local_cypress_1.it)('hej??: ' + fullUrl, () => {
                             local_cypress_1.cy.prepareForCapture(fullUrl, size, onPageVisit);
                             local_cypress_1.cy.matchImageSnapshot(snapName, {
                                 storeReceivedOnFailure: true,

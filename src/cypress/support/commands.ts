@@ -1,9 +1,4 @@
-Cypress.Commands.add('setFixtureData', () => {
-    cy.fixture('urls').as('urlFixture');
-    cy.get('@urlFixture').then((urls) => {
-        globalThis.urls = urls;
-    });
-});
+import { cy, Cypress } from 'local-cypress'
 
 Cypress.Commands.add('prepareForCapture', (fullUrl, size, onPageVisit) => {
     cy.setResolution(size);
