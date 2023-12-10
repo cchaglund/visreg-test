@@ -1,19 +1,29 @@
 {
-	"name": "visual-regression-testing",
+	"name": "@haglund/visreg",
 	"version": "1.0.0",
 	"description": "",
-	"main": "index.js",
+	"main": "dist/run-test.js",
+	"types": "dist/visreg.d.ts",
 	"scripts": {
-		"test-interactive": "npx cypress open --env failOnSnapshotDiff=false",
-		"watch": "tsc visreg.ts --watch",
-		"test": "ts-node visreg.ts"
+		"test": "node ./dist/visreg.js",
+		"dev-build-and-test": "tsc && node ./dist/visreg.js",
+		"build": "tsc",
+		"watch": "tsc --watch",
+		"test-dev": "ts-node ./visreg.ts",
+		"prepublish": "npm run build"
 	},
-	"author": "Christofer Haglund",
+	"bin": {
+		"visreg": "dist/visreg.js"
+	},
+	"author": "Christofer Haglund <cchaglund@users.noreply.github.com>",
 	"license": "ISC",
-	"devDependencies": {
-		"@simonsmith/cypress-image-snapshot": "9.0.1",
-		"cypress": "13.5.1",
-		"typescript": "5.3.2",
-		"ts-node": "10.2.1"
-	}
+	"dependencies": {
+        "@simonsmith/cypress-image-snapshot": "9.0.1",
+        "local-cypress": "1.2.6"
+    },
+    "devDependencies": {
+        "ts-node": "10.2.1",
+        "typescript": "5.3.2"
+    },
+	"files": ["dist"]
 }
