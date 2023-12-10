@@ -1,6 +1,6 @@
 {
 	"name": "visreg-test", 
-	"version": "1.0.1",
+	"version": "1.0.11",
 	"description": "",
 	"main": "dist/run-test.js",
 	"types": "dist/visreg.d.ts",
@@ -10,7 +10,8 @@
 		"build": "tsc",
 		"watch": "tsc --watch",
 		"test-dev": "ts-node ./visreg.ts",
-		"prepublish": "npm run build"
+		"prepublish": "npm run build",
+		"pub": "tsc && npm publish"
 	},
 	"bin": {
 		"visreg-test": "dist/visreg.js"

@@ -1,8 +1,25 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.runTest = void 0;
+require("../support/commands");
+const command_1 = require("cypress-image-snapshot-fork-2/command");
 const shared_1 = require("../../shared");
 const local_cypress_1 = require("local-cypress");
+(0, command_1.addMatchImageSnapshotCommand)({
+    failureThreshold: 1,
+    failureThresholdType: 'percent',
+    capture: 'fullPage',
+    blackout: [''],
+    snapFilenameExtension: '.base',
+    useRelativeSnapshotsDir: true,
+});
+local_cypress_1.Cypress.on('uncaught:exception', () => {
+    /**
+     * returning false here prevents Cypress from failing the test if an error
+     * in the console of the application which is being tested is found
+     */
+    return false;
+});
 const parseSnapConfigFromName = (name, pages) => {
     const divider = ' @ ';
     const nameParts = name.split(divider);
@@ -40,11 +57,11 @@ const runTest = (props) => {
                         const { path, title, blackout } = endpoint;
                         const snapName = `${title} @ ${size}`;
                         const fullUrl = formatUrl ? formatUrl(path) : `${sanitizedBaseUrl}${path}`;
-                        (0, local_cypress_1.it)('hej??: ' + fullUrl, () => {
+                        (0, local_cypress_1.it)(snapName, () => {
                             local_cypress_1.cy.prepareForCapture(fullUrl, size, onPageVisit);
                             local_cypress_1.cy.matchImageSnapshot(snapName, {
                                 storeReceivedOnFailure: true,
-                                blackout: blackout !== null && blackout !== void 0 ? blackout : [],
+                                blackout: blackout ?? [],
                             });
                         });
                     });

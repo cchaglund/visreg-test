@@ -1,5 +1,59 @@
+import '../support/commands';
+import { addMatchImageSnapshotCommand } from 'cypress-image-snapshot-fork-2/command';
 import { delimiter } from '../../shared';
-import { cy, Cypress, describe, it } from 'local-cypress'
+import { cy, Cypress, describe, it } from 'local-cypress';
+
+declare global {
+	namespace Cypress {
+		interface Chainable {
+			/**
+			 * Custom command to set the viewport to a specific device preset or [width, height].
+			 * @example cy.setResolution('samsung-s10')
+			 */
+			setResolution(value: ViewportPreset | number[]): Chainable<JQuery<HTMLElement>>;
+
+			/**
+			 * Custom command to capture the full page
+			 * @example cy.prepareForCapture('/home', 'samsung-s10')
+			 */
+			prepareForCapture(fullUrl: string, size: ViewportConfig, onPageVisit?: () => void): Chainable<JQuery<HTMLElement>>;
+		}
+
+		export type Endpoints = {
+			title: string,
+			path: string,
+			blackout?: string[]
+		}
+		
+		export type SnapConfig = {
+			path: string;
+			size: ViewportPreset | number[];
+			title: string
+		}
+
+		export type ViewportConfig = ViewportPreset | number[];
+	}
+
+}
+
+addMatchImageSnapshotCommand({
+	failureThreshold: 1,
+	failureThresholdType: 'percent',
+	capture: 'fullPage',
+	blackout: [''],
+	snapFilenameExtension: '.base',
+	useRelativeSnapshotsDir: true,
+});
+
+
+Cypress.on('uncaught:exception', () => {
+	/**
+	 * returning false here prevents Cypress from failing the test if an error 
+	 * in the console of the application which is being tested is found
+	 */
+	return false
+})
+
 
 const parseSnapConfigFromName = (name: string, pages: Cypress.Endpoints[]): Cypress.SnapConfig | null => {
     const divider = ' @ ';
@@ -59,7 +113,7 @@ export const runTest = (props: TestProps): void => {
                         const snapName = `${title} @ ${size}`;
                         const fullUrl = formatUrl ? formatUrl(path) : `${sanitizedBaseUrl}${path}`;
                 
-                        it('hej??: ' + fullUrl, () => {
+                        it(snapName, () => {
                             cy.prepareForCapture(fullUrl, size, onPageVisit);
                 
                             cy.matchImageSnapshot( snapName, {

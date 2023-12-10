@@ -2,13 +2,6 @@ import {defineConfig} from 'cypress'
 import {addMatchImageSnapshotPlugin} from 'cypress-image-snapshot-fork-2/plugin';
 import * as fs from 'fs';
 
-console.log("\nCurrent working directory: ", process.cwd());
-
-// check if file "./cypress/support/e2e.js" exists:
-console.log("process.env.PROJECT_DIR", process.env.PROJECT_DIR);
-console.log("Does file 'PROJECT_DIR/._this_folder_is_not_used_but_is_needed_for_cypress_to_work' exist?", fs.existsSync(process.env.PROJECT_DIR + '/._this_folder_is_not_used_but_is_needed_for_cypress_to_work'));
-console.log("2", process.env.PROJECT_DIR + '/._this_folder_is_not_used_but_is_needed_for_cypress_to_work');
-
 
 export default defineConfig({
 	e2e: {
@@ -17,25 +10,13 @@ export default defineConfig({
 		 * in the non-default cypress/e2e folder. But the snapshot plugin will not actually use it (it will create 
 		 * a folder structure dynamically instead), but with it it knows where to place the images.
 		*/
-		screenshotsFolder: process.env.PROJECT_DIR + '/._this_folder_is_not_used_but_is_needed_for_cypress_to_work', // when local
 		specPattern: process.env.PROJECT_DIR + '/**/*.cy.js', // when local
-		
-		// screenshotsFolder: '/Users/christoferhaglund/Code/misc/suites/._this_folder_is_not_used_but_is_needed_for_cypress_to_work', // when local
-		// specPattern: '/Users/christoferhaglund/Code/misc/suites/**/*.cy.js', // when local
-
-
+		supportFile: false,
 		// supportFile: 'dist/cypress/support/e2e.js', // when local
-
-		// screenshotsFolder: '../._this_folder_is_not_used_but_is_needed_for_cypress_to_work', // when npm package
-		// specPattern: '../**/*.cy.js', // when npm package
-		// supportFile: 'node_modules/visreg/dist/cypress/support/e2e.js', // when as npm package
-
 		responseTimeout: 60000,
 		screenshotOnRunFailure: false,
 
 		setupNodeEvents(on, config) {
-			// console.log('CONFIG: ', config);
-			
 			on('before:browser:launch', (browser, launchOptions) => {
 
 				if (browser.name === 'electron' && browser.isHeadless) {
