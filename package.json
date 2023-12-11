@@ -1,6 +1,6 @@
 {
 	"name": "visreg-test", 
-	"version": "1.0.15",
+	"version": "1.0.16",
 	"description": "A universal visual regression testing tool which is quick and easy to set up with a simple and convenient UI to run and assess visual regression.",
 	"main": "dist/run-test.js",
 	"types": "dist/visreg.d.ts",
@@ -20,7 +20,7 @@
 	"license": "LGPL-3.0-only",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/simonsmith/cypress-image-snapshot"
+		"url": "https://github.com/cchaglund/visreg-test"
 	},
 	"dependencies": {
 		"cypress-image-snapshot-fork-2": "9.0.1-2",
