@@ -1,6 +1,8 @@
 # Visual regression testing suite
 
-This is a visual regression testing suite built on top of [cypress](https://www.cypress.io/), [local-cypress](https://www.npmjs.com/package/local-cypress) by bahmutov, and [cypress-image-snapshot](https://github.com/simonsmith/cypress-image-snapshot) by simonsmith. It builds upon those great packages and adds a layer of abstraction to make it easier to set up, and a simple and convenient UI to run and assess visual regression tests.
+A universal visual regression testing tool which is quick and easy to set up with a simple and convenient UI to run and assess visual regression.
+
+Built upon [cypress](https://www.cypress.io/), [local-cypress](https://www.npmjs.com/package/local-cypress), and [cypress-image-snapshot](https://github.com/simonsmith/cypress-image-snapshot).
 
 
 ## Setup
@@ -14,6 +16,10 @@ import { runTest } from 'visreg-test';
 
 const baseUrl = 'https://developer.mozilla.org';
 
+const viewports = [
+    'iphone-6',
+];
+
 const endpoints = [
     {
         title: 'Start',
@@ -23,10 +29,6 @@ const endpoints = [
         title: 'Guides',
         path: '/en-US/docs/Learn',
     }
-];
-
-const viewports = [
-    'iphone-6',
 ];
 
 runTest({
@@ -76,26 +78,27 @@ import { runTest } from 'visreg-test';
 
 const baseUrl = 'https://developer.mozilla.org';
 
-const endpoints = [...];
+const viewports = [...];
 
 const endpoints = [
     {
         title: 'Start',
         path: '/',
-        blackout: ['#sidebar', '.any-selector'] // Blackout elements from the snapshot, useful for elements that change frequently and are not relevant to the test
+        // Blackout elements from the snapshot, useful for elements that change frequently and are not relevant to the test.
+        blackout: ['#sidebar', '.my-selector', 'footer', ...] 
     },
     ...
 ];
 
-// This is only used when displaying the test results in the terminal
+// This is only used when displaying the test results in the terminal.
 const suiteName = 'MDN';
 
-// E.g. to add query params to the url
+// Apply some formatting to the url before a snapshot is taken, e.g. to add query params to the url.
 const formatUrl: FormatUrl = (path) => {
     return `${baseUrl}${path}?noexternal`;
 }
 
-// Can be used to prepare the page for snapshot, e.g. by hiding elements or clicking to bypass cookie banners.
+// Code here will run when cypress has loaded the page but before it starts taking snapshots. Useful to prepare the page, e.g. by clicking to bypass cookie banners or hiding certain elements.
 const onPageVisit: OnPageVisit = () => {
     cy.get('header').invoke('css', 'opacity', 0);
     cy.get('body').invoke('css', 'height', 'auto');
@@ -105,12 +108,14 @@ runTest({
     baseUrl,
     endpoints,
     viewports,
-
+    // Don't forget to add the new options here!
     suiteName,
     formatUrl,
     onPageVisit,
 });
 ```
+
+To create another test suite, simply create a new directory and add a `snap.cy.js` file to it. You can then run the tests for that suite by running `npx visreg-test` from the root of your project and selecting the suite from the list.
 
 You can also add a `visreg.config.js` file to the root of your project to set default values for these options.
 
@@ -148,7 +153,7 @@ There are 3 **types** of test:
 
 
 
-### Notes
+## Notes
 - Does not work on Windows.
 
 
