@@ -15,7 +15,7 @@ let approvedFiles: string[] = [];
 let rejectedFiles: string[] = [];
 let diffFiles = [];
 
-const SUITE_SNAPS_DIR = () => path.join(projectDir, clean_target_name, 'snapshots', 'snaps'); // TODO: snaps is the name of the test file, improvement could be to make it dynamic and allow for multiple test files
+const SUITE_SNAPS_DIR = () => path.join(projectDir, clean_target_name, 'snapshots', 'snaps');
 const DIFF_DIR = () => path.join(SUITE_SNAPS_DIR(), '__diff_output__');
 const RECEIVED_DIR = () => path.join(SUITE_SNAPS_DIR(), '__received_output__');
 
@@ -263,9 +263,9 @@ const openImage = (imageFile: string) => {
     }
 }
 
-const processImage = async (imageFile: string) => {
+const processImage = async (imageFile: string, index: number, total: number) => {
     const imageName = imageFile.replace('.diff.png', '');
-	printColorText('\n' + imageName, '4')
+	printColorText(`\n${imageName}\x1b[2m - ${index}/${total}\x1b[0m`, '4');
 
     openImage(imageFile);
 
@@ -330,13 +330,13 @@ const assessExistingDiffImages = async () => {
 	console.log('\n\n');
 
 	exitIfNoDIffs();
-	printColorText('🚨  Detected differences, opening preview \x1b[2m- takes a couple of seconds\x1b[0m\n\n', '31');
+	printColorText(`🚨  Detected ${fs.readdirSync(DIFF_DIR()).length} diffs, opening preview \x1b[2m- takes a couple of seconds\x1b[0m\n\n`, '31');
 
     const files = fs.readdirSync(DIFF_DIR()).filter(file => file.endsWith('.diff.png'));
 
-    for (const file of files) {
-        await processImage(file);
-    }
+	for (const [index, file] of files.entries()) {
+		await processImage(file, index, files.length);
+	}
 
     if (process.platform === 'darwin') {
         execSync(`osascript -e 'quit app "Preview"'`);

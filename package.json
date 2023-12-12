@@ -1,6 +1,6 @@
 {
 	"name": "visreg-test", 
-	"version": "1.0.17",
+	"version": "1.0.18",
 	"description": "A universal visual regression testing tool which is quick and easy to set up with a simple and convenient UI to run and assess visual regression.",
 	"main": "dist/run-test.js",
 	"types": "dist/visreg.d.ts",
@@ -11,7 +11,9 @@
 		"watch": "tsc --watch",
 		"test-dev": "ts-node ./visreg.ts",
 		"prepublish": "npm run build",
-		"pub": "tsc && npm publish"
+		"pub": "tsc && npm publish",
+		"create-symlink": "node -e \"require('fs').symlinkSync('./dist', process.argv[1] + '/node_modules/visreg-test/dist')\""
+
 	},
 	"bin": {
 		"visreg-test": "dist/visreg.js"

@@ -157,6 +157,22 @@ There are 3 **types** of test:
 - Does not work on Windows.
 
 
+## Development
+
+### Setup dev environment
+
+- Clone this repo and run `npm install` to install the dependencies, e.g. into a directory called `visreg/repo`.
+- Create a directory for testing the module elsewhere (e.g. `visreg/dev-testing-grounds`) and set up the tests according to the instructions above.
+- After installing the npm visreg-test package you should now have a `visreg/dev-testing-grounds/node_modules/visreg-test/dist` directory. Delete it.
+- From `visreg/repo` run `npm run create-symlink -- [Absolute path]` where the absolute path should be your newly created testing directory (i.e. using the examples above it should be something like `npm run create-symlink -- /Users/.../dev-testing-grounds`). Please note that the path should not end with a slash, because we append some stuff to it.
+- This will create a symlink between the `dist` directory in the repo and the `node_modules/visreg-test` directory in your testing directory.
+
+### Running dev mode
+
+- From `visreg/repo` run `npm run watch` to start watching the files and compiling them to the `dist` directory, which will be mirrored to your testing directory. Any changes you make will automatically be reflected in your testing directory visreg-test package, allowing you to test your changes to the package in real time without having to publish and reinstall it all of the time.
+- From your testing directory, run the tests. Normally you would use `npx visreg-test` to do so, but due to the symlinking npx doesn't work, so you need to explicityly run it like so, instead: `node ./node_modules/.bin/visreg-test`.
+- You should now see the changes you made to the package reflected in the tests.
+
 <!-- 
 ```javascript
 export interface MatchImageSnapshotOptions {
