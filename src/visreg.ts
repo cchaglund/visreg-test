@@ -10,6 +10,15 @@ import { TestType } from './types.d';
 const projectDir = process.cwd();
 process.env.PROJECT_DIR = projectDir;
 
+const configPath = path.join(projectDir, 'visreg.config.json');
+const visregConfig = fs.existsSync(configPath) ? JSON.parse(fs.readFileSync(configPath, 'utf-8')) : {};
+// process.env.CYPRESS_SCREENSHOT_OPTIONS = visregConfig.screenshotOptions ? JSON.stringify(visregConfig.screenshotOptions) : '';
+// process.env.CYPRESS_COMPARISON_OPTIONS = visregConfig.comparisonOptions ? JSON.stringify(visregConfig.comparisonOptions) : '';
+
+// console.log('process.env.CYPRESS_SCREENSHOT_OPTIONS', process.env.CYPRESS_SCREENSHOT_OPTIONS);
+// console.log('process.env.CYPRESS_COMPARISON_OPTIONS', process.env.CYPRESS_COMPARISON_OPTIONS);
+
+
 let clean_target_name = "";
 let approvedFiles: string[] = [];
 let rejectedFiles: string[] = [];
@@ -75,25 +84,21 @@ const getDirectories = (source: string): string[] =>
 		.map(dirent => dirent.name);
 
 
-const configPath = path.join(projectDir, 'visreg.config.json');
-let testDirectory = projectDir;
-let ignoreDirectories: string[] = [ 'node_modules' ];
-
-if (fs.existsSync(configPath)) {
-	const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
-	
-	if (config.testDirectory) {
-		testDirectory = path.isAbsolute(config.testDirectory) ? config.testDirectory : path.resolve(projectDir, config.testDirectory);
-	}
-	if (config.ignoreDirectories) {
-		ignoreDirectories.push(...config.ignoreDirectories);
-	}
-}
-
-const targets: string[] = getDirectories(testDirectory)
-	.filter(dirName => !ignoreDirectories.includes(dirName));
 
 const selectTarget = async (): Promise<string> => {
+	let testDirectory = projectDir;
+	let ignoreDirectories: string[] = [ 'node_modules' ];
+	
+	if (visregConfig.testDirectory) {
+		testDirectory = path.isAbsolute(visregConfig.testDirectory) ? visregConfig.testDirectory : path.resolve(projectDir, visregConfig.testDirectory);
+	}
+	if (visregConfig.ignoreDirectories) {
+		ignoreDirectories.push(...visregConfig.ignoreDirectories);
+	}
+
+	const targets: string[] = getDirectories(testDirectory)
+		.filter(dirName => !ignoreDirectories.includes(dirName));
+
 	if (targets.length === 0) {
 		printColorText('No test targets found - see README', '31');
 		process.exit(1);
@@ -128,7 +133,7 @@ const selectTarget = async (): Promise<string> => {
 const selectType = async (): Promise<TestType> => {
 	console.log('Select type:\n');
 	typesList.forEach((type, index) => {
-		console.log(`${index + 1} ${type.name} - ${type.description}`);
+		printColorText(`${index + 1} ${type.name}\x1b[2m - ${type.description}\x1b[0m`, '0');
 	});
 
 	const rl = readline.createInterface({
@@ -164,8 +169,8 @@ const runCypressTest = async (target: string, type: string, diffListString?: str
 			'failOnSnapshotDiff=false',
 			`target=${target}`,
 			`diffListString=${diffListString ? encodedDiff : 'false'}`,
-			`projectDir=${projectDir}`
-		];		
+			`projectDir=${projectDir}`,
+		];
 
 		let cypressCommand: string
 		if (gui) {
@@ -293,7 +298,7 @@ const processImage = async (imageFile: string, index: number, total: number) => 
 			}
 			});
 
-			console.log(`\x1b[2mENTER to approve, SPACEBAR to reject, R to reopen image \x1b[0m`);
+			printColorText('ENTER to approve, SPACEBAR to reject, R to reopen image', '2');
         });
 
         if (process.platform === 'linux') {

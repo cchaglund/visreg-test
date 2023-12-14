@@ -37,7 +37,7 @@ declare global {
 }
 
 addMatchImageSnapshotCommand({
-	failureThreshold: 1,
+	failureThreshold: 0.01,
 	failureThresholdType: 'percent',
 	capture: 'fullPage',
 	blackout: [''],
