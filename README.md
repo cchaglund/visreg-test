@@ -358,23 +358,14 @@ You can configure certain settings with a `visreg.config.json` file placed in th
 
 ```json
 {
-    /**
-	 * Relative or absolute path to directory of test suites. Default is the root of the project,
-     * where package.json is.
-	 */
     "testDirectory": "path/to/tests",
-    /**
-    * These will not be included in the selection of test suites. node_modules is always ignored
-    */
     "ignoreDirectories": [
         "path/to/ignored/directory",
         "path/to/another/ignored/directory",
     ],
-    /**
-    * Options to pass to cypress and the jest comparison engine. 
-    */
-    "screenshotOptions": {...},
-    "comparisonOptions": {...}
+
+    "screenshotOptions": {},
+    "comparisonOptions": {}
 }
 
 ```
