@@ -1,6 +1,6 @@
 {
 	"name": "visreg-test",
-	"version": "1.1.7",
+	"version": "1.1.8",
 	"description": "A universal visual regression testing tool which is quick and easy to set up with a simple and convenient UI to run and assess visual regression.",
 	"main": "dist/run-test.js",
 	"types": "dist/types.d.ts",
