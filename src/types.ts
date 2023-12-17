@@ -18,7 +18,7 @@ declare global {
 	}
 }
 
-export declare function run(props: TestProps): void;
+export declare function runVisreg(props: TestProps): void;
 
 export type CypressCy = typeof originalCy;
 
