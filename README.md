@@ -4,6 +4,19 @@ A visual regression testing solution that offers an easy setup with simple yet p
 
 Built upon [cypress](https://www.cypress.io/), [local-cypress](https://www.npmjs.com/package/local-cypress), and [cypress-image-snapshot](https://github.com/simonsmith/cypress-image-snapshot).
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [Setup](#setup)
+  - [Setup+ (optional)](#setup-optional)
+- [Running the tests](#running-the-tests)
+- [Development](#development)
+  - [Setup dev environment](#setup-dev-environment)
+  - [Running dev mode](#running-dev-mode)
+- [Configuration options](#configuration-options)
+- [Notes](#notes)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 <br>
 
@@ -12,8 +25,8 @@ Built upon [cypress](https://www.cypress.io/), [local-cypress](https://www.npmjs
 Let's install the package and create our first test suite - a directory containing a test configuration file and any generated snapshots.
 
 - Run `npm install visreg-test` in your project to install the package.
-- Create a new directory - this will be your first test suite, where you will configure the tests and store the snapshots.
-- In it, create a test configuration javascript file with the name `snaps.cy.js` and copy the below code into it.
+- Create a new **directory** - this will be your first test suite, where you will configure the tests and store the snapshots.
+- In it, create a **javascript file** with the name `snaps.cy.js` and copy the below code into it - this will be your test configuration.
 
 > Note: you can also use Typescript, so where you see `snaps.cy.js` you can  use `snaps.cy.ts` instead. You don't need to compile the file into javascript, the module does that for you automatically at runtime.
 
@@ -287,7 +300,7 @@ run(options);
 To create another test suite, simply create a new directory and add a `snaps.cy` file to it (`snaps.cy.js or snaps.cy.ts`). When you run the tests you will be prompted to select which test suite to run.
 
 
-## Running the tests
+# Running the tests
 
 - Run `npx visreg-test` from your project
 - Select a suite 
@@ -396,7 +409,7 @@ type ConfigurationOptions = {
  * @see https://docs.cypress.io/api/cypress-api/screenshot-api#Arguments
  * @see https://docs.cypress.io/api/commands/screenshot#Arguments
  */
-export type CypressScreenshotOptions = {
+type CypressScreenshotOptions = {
 	/**
 	 * Array of string selectors used to match elements that should be blacked out when the screenshot is taken.
 	 * Does not apply to element screenshot captures.
@@ -477,7 +490,7 @@ export type CypressScreenshotOptions = {
  * Options to pass to the Jest comparison engine when comparing screenshots.
  * @see https://github.com/americanexpress/jest-image-snapshot#%EF%B8%8F-api
  */
-export type JestMatchImageSnapshotOptions = {
+type JestMatchImageSnapshotOptions = {
 	/**
 	 * Custom config passed to 'pixelmatch' or 'ssim'
 	 */
