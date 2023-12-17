@@ -6,7 +6,7 @@ import { execSync, spawn } from 'child_process';
 import * as readline from 'readline';
 import { delimiter } from './shared';
 import { TestType } from './types';
-import * as ts from 'typescript';
+// import * as ts from 'typescript';
 
 
 const pathExists = (dirPath: string) => {
@@ -187,22 +187,22 @@ let specPath = path.join(projectDir, selectedTargetName, 'snaps.cy.js');
 	autoCreatedSpecFile = true;
 	const tsFilePath = path.join(projectDir, selectedTargetName, 'snaps.cy.ts');
 
-	if (fs.existsSync(tsFilePath)) {
-		const source = fs.readFileSync(tsFilePath, 'utf8');
+	// if (fs.existsSync(tsFilePath)) {
+	// 	const source = fs.readFileSync(tsFilePath, 'utf8');
 
-		const result = ts.transpileModule(source, {
-			compilerOptions: { module: ts.ModuleKind.CommonJS }
-		});
+	// 	const result = ts.transpileModule(source, {
+	// 		compilerOptions: { module: ts.ModuleKind.CommonJS }
+	// 	});
 
-		const specPath = path.join(projectDir, selectedTargetName, 'snaps.cy.js');
+	// 	const specPath = path.join(projectDir, selectedTargetName, 'snaps.cy.js');
 
-		if (pathExists(specPath)) {
-			fs.unlinkSync(specPath);
-		}
+	// 	if (pathExists(specPath)) {
+	// 		fs.unlinkSync(specPath);
+	// 	}
 
-		fs.writeFileSync(specPath, result.outputText);
-		return specPath;
-	}
+	// 	fs.writeFileSync(specPath, result.outputText);
+	// 	return specPath;
+	// }
 	
 	printColorText('No test targets found - see README', '31');
 	process.exit(1);
