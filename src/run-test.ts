@@ -4,7 +4,4 @@ import { RunTest, TestProps } from './types';
 export const runVisreg: RunTest = (props: TestProps) => {
     runTest(props);
 };
-// export const runVisreg = (props: any) => {
-//     runTest(props);
-// };
 
