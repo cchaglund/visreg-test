@@ -1,3 +1,5 @@
+import { VisregViewport } from 'src/types';
+
 /**
  * @description
  * Viewports that will be tested
@@ -5,7 +7,7 @@
  * @example
  *   "iphone-6", "ipad-2", [1920, 1080]
  */
-const viewports: Cypress.ViewportConfig[] = [
+const viewports: VisregViewport[] = [
     [1920, 1080]
 ]
 

@@ -5,28 +5,53 @@ import * as path from 'path';
 import { execSync, spawn } from 'child_process';
 import * as readline from 'readline';
 import { delimiter } from './shared';
-import { TestType } from './types.d';
+import { TestType } from './types';
+import * as ts from 'typescript';
+
+
+const pathExists = (dirPath: string) => {
+	return fs.existsSync(dirPath);
+}
+
+const removeDirIfEmpty = (dirPath: string) => {
+    if (pathExists(dirPath) && !hasFiles(dirPath)) {
+        fs.rmdirSync(dirPath);
+    }
+}
+
+const hasFiles = (dirPath: string) => {
+	return fs.readdirSync(dirPath).length > 0;
+}
+
+// Function to print color text
+const printColorText = (text: string, colorCode: string): void => {
+	console.log(`\x1b[${ colorCode }m${ text }\x1b[0m`);
+};
 
 const projectDir = process.cwd();
 process.env.PROJECT_DIR = projectDir;
 
 const configPath = path.join(projectDir, 'visreg.config.json');
-const visregConfig = fs.existsSync(configPath) ? JSON.parse(fs.readFileSync(configPath, 'utf-8')) : {};
-// process.env.CYPRESS_SCREENSHOT_OPTIONS = visregConfig.screenshotOptions ? JSON.stringify(visregConfig.screenshotOptions) : '';
-// process.env.CYPRESS_COMPARISON_OPTIONS = visregConfig.comparisonOptions ? JSON.stringify(visregConfig.comparisonOptions) : '';
+const visregConfig = pathExists(configPath) ? JSON.parse(fs.readFileSync(configPath, 'utf-8')) : {};
+process.env.CYPRESS_SCREENSHOT_OPTIONS = visregConfig.screenshotOptions ? JSON.stringify(visregConfig.screenshotOptions) : '';
+process.env.CYPRESS_COMPARISON_OPTIONS = visregConfig.comparisonOptions ? JSON.stringify(visregConfig.comparisonOptions) : '';
 
-// console.log('process.env.CYPRESS_SCREENSHOT_OPTIONS', process.env.CYPRESS_SCREENSHOT_OPTIONS);
-// console.log('process.env.CYPRESS_COMPARISON_OPTIONS', process.env.CYPRESS_COMPARISON_OPTIONS);
+if (pathExists(configPath)) {
+	printColorText(`\nUsing config file: ${configPath}`, '2');
+}
 
-
-let clean_target_name = "";
+let selectedTargetName = '';
+let testTypeSlug = '';
 let approvedFiles: string[] = [];
 let rejectedFiles: string[] = [];
 let diffFiles = [];
+let autoCreatedSpecFile = false;
 
-const SUITE_SNAPS_DIR = () => path.join(projectDir, clean_target_name, 'snapshots', 'snaps');
+const SUITE_SNAPS_DIR = () => path.join(projectDir, selectedTargetName, 'snapshots', 'snaps');
 const DIFF_DIR = () => path.join(SUITE_SNAPS_DIR(), '__diff_output__');
+const BACKUP_DIFF_DIR = () => path.join(SUITE_SNAPS_DIR(), 'backup-diffs');
 const RECEIVED_DIR = () => path.join(SUITE_SNAPS_DIR(), '__received_output__');
+const BACKUP_RECEIVED_DIR = () => path.join(SUITE_SNAPS_DIR(), 'backup-received');
 
 const typesList: TestType[] = [
 	{
@@ -46,30 +71,23 @@ const typesList: TestType[] = [
 	}
 ];
 
-
-// Function to print color text
-const printColorText = (text: string, colorCode: string): void => {
-	console.log(`\x1b[${ colorCode }m${ text }\x1b[0m`);
-};
-
 // Print header
 printColorText('\n _  _  __  ____  ____  ____  ___ \n/ )( \\(  )/ ___)(  _ \\(  __)/ __)\n\\ \\/ / )( \\___ \\ )   / ) _)( (_ \\ \n \\__/ (__)(____/(__\\_)(____)\\___/\n', '36;1');
 
 
 // Main function
 const main = async (): Promise<void> => {
-	const selectedTargetName = await selectTarget();
-	clean_target_name = selectedTargetName;
+	selectedTargetName = await selectTarget();
 
-	const { slug: testTypeSlug } = await selectType();
-
+	const type = await selectType();
+	testTypeSlug = type.slug;
 	
 	if (testTypeSlug === 'test-all') {
-		fullRegressionTest(selectedTargetName, testTypeSlug);
+		fullRegressionTest();
 	}
 
 	if (testTypeSlug === 'retest-diffs-only') {
-		diffsOnly(selectedTargetName, testTypeSlug);
+		diffsOnly();
 	}
 
 	if (testTypeSlug === 'assess-existing-diffs') {
@@ -97,7 +115,14 @@ const selectTarget = async (): Promise<string> => {
 	}
 
 	const targets: string[] = getDirectories(testDirectory)
-		.filter(dirName => !ignoreDirectories.includes(dirName));
+		.filter(dirName => !ignoreDirectories.includes(dirName))
+		.filter(dirName => {
+			const fileName = 'snaps.cy';
+			return (
+				fs.existsSync(path.join(testDirectory, dirName, fileName + '.js')) ||
+				fs.existsSync(path.join(testDirectory, dirName, fileName + '.ts'))
+			);
+		});
 
 	if (targets.length === 0) {
 		printColorText('No test targets found - see README', '31');
@@ -152,11 +177,41 @@ const selectType = async (): Promise<TestType> => {
 	return selectedTest;
 };
 
-const runCypressTest = async (target: string, type: string, diffListString?: string): Promise<void> => {
+const preparedSpecFile = () => {
+let specPath = path.join(projectDir, selectedTargetName, 'snaps.cy.js');
+	
+	if (fs.existsSync(specPath)) {
+		return specPath;
+	}
+
+	autoCreatedSpecFile = true;
+	const tsFilePath = path.join(projectDir, selectedTargetName, 'snaps.cy.ts');
+
+	if (fs.existsSync(tsFilePath)) {
+		const source = fs.readFileSync(tsFilePath, 'utf8');
+
+		const result = ts.transpileModule(source, {
+			compilerOptions: { module: ts.ModuleKind.CommonJS }
+		});
+
+		const specPath = path.join(projectDir, selectedTargetName, 'snaps.cy.js');
+
+		if (pathExists(specPath)) {
+			fs.unlinkSync(specPath);
+		}
+
+		fs.writeFileSync(specPath, result.outputText);
+		return specPath;
+	}
+	
+	printColorText('No test targets found - see README', '31');
+	process.exit(1);
+};
+
+const runCypressTest = async (diffListString?: string): Promise<void> => {
 	printColorText(`\nStarting Cypress\n`, '2');
     return new Promise((resolve, reject) => {
-		const specPath = path.join(projectDir, target, 'snaps.cy.js');
-		
+		const specPath = preparedSpecFile();
 		const gui = process.argv.includes('--gui');
 
 		let encodedDiff = '';
@@ -165,9 +220,9 @@ const runCypressTest = async (target: string, type: string, diffListString?: str
 		}
 		
 		const envs = [
-			`testType=${type}`,
+			`testType=${testTypeSlug}`,
 			'failOnSnapshotDiff=false',
-			`target=${target}`,
+			`target=${selectedTargetName}`,
 			`diffListString=${diffListString ? encodedDiff : 'false'}`,
 			`projectDir=${projectDir}`,
 		];
@@ -197,37 +252,74 @@ const runCypressTest = async (target: string, type: string, diffListString?: str
         });
 
         child.on('close', (code) => {
+			let msg = '';
+
             if (code !== 0) {
-                reject(new Error(`child process exited with code ${code}`));
-            } else {
-                resolve();
+				restoreFromBackup();
+				let msg = `Child process exited with code ${code}.`;
+				msg += diffListString ? `\nDiffListString: ${diffListString}.` : '';
+				msg += gui ? `\nIf you are running the tests in GUI mode, you must manually assess the diffs.` : '';
             }
+
+			cleanUp();
+			code === 0 ? resolve() : reject(new Error(msg));
         });
 	});
 };
 
+
+const cleanUp = () => {
+	if (autoCreatedSpecFile) {
+		fs.unlinkSync(path.join(projectDir, selectedTargetName, 'snaps.cy.js'));
+	}
+
+	pathExists(BACKUP_DIFF_DIR()) && fs.rmdirSync(BACKUP_DIFF_DIR(), { recursive: true });
+	pathExists(BACKUP_RECEIVED_DIR()) && fs.rmdirSync(BACKUP_RECEIVED_DIR(), { recursive: true });
+
+	removeDirIfEmpty(DIFF_DIR());
+	removeDirIfEmpty(RECEIVED_DIR());
+}
+
+const restoreFromBackup = () => {
+	const backupDiffDir = BACKUP_DIFF_DIR();
+	const backupReceivedDir = BACKUP_RECEIVED_DIR();
+
+	if (pathExists(backupDiffDir)) {
+		const files = fs.readdirSync(backupDiffDir);
+		files.forEach(file => {
+			fs.renameSync(path.join(backupDiffDir, file), path.join(DIFF_DIR(), file));
+		});
+	}
+
+	if (pathExists(backupReceivedDir)) {
+		const files = fs.readdirSync(backupReceivedDir);
+		files.forEach(file => {
+			fs.renameSync(path.join(backupReceivedDir, file), path.join(RECEIVED_DIR(), file));
+		});
+	}
+}
+
 const exitIfNoDIffs = () => {
-	if (!fs.existsSync(DIFF_DIR()) || fs.readdirSync(DIFF_DIR()).length === 0) {
+	if (!pathExists(DIFF_DIR()) || !hasFiles(DIFF_DIR())) {
 		printColorText('🎉  Visual regression passed! (No diffs found)', '32');
 		process.exit();
 	}
 }
 
-const fullRegressionTest = async (selectedTargetName: string, testTypeSlug: string) => {
+const fullRegressionTest = async () => {
 	remove_diffs();
 	remove_received();
-	await runCypressTest(selectedTargetName, testTypeSlug);
+	await runCypressTest();
 	assessExistingDiffImages();
-
 }
 
-const diffsOnly = async (selectedTargetName: string, testTypeSlug: string) => {
+const diffsOnly = async () => {
 	exitIfNoDIffs();
 
     const diffListString = createTemporaryDiffList();
     remove_diffs();
     remove_received();
-	await runCypressTest(selectedTargetName, testTypeSlug, diffListString);
+	await runCypressTest(diffListString);
     assessExistingDiffImages();
 }
 
@@ -238,20 +330,38 @@ const assessExistingDiffs = () => {
 
 const remove_diffs = () => {
 	const dir = DIFF_DIR();
-    if (fs.existsSync(dir) && fs.readdirSync(dir)?.length) {
-		fs.rm(dir, { recursive: true }, (err) => { console.log(err) });
+	const backupDir = BACKUP_DIFF_DIR();
+
+    if (pathExists(dir) && hasFiles(dir)) {
+		if (!pathExists(backupDir)) {
+			fs.mkdirSync(backupDir);
+		}
+
+		const files = fs.readdirSync(dir);
+		files.forEach(file => {
+			fs.renameSync(path.join(dir, file), path.join(backupDir, file));
+		});
     }
 }
 
 const remove_received = () => {
 	const dir = RECEIVED_DIR();
-    if (fs.existsSync(dir) && fs.readdirSync(dir).length) {
-		fs.rm(dir, { recursive: true }, (err) => { console.log(err) });
+	const backupDir = BACKUP_RECEIVED_DIR();
+
+    if (pathExists(dir) && hasFiles(dir)) {
+		if (!pathExists(backupDir)) {
+			fs.mkdirSync(backupDir);
+		}
+
+		const files = fs.readdirSync(dir);
+		files.forEach(file => {
+			fs.renameSync(path.join(dir, file), path.join(backupDir, file));
+		});
     }
 }
 
 const createTemporaryDiffList = () => {
-	if (!fs.existsSync(DIFF_DIR())) {
+	if (!pathExists(DIFF_DIR())) {
 		return '';
 	}
 

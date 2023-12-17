@@ -1,38 +1,104 @@
+import { cy as originalCy } from 'local-cypress';
+
+declare global {
+	namespace Cypress {
+		interface Chainable {
+			/**
+			 * Custom command to set the viewport to a specific device preset or [width, height].
+			 * @example cy.setResolution('samsung-s10')
+			 */
+			setResolution(viewport: VisregViewport): Chainable<JQuery<HTMLElement>>;
+
+			/**
+			 * Custom command to capture the full page
+			 * @example cy.prepareForCapture('/home', 'samsung-s10')
+			 */
+			prepareForCapture(args: PrepareForCaptureSettings): Chainable<JQuery<HTMLElement>>;
+		}
+	}
+}
+
+export declare function run(props: TestProps): void;
+
+export type CypressCy = typeof originalCy;
+
+export type RunTest = (props: TestProps) => void;
+
+export type SnapConfig = {
+	path: string;
+	size: Cypress.ViewportPreset | number[];
+	title: string;
+};
+
+export type Endpoint = {
+	title: string;
+	path: string;
+	blackout?: string[];
+	elementToMatch?: string;
+	padding?: Cypress.Padding;
+	capture?: 'viewport' | 'fullPage';
+	onEndpointVisit?: () => void;
+};
+
+export type VisregViewport = Cypress.ViewportPreset | number[];
+
+export type PrepareForCaptureSettings = {
+	fullUrl: string;
+	viewport: VisregViewport;
+	onPageVisitFunctions?: ((() => void) | undefined)[];
+	skipScrolling?: boolean;
+};
+
+
+export type TestProps = {
+	suiteName: string;
+	baseUrl: string;
+	endpoints: Endpoint[];
+	viewports?: VisregViewport[];
+	formatUrl?: (path: string) => string;
+	onPageVisit?: () => void;
+};
+
 export type TestType = {
 	name: string;
 	slug: string;
 	description: string;
 };
 
+
 export type ConfigurationOptions = {
+	/**
+	 * Relative or absolute path to directory of test suites. Default is the root of the project,
+     * where package.json is.
+	 */
+	testDirectory: string;
+	/**
+	* These will not be included in the selection of test suites. node_modules is always ignored
+	*/
+	ignoreDirectories: string[];
 	screenshotOptions: CypressScreenshotOptions; // https://docs.cypress.io/api/cypress-api/screenshot-api#Arguments
 	comparisonOptions: JestMatchImageSnapshotOptions; // https://github.com/americanexpress/jest-image-snapshot#%EF%B8%8F-api
 };
 
 
-interface CypressScreenshotOptions {
+export type CypressScreenshotOptions = {
 	/**
 	 * Array of string selectors used to match elements that should be blacked out when the screenshot is taken.
 	 * Does not apply to element screenshot captures.
+	 * Is replaced by the individual blackout option attribute of an endpoint object if it exists. TODO: make them work together instead of replacing.
 	 * @type {string[]}
 	 * @default []
 	 */
 	blackout?: string[];
 
 	/**
-	 * Which parts of the Cypress Test Runner to capture.
-	 * This value is ignored for element screenshot captures.
-	 * Valid values are viewport, fullPage, or runner.
-	 * When viewport, the application under test is captured in the current viewport.
+     * Valid values are viewport or fullPage.
 	 * When fullPage, the application under test is captured in its entirety from top to bottom.
-	 * When runner, the entire browser viewport, including the Cypress Command Log, is captured.
-	 * For screenshots automatically taken on test failure, capture is always coerced to runner.
-	 * When Test Replay is enabled and the Runner UI is hidden, a runner screenshot will not include the Runner UI
-	 * and will instead capture the application under test only in the current viewport.
+	 * This value is ignored for element screenshot captures.
 	 * @type {string}
 	 * @default 'fullPage'
 	 */
-	capture?: 'viewport' | 'fullPage' | 'runner';
+	capture?: 'viewport' | 'fullPage';
 
 	/**
 	 * When true, prevents JavaScript timers (setTimeout, setInterval, etc) and CSS animations from running
@@ -45,13 +111,12 @@ interface CypressScreenshotOptions {
 	/**
 	 * Position and dimensions (in pixels) used to crop the final screenshot image. 
 	 * @type {Object}
-	 * @default null
 	 * @property {number} x - The x-coordinate of the top-left corner of the cropped image.
 	 * @property {number} y - The y-coordinate of the top-left corner of the cropped image.
 	 * @property {number} width - The width of the cropped image.
 	 * @property {number} height - The height of the cropped image.
 	 */
-	clip: {
+	clip?: {
 		x: number;
 		y: number;
 		width: number;
@@ -63,21 +128,13 @@ interface CypressScreenshotOptions {
 	 * It can either be a number, or an array of up to four numbers using CSS shorthand notation. 
 	 * This property is only applied for element screenshots and is ignored for all other types.
 	 * @type {number | [number] | [number, number] | [number, number, number] | [number, number, number, number]}
-	 * @default null
 	 */
-	padding:
-		| number
-		| [ number ]
-		| [ number, number ]
-		| [ number, number, number ]
-		| [ number, number, number, number ];
-	/**
-	 * Whether to scale the app to fit into the browser viewport.
-	 * This is always coerced to true for runner captures.
-	 * @type {boolean}
-	 * @default false
-	 */
-	scale?: boolean;
+	padding?:
+	| number
+	| [ number ]
+	| [ number, number ]
+	| [ number, number, number ]
+	| [ number, number, number, number ];
 
 	/**
 	 * Time to wait for .screenshot() to resolve before timing out
@@ -90,75 +147,18 @@ interface CypressScreenshotOptions {
 	 * @property {number} responseTimeout - Time, in milliseconds, to wait until a response in a cy.request(), cy.wait(), cy.fixture(), cy.getCookie(), cy.getCookies(), cy.setCookie(), cy.clearCookie(), cy.clearCookies(), and cy.screenshot() commands.
 	 * @see https://docs.cypress.io/guides/references/configuration.html#Timeouts
 	 */
-	timout?: {
+	timeouts?: {
 		defaultCommandTimeout?: 4000,
 		execTimeout?: 60000,
 		taskTimeout?: 60000,
 		pageLoadTimeout?: 60000,
 		requestTimeout?: 5000,
-		responseTimeout?: 30000
+		responseTimeout?: 30000;
 	};
-
-	/**
-	 * When true, automatically takes a screenshot when there is a failure during cypress run.
-	 * @type {boolean}
-	 * @default true
-	 */
-	screenshotOnRunFailure?: boolean;
-
-	/**
-	 * Whether to overwrite duplicate screenshot files with the same file name when saving.
-	 * @type {boolean}
-	 * @default false
-	 */
-	overwrite?: boolean;
-
-	/**
-	 * A callback before a (non-failure) screenshot is taken.
-	 * For an element capture, the argument is the element being captured.
-	 * For other screenshots, the argument is the $el.
-	 * @type {Function}
-	 * @default null
-	 * @param {Object} $el - The element being captured.
-	 */
-	onBeforeScreenshot?: Function | null;
-
-	/**
-	 * A callback after a (non-failure) screenshot is taken.
-	 * For an element capture, the first argument is the element being captured.
-	 * For other screenshots, the first argument is the $el.
-	 * The second argument is properties concerning the screenshot, including the path it was saved to
-	 * and the dimensions of the saved screenshot.
-	 * @type {Function}
-	 * @default null
-	 * @param {Object} $el - The element being captured.
-	 * @param {Object} props - Properties concerning the screenshot, including the path it was saved to and the dimensions of the saved screenshot.
-	 * @param {string} props.path - The path the screenshot was saved to.
-	 * @param {number} props.size - The size of the screenshot in bytes.
-	 * @param {Object} props.dimensions - The dimensions of the screenshot.
-	 * @param {number} props.dimensions.width - The width of the screenshot.
-	 * @param {number} props.dimensions.height - The height of the screenshot.
-	 * @param {boolean} props.multipart - Whether the screenshot was saved as a multipart image.
-	 * @param {number} props.pixelRatio - The pixel ratio of the screenshot.
-	 * @param {string} props.takenAt - The time the screenshot was taken.
-	 * @param {string} props.name - The name of the screenshot.
-	 * @param {string[]} props.blackout - The selectors used to blackout parts of the screenshot.
-	 * @param {number} props.duration - The duration of the screenshot command.
-	 * @param {number} props.testAttemptIndex - The index of the test attempt.
-	 * @see https://docs.cypress.io/api/cypress-api/screenshot-api#Arguments
-	 */
-	onAfterScreenshot?: Function | null;
-}
+};
 
 
-interface JestMatchImageSnapshotOptions {
-	/**
-	 * If set to true, the build will not fail when the screenshots to compare have different sizes.
-	 * @type {boolean | undefined}
-	 * @default false
-	 */
-	allowSizeMismatch?: boolean | undefined;
-
+export type JestMatchImageSnapshotOptions = {
 	/**
 	 * Custom config passed to 'pixelmatch' or 'ssim'
 	 */
@@ -193,7 +193,7 @@ interface JestMatchImageSnapshotOptions {
 		 * @default [255, 0, 0]
 		 */
 		diffColor?: [ number, number, number ] | undefined;
-		
+
 		/**
 		 * An alternative color to use for dark on light differences to differentiate between "added" and "removed" parts.
 		 * If not provided, all differing pixels use the color specified by `diffColor`.
@@ -225,34 +225,11 @@ interface JestMatchImageSnapshotOptions {
 	 */
 	comparisonMethod?: "pixelmatch" | "ssim" | undefined;
 
-
-	/**
-	 * A custom name to give this snapshot. If not provided, one is computed automatically. When a function is provided
-	 * it is called with an object containing testPath, currentTestName, counter and defaultIdentifier as its first
-	 * argument. The function must return an identifier to use for the snapshot.
-	 */
-	customSnapshotIdentifier?:
-	| ((parameters: {
-		testPath: string;
-		currentTestName: string;
-		counter: number;
-		defaultIdentifier: string;
-	}) => string)
-	| string
-	| undefined;
-
 	/**
 	 * Changes diff image layout direction.
 	 * @default 'horizontal'
 	 */
 	diffDirection?: "horizontal" | "vertical" | undefined;
-
-	/**
-	 * Either only include the difference between the baseline and the received image in the diff image, or include
-	 * the 3 images (following the direction set by `diffDirection`).
-	 * @default false
-	 */
-	onlyDiff?: boolean | undefined;
 
 	/**
 	 * This needs to be set to a existing file, like `require.resolve('./runtimeHooksPath.cjs')`.
@@ -310,3 +287,4 @@ interface JestMatchImageSnapshotOptions {
 	 */
 	blur?: number | undefined;
 }
+

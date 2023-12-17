@@ -15,5 +15,6 @@
 	],
 	"exclude": [
 		"src/e2e/_example_/*.ts"
-	]
+	],
+	"moduleResolution": "node",
 }

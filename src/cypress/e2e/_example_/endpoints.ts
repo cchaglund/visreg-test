@@ -1,3 +1,5 @@
+import { Endpoint } from 'src/types';
+
 /**
  * @description
  * This file is used to define the endpoints that will be tested.
@@ -10,11 +12,11 @@
  *       blackout: ['.selector-to-blackout', '#another-selector-to-blackout']
  *   ]
  */
-const endpoints: Cypress.Endpoints[] = [
+const endpoints: Endpoint[] = [
     {
         title: 'Cypress',
         path: '/guides/overview/why-cypress',
-        blackout: ['#sidebar']
+        blackout: ['#sidebar'],
     },
     {
         title: 'Core Concepts',

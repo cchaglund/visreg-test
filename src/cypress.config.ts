@@ -1,6 +1,14 @@
 import {defineConfig} from 'cypress'
 import {addMatchImageSnapshotPlugin} from 'cypress-image-snapshot-fork-2/plugin';
 import * as fs from 'fs';
+import { CypressScreenshotOptions } from './types';
+
+
+const screenshotOptions: CypressScreenshotOptions = process.env.CYPRESS_SCREENSHOT_OPTIONS
+	? JSON.parse(process.env.CYPRESS_SCREENSHOT_OPTIONS)
+	: {};
+
+const timeouts = screenshotOptions?.timeouts || {};
 
 
 export default defineConfig({
@@ -10,11 +18,11 @@ export default defineConfig({
 		 * in the non-default cypress/e2e folder. But the snapshot plugin will not actually use it (it will create 
 		 * a folder structure dynamically instead), but with it it knows where to place the images.
 		*/
-		specPattern: process.env.PROJECT_DIR + '/**/*.cy.js', // when local
+		specPattern: process.env.PROJECT_DIR + '/**/*.cy.js',
 		supportFile: false,
-		// supportFile: 'dist/cypress/support/e2e.js', // when local
 		responseTimeout: 60000,
 		screenshotOnRunFailure: false,
+		...timeouts,
 
 		setupNodeEvents(on, config) {
 			on('before:browser:launch', (browser, launchOptions) => {

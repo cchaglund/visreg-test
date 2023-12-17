@@ -1,6 +1,7 @@
 import { runTest } from './cypress/e2e/visual-regression-tests.cy';
+import { RunTest, TestProps } from './types';
 
-module.exports = {
-    runTest: runTest
+export const run: RunTest = (props: TestProps) => {
+    runTest(props);
 };
 

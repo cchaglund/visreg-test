@@ -1,0 +1,3 @@
+- added support for the Cypress and imageSnapshotOptions
+- better error handling
+- support for ts files
