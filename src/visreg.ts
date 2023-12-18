@@ -115,7 +115,7 @@ const selectTarget = async (): Promise<string> => {
 	const targets: string[] = getDirectories(testDirectory)
 		.filter(dirName => !ignoreDirectories.includes(dirName))
 		.filter(dirName => {
-			const fileName = 'snaps.cy';
+			const fileName = 'snaps';
 			return (
 				fs.existsSync(path.join(testDirectory, dirName, fileName + '.js')) ||
 				fs.existsSync(path.join(testDirectory, dirName, fileName + '.ts'))
@@ -176,14 +176,14 @@ const selectType = async (): Promise<TestType> => {
 };
 
 const preparedSpecFile = () => {
-let specPath = path.join(projectDir, selectedTargetName, 'snaps.cy.js');
+let specPath = path.join(projectDir, selectedTargetName, 'snaps.js');
 	
 	if (fs.existsSync(specPath)) {
 		return specPath;
 	}
 
 	autoCreatedSpecFile = true;
-	const tsFilePath = path.join(projectDir, selectedTargetName, 'snaps.cy.ts');
+	const tsFilePath = path.join(projectDir, selectedTargetName, 'snaps.ts');
 
 	if (fs.existsSync(tsFilePath)) {
 		const source = fs.readFileSync(tsFilePath, 'utf8');
@@ -192,7 +192,7 @@ let specPath = path.join(projectDir, selectedTargetName, 'snaps.cy.js');
 			compilerOptions: { module: ModuleKind.CommonJS }
 		});
 
-		const specPath = path.join(projectDir, selectedTargetName, 'snaps.cy.js');
+		const specPath = path.join(projectDir, selectedTargetName, 'snaps.js');
 
 		if (pathExists(specPath)) {
 			fs.unlinkSync(specPath);
@@ -268,7 +268,7 @@ const runCypressTest = async (diffListString?: string): Promise<void> => {
 
 const cleanUp = () => {
 	if (autoCreatedSpecFile) {
-		fs.unlinkSync(path.join(projectDir, selectedTargetName, 'snaps.cy.js'));
+		fs.unlinkSync(path.join(projectDir, selectedTargetName, 'snaps.js'));
 	}
 
 	pathExists(BACKUP_DIFF_DIR()) && fs.rmdirSync(BACKUP_DIFF_DIR(), { recursive: true });

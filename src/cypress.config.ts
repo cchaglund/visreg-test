@@ -18,7 +18,7 @@ export default defineConfig({
 		 * in the non-default cypress/e2e folder. But the snapshot plugin will not actually use it (it will create 
 		 * a folder structure dynamically instead), but with it it knows where to place the images.
 		*/
-		specPattern: process.env.PROJECT_DIR + '/**/*.cy.js',
+		specPattern: process.env.PROJECT_DIR + '/**/*.js',
 		supportFile: false,
 		responseTimeout: 60000,
 		screenshotOnRunFailure: false,

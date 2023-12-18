@@ -1,22 +1,37 @@
-# About
+# Visreg-test
 
 A visual regression testing solution that offers an easy setup with simple yet powerful customisation options, wrapped up in a convenient CLI runner to make assessing and accepting/rejecting diffs a breeze.
 
-Built upon [cypress](https://www.cypress.io/), [local-cypress](https://www.npmjs.com/package/local-cypress), and [cypress-image-snapshot](https://github.com/simonsmith/cypress-image-snapshot).
+# What it does
+- Run `npx visreg-test` to start the **terminal-based** test runner.
+- **UI** to select which test *suite* and *type* of test to run.
+- Take **snapshots** and *compare* them to existing baseline snapshots.
+- **Assess** any diffs, which will be *automatically* opened in an image previewer - accept/reject them from the CLI.
 
+
+## Quick links
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
 - [Setup](#setup)
-  - [Setup+ (optional)](#setup-optional)
+    - [Structure](#structure)
+    - [Test file (minimal example)](#test-file-minimal-example)
+  - [Test file (full example)](#test-file-full-example)
 - [Running the tests](#running-the-tests)
-- [Development](#development)
+- [Contribution](#contribution)
   - [Setup dev environment](#setup-dev-environment)
   - [Running dev mode](#running-dev-mode)
-- [Configuration options](#configuration-options)
+- [Configuration](#configuration)
+    - [Test options](#test-options)
+    - [Endpoint options](#endpoint-options)
+    - [Module configuration (*optional*)](#module-configuration-optional)
+    - [Screenshot options (*optional*)](#screenshot-options-optional)
+    - [Jest snapshot comparison options (*optional*)](#jest-snapshot-comparison-options-optional)
 - [Notes](#notes)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+
 
 <br>
 
@@ -24,24 +39,56 @@ Built upon [cypress](https://www.cypress.io/), [local-cypress](https://www.npmjs
 
 Let's install the package and create our first test suite - a directory containing a test configuration file and any generated snapshots.
 
-- Run `npm install visreg-test` in your project to install the package.
-- Create a new **directory** - this will be your first test suite, where you will configure the tests and store the snapshots.
-- In it, create a **javascript file** with the name `snaps.cy.js` and copy the below code into it - this will be your test configuration.
+Go to your project directory:
+    
+```
+cd my-project
+```
 
-> Note: you can also use Typescript, so where you see `snaps.cy.js` you can  use `snaps.cy.ts` instead. You don't need to compile the file into javascript, the module does that for you automatically at runtime.
+Install the package:
+```
+npm install visreg-test
+``` 
+
+Create a new directory for your test suites:
+```
+mkdir my-test-suite
+```
+
+Create a file for your test configuration:
+```
+touch my-test-suite/snaps.js
+```
+
+- `my-test-suite` will hold the test configuration (`snaps.js`) and store the snapshots.
+- You can also use **Typescript**, so where you see `snaps.js` you can  use `snaps.ts` instead. You don't need to compile the file into javascript, the module does that automatically at runtime.
+
+### Structure
+So now your directory should look something like the following:
+    
+```
+
+my-project
+├── node_modules
+├── package.json
+├── package-lock.json
+└── test-suite
+   └── snaps.js
+
+```
+
+### Test file (minimal example)
+
+The test configuration file is where you define how your tests should be run. Here's a **minimal example** of all you need to get started:
+
 
 <details open>
 <summary>JavaScript</summary>
 
 ```javascript
-// JavaScript
 import { run } from 'visreg-test';
 
 const baseUrl = 'https://developer.mozilla.org';
-
-const viewports = [
-    'iphone-6',
-];
 
 const endpoints = [
     {
@@ -57,7 +104,6 @@ const endpoints = [
 run({
     baseUrl,
     endpoints,
-    viewports,
 });
 ```
 </details>
@@ -66,15 +112,9 @@ run({
 <summary>Typescript</summary>
 
 ```typescript
-// Typescript
 import { run, VisregViewport, Endpoint, TestProps } from 'visreg-test';
 
 const baseUrl: string = 'https://developer.mozilla.org';
-
-const viewports: VisregViewport[] = [
-    'iphone-6',
-];
-
 const endpoints: Endpoint[] = [
     {
         title: 'Start',
@@ -99,42 +139,48 @@ run(options);
 </details>
 <br>
 
+<!-- For more information on the options available, see [Configuration options](#configuration-options). -->
+
+**That's it!**
+
+You can now [run your first test](#running-the-tests).
 
 
-So now your directory should look something like the following:
-    
-```
+## Test file (full example)
 
-my-project
-├── node_modules
-├── package.json
-├── package-lock.json
-└── test-suite
-   └── snaps.cy.js
+Realistically, you will probably want to customise the tests a bit more.
 
-```
+For example, if you run the minimal example above, the tests will run with the following defaults:
 
+- Viewports to test is set to `iphone-6, ipad-2, [1920, 1080]`.
+- The endpoint is captured in its entirety from top to bottom.
 
+But you can hook into some functions and/or add some configuration options, enabling you to do things like:
+- specify your own viewports
+- capture the viewport instead of the full page
+- format the url before taking a snapshot (e.g. to add query params)
+- hide certain elements before taking snapshots (e.g. highly dynamic parts of the page which give false positives)
+- take snapshots of specific elements (allows for reliable component testing)
+- manipulate the page before taking snapshots (e.g. clicking away cookie consent banners or expanding sections, navigation, etc.)
+- and [more](#configuration)...
 
-In *theory* this is all you need and you can [run your first test](#running-the-tests).
-
-However, in *practice* you will probably want to hook into some functions and/or add some configuration options, e.g. to get rid of cookie banners or hide certain elements before taking the snapshots.
-
-## Setup+ (optional)
-
-Expanding on the example above, you could add the following to your `snaps.cy` file (comments explain the new stuff):
+Here's a slightly more realistic example, expanding on the minimal example above:
 
 <details open>
 <summary>JavaScript</summary>
 
 ```javascript
-// snaps.cy.js
 import { run } from 'visreg-test';
 
+/**
+ * This suiteName only used when displaying the test results in the terminal. Suite directory names are used by default.
+ */
+const suiteName = 'MDN';
 const baseUrl = 'https://developer.mozilla.org';
-
 const viewports = [
     'iphone-6',
+    'ipad-2',
+    [1920, 1080]
 ];
 
 const endpoints = [
@@ -146,21 +192,7 @@ const endpoints = [
          */
         blackout: ['#sidebar', '.my-selector', 'footer'],
         /**
-         * Capture a screenshot of a specific element on the page, rather than the whole page.
-         */
-        elementToMatch: ['div[data-testid="my-element"]'],
-        /**
-         * Padding to add to the element screenshot. Ignored if elementToMatch is not set.
-         */
-        padding: [20, 40],
-        /**
-         * Valid values are viewport or fullPage.
-         * Whether to capture the viewport or the whole page.
-         * This value is ignored for element screenshot captures.
-         */
-        capture: 'viewport',
-        /**
-         * Place to do manipulate the page specified in the endpoint before taking the snapshot.
+         * Place to manipulate the page specified in the endpoint before taking the snapshot.
          */
         onEndpointVisit: () => {
             cy.get('button[id="expand-section"]').click();
@@ -173,15 +205,10 @@ const endpoints = [
 ];
 
 /**
- * This is only used when displaying the test results in the terminal.
- */
-const suiteName = 'MDN';
-
-/**
  * Apply some formatting to the url before a snapshot is taken, e.g. to add query params to the url.
  */
 const formatUrl = (path) => {
-    return `${baseUrl}${path}?noexternal`;
+	return [ baseUrl, path, '?noexternal' ].join('');
 }
 
 /**
@@ -196,7 +223,7 @@ run({
     baseUrl,
     endpoints,
     viewports,
-    // Don't forget to add the new options here!
+    // Don't forget to add the new options here
     suiteName,
     formatUrl,
     onPageVisit,
@@ -211,7 +238,6 @@ run({
 <summary>Typescript</summary>
 
 ```typescript
-// snaps.cy.ts
 import { run, VisregViewport, Endpoint, TestProps, CypressCy, FormatUrl, OnPageVisit } from 'visreg-test';
 
 /**
@@ -219,10 +245,15 @@ import { run, VisregViewport, Endpoint, TestProps, CypressCy, FormatUrl, OnPageV
  */
 declare const cy: CypressCy;
 
+/**
+ * This is only used when displaying the test results in the terminal. Suite directory names are used by default.
+ */
+const suiteName: string = 'MDN';
 const baseUrl: string = 'https://developer.mozilla.org';
-
 const viewports: VisregViewport[] = [
     'iphone-6',
+    'ipad-2',
+    [1920, 1080]
 ];
 
 const endpoints: Endpoint[] = [
@@ -233,22 +264,9 @@ const endpoints: Endpoint[] = [
          * Blackout elements from the snapshot, useful for elements that change frequently and are not relevant to the test.
          */
         blackout: ['#sidebar', '.my-selector', 'footer'],
+
         /**
-         * Capture a screenshot of a specific element on the page, rather than the whole page.
-         */
-        elementToMatch: ['div[data-testid="my-element"]'],
-        /**
-         * Padding to add to the element screenshot. Ignored if elementToMatch is not set.
-         */
-        padding: [20, 40],
-        /**
-         * Valid values are viewport or fullPage.
-         * Whether to capture the viewport or the whole page.
-         * This value is ignored for element screenshot captures.
-         */
-        capture: 'viewport',
-        /**
-         * Place to do manipulate the page specified in the endpoint before taking the snapshot.
+         * Place to manipulate the page specified in the endpoint before taking the snapshot.
          */
         onEndpointVisit: () => {
             cy.get('button[id="expand-section"]').click();
@@ -261,15 +279,10 @@ const endpoints: Endpoint[] = [
 ];
 
 /**
- * This is only used when displaying the test results in the terminal.
- */
-const suiteName: string = 'MDN';
-
-/**
  * Apply some formatting to the url before a snapshot is taken, e.g. to add query params to the url.
  */
 const formatUrl: FormatUrl = (path) => {
-    return `${baseUrl}${path}?noexternal`;
+    return [ baseUrl, path, '?noexternal' ].join('');
 }
 
 /**
@@ -284,7 +297,7 @@ const options: TestProps = {
     baseUrl,
     endpoints,
     viewports,
-    // Don't forget to add the new options here!
+    // Don't forget to add the new options here
     suiteName,
     formatUrl,
     onPageVisit,
@@ -297,7 +310,9 @@ run(options);
 </details>
 <br>
 
-To create another test suite, simply create a new directory and add a `snaps.cy` file to it (`snaps.cy.js or snaps.cy.ts`). When you run the tests you will be prompted to select which test suite to run.
+Many more options are available, see [Configuration options](#configuration-options) for more information.
+
+To create another test suite, simply create a new directory and add a `snaps` file to it (`snaps.js or snaps.ts`). When you run visreg-test you will be prompted to select which suite to run.
 
 
 # Running the tests
@@ -319,7 +334,7 @@ my-project
 ├── package.json
 ├── package-lock.json
 └── test-suite
-   └── snaps.cy.js
+   └── snaps.js
    └── snapshots
       └── snaps
          └── Start @ iphone-6.base.png
@@ -331,8 +346,8 @@ my-project
 
 There are 3 **types** of test:
 
-- **Full suite:** run all tests in a suite and generate new baseline snapshots
-- **Retest diffs:** only run tests which failed in the last run
+- **Full suite:** run all tests in a suite and generate baseline snapshots or compare to existing baseline snapshots
+- **Retest diffs:** only run the tests which diffed and were rejected in the last run
 - **Assess diffs**: assess existing diffs (no tests are run)
 
 
@@ -340,7 +355,7 @@ There are 3 **types** of test:
 
 <br>
 
-# Development
+# Contribution
 
 Want to contribute? Great! Here's how to get started:
 
@@ -363,265 +378,97 @@ Want to contribute? Great! Here's how to get started:
 
 <br>
 
-# Configuration options
+# Configuration
 
-You can configure certain settings with a `visreg.config.json` file placed in the root of your project. E.g.:
+<br>
 
+### Test options
 
+| Property             | Description                                                                                                 | Example                                                                                       | Type |
+|-----------------|-------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|---------|
+| baseUrl         | The base url of the site to test.                                                                           | `'https://developer.mozilla.org'`                                                                | `string`, *required* |
+| endpoints       | An array of endpoint objects.                                                                                | `[{ title: 'Start', path: '/' }]`                | `Endpoint[]`, *required* |
+| viewports       | An array of viewports to test.                                                                               | `['iphone-6', [1920, 1080]]`                                                           | `VisregViewport[]`, *optional* |
+| suiteName       | The name of the test suite. This is only used when displaying the test results in the terminal.             | `'MDN'`                                                                                         | `string`, *optional* |
+| formatUrl       | Apply some formatting to the url before a snapshot is taken, e.g. to add query params to the url.           | `(path) => [baseUrl, path, '?noexternal'].join('')`                                         | `(path: string) => string`, *optional* |
+| onPageVisit     | Code here will run when cypress has loaded the page but before it starts taking snapshots. Useful to prepare the page, e.g. by clicking to bypass cookie banners or hiding certain elements. See https://docs.cypress.io/api/table-of-contents#Commands. | `() => { cy.get('button').click() }` | `() => void`, *optional* |
 
-```json
-{
-    "testDirectory": "path/to/tests",
-    "ignoreDirectories": [
-        "path/to/ignored/directory",
-        "path/to/another/ignored/directory",
-    ],
+<br>
 
-    "screenshotOptions": {},
-    "comparisonOptions": {}
-}
+### Endpoint options
 
-```
-
-`screenshotOptions` and `comparisonOptions` are the options that will be passed to Cypress and the Jest comparison engine respectively. 
-
->Note that certain settings are overridden by the individual endpoint options, e.g. `padding` and `capture` are overridden by the `padding` and `capture` options of an endpoint object if they exist, whereas other settings are combined, e.g. `blackout`.
-
-```typescript
-
-type ConfigurationOptions = {
-	/**
-	 * Relative or absolute path to directory of test suites.
-     * Default is the root of the project, where package.json is.
-	 */
-    testDirectory: string;
-	/**
-	 * These will not be included in the selection of test.
-     * node_modules is always ignored.
-	 */
-	ignoreDirectories: string[];
-	screenshotOptions: CypressScreenshotOptions; 
-	comparisonOptions: JestMatchImageSnapshotOptions;
-};
-
-/**
- * Options to pass to Cypress when taking screenshots.
- * @see https://docs.cypress.io/api/cypress-api/screenshot-api#Arguments
- * @see https://docs.cypress.io/api/commands/screenshot#Arguments
- */
-type CypressScreenshotOptions = {
-	/**
-	 * Array of string selectors used to match elements that should be blacked out when the screenshot is taken.
-	 * Does not apply to element screenshot captures.
-	 * @type {string[]}
-	 * @default []
-	 */
-	blackout?: string[];
-
-	/**
-     * Valid values are viewport or fullPage.
-	 * When fullPage, the application under test is captured in its entirety from top to bottom.
-	 * This value is ignored for element screenshot captures.
-	 * @type {string}
-	 * @default 'fullPage'
-	 */
-	capture?: 'viewport' | 'fullPage';
-
-	/**
-	 * When true, prevents JavaScript timers (setTimeout, setInterval, etc) and CSS animations from running
-	 * while the screenshot is taken.
-	 * @type {boolean}
-	 * @default true
-	 */
-	disableTimersAndAnimations?: boolean;
-
-	/**
-	 * Position and dimensions (in pixels) used to crop the final screenshot image. 
-	 * @type {Object}
-	 * @property {number} x - The x-coordinate of the top-left corner of the cropped image.
-	 * @property {number} y - The y-coordinate of the top-left corner of the cropped image.
-	 * @property {number} width - The width of the cropped image.
-	 * @property {number} height - The height of the cropped image.
-	 */
-	clip?: {
-		x: number;
-		y: number;
-		width: number;
-		height: number;
-	};
-
-	/**
-	 * Padding used to alter the dimensions of a screenshot of an element. 
-	 * It can either be a number, or an array of up to four numbers using CSS shorthand notation. 
-	 * This property is only applied for element screenshots and is ignored for all other types.
-	 * @type {number | [number] | [number, number] | [number, number, number] | [number, number, number, number]}
-	 */
-	padding?:
-	| number
-	| [ number ]
-	| [ number, number ]
-	| [ number, number, number ]
-	| [ number, number, number, number ];
-
-	/**
-	 * Time to wait for .screenshot() to resolve before timing out
-	 * @type {Object}
-	 * @property {number} defaultCommandTimeout - Time, in milliseconds, to wait until most DOM based commands are considered timed out.
-	 * @property {number} execTimeout - Time, in milliseconds, to wait for a system command to finish executing during a cy.exec() command.
-	 * @property {number} taskTimeout - Time, in milliseconds, to wait for a task to finish executing during a cy.task() command.
-	 * @property {number} pageLoadTimeout - Time, in milliseconds, to wait for page transition events or cy.visit(), cy.go(), cy.reload() commands to fire their page load events. Network requests are limited by the underlying operating system, and may still time out if this value is increased.
-	 * @property {number} requestTimeout - Time, in milliseconds, to wait for a request to go out in a cy.wait() command.
-	 * @property {number} responseTimeout - Time, in milliseconds, to wait until a response in a cy.request(), cy.wait(), cy.fixture(), cy.getCookie(), cy.getCookies(), cy.setCookie(), cy.clearCookie(), cy.clearCookies(), and cy.screenshot() commands.
-	 * @see https://docs.cypress.io/guides/references/configuration.html#Timeouts
-	 */
-	timeouts?: {
-		defaultCommandTimeout?: 4000,
-		execTimeout?: 60000,
-		taskTimeout?: 60000,
-		pageLoadTimeout?: 60000,
-		requestTimeout?: 5000,
-		responseTimeout?: 30000;
-	};
-};
+| Property             | Description                                                                                                 | Example                                                                                       | Type |
+|-----------------|-------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|---------|
+| title           | The title of the endpoint.                                                                                  | `'Start'`                                                                                       | `string`, *required* |
+| path            | The path of the endpoint.                                                                                   | `'/start'`                                                                                      | `string`, *required*  |
+| blackout        | Blackout elements from the snapshot, useful for elements that change frequently and are not relevant to the test. | `['#sidebar', '.my-selector']`                                                            | `string[]`, *optional* |
+| elementToMatch  | Capture a screenshot of a specific element on the page, rather than the whole page.                        | `'.my-element'`                                                                                  | `string`, *optional* |
+| padding         | Padding to add to the element screenshot. Ignored if elementToMatch is not set.                            | `[20, 40]`                                                                                       | `number[]`, *optional* |
+| capture         | Valid values are viewport or fullPage. Whether to capture the viewport or the whole page. This value is ignored for element screenshot captures. | `'viewport'`                                               | `'viewport' \| 'fullPage'`, *optional* |
+| onEndpointVisit | Place to manipulate the page specified in the endpoint before taking the snapshot.                      | `() => { cy.get('.cookie-consent').click(); }`                                                    | `() => void`, *optional* |
 
 
+<br>
 
-/**
- * Options to pass to the Jest comparison engine when comparing screenshots.
- * @see https://github.com/americanexpress/jest-image-snapshot#%EF%B8%8F-api
- */
-type JestMatchImageSnapshotOptions = {
-	/**
-	 * Custom config passed to 'pixelmatch' or 'ssim'
-	 */
-	customDiffConfig?: {
-		/**
-		 * Matching threshold, ranges from 0 to 1. Smaller values make the comparison more sensitive.
-		 * @default 0.1
-		 */
-		readonly threshold?: number | undefined;
+### Module configuration (*optional*)
 
-		/**
-		 * If true, disables detecting and ignoring anti-aliased pixels.
-		 * @default false
-		 */
-		readonly includeAA?: boolean | undefined;
+You can configure certain settings with a `visreg.config.json` file placed in the root of your project.
 
-		/**
-		 * Blending factor of unchanged pixels in the diff output.
-		 * Ranges from 0 for pure white to 1 for original brightness
-		 * @default 0.1
-		 */
-		alpha?: number | undefined;
-
-		/**
-		 * The color of anti-aliased pixels in the diff output.
-		 * @default [255, 255, 0]
-		 */
-		aaColor?: [ number, number, number ] | undefined;
-
-		/**
-		 * The color of differing pixels in the diff output.
-		 * @default [255, 0, 0]
-		 */
-		diffColor?: [ number, number, number ] | undefined;
-
-		/**
-		 * An alternative color to use for dark on light differences to differentiate between "added" and "removed" parts.
-		 * If not provided, all differing pixels use the color specified by `diffColor`.
-		 * @default null
-		 */
-		diffColorAlt?: [ number, number, number ] | undefined;
-
-		/**
-		 * Draw the diff over a transparent background (a mask), rather than over the original image.
-		 * Will not draw anti-aliased pixels (if detected)
-		 * @default false
-		 */
-		diffMask?: boolean | undefined;
-	} | Partial<{
-		rgb2grayVersion: 'original' | 'integer';
-		k1: number;
-		k2: number;
-		ssim: 'fast' | 'original' | 'bezkrovny' | 'weber';
-		windowSize: number;
-		bitDepth: number;
-		downsample: 'original' | 'fast' | false;
-		maxSize?: number;
-	}> | undefined;
-
-	/**
-	 * The method by which images are compared.
-	 * `pixelmatch` does a pixel by pixel comparison, whereas `ssim` does a structural similarity comparison.
-	 * @default 'pixelmatch'
-	 */
-	comparisonMethod?: "pixelmatch" | "ssim" | undefined;
-
-	/**
-	 * Changes diff image layout direction.
-	 * @default 'horizontal'
-	 */
-	diffDirection?: "horizontal" | "vertical" | undefined;
-
-	/**
-	 * This needs to be set to a existing file, like `require.resolve('./runtimeHooksPath.cjs')`.
-	 * This file can expose a few hooks:
-	 * - `onBeforeWriteToDisc`: before saving any image to the disc, this function will be called (can be used to write EXIF data to images for instance)
-	 * - `onBeforeWriteToDisc: (arguments: { buffer: Buffer; destination: string; testPath: string; currentTestName: string }) => Buffer`
-	 */
-	runtimeHooksPath?: string | undefined;
-
-	/**
-	 * Will output base64 string of a diff image to console in case of failed tests (in addition to creating a diff image).
-	 * This string can be copy-pasted to a browser address string to preview the diff for a failed test.
-	 * @default false
-	 */
-	dumpDiffToConsole?: boolean | undefined;
-
-	/**
-	 * Will output the image to the terminal using iTerm's Inline Images Protocol.
-	 * If the term is not compatible, it does the same thing as `dumpDiffToConsole`.
-	 * @default false
-	 */
-	dumpInlineDiffToConsole?: boolean | undefined;
-
-	/**
-	 * Removes coloring from the console output, useful if storing the results to a file.
-	 * @default false.
-	 */
-	noColors?: boolean | undefined;
-
-	/**
-	 * Sets the threshold that would trigger a test failure based on the failureThresholdType selected. This is different
-	 * to the customDiffConfig.threshold above - the customDiffConfig.threshold is the per pixel failure threshold, whereas
-	 * this is the failure threshold for the entire comparison.
-	 * @default 0.
-	 */
-	failureThreshold?: number | undefined;
-
-	/**
-	 * Sets the type of threshold that would trigger a failure.
-	 * @default 'pixel'.
-	 */
-	failureThresholdType?: "pixel" | "percent" | undefined;
-
-	/**
-	 * Updates a snapshot even if it passed the threshold against the existing one.
-	 * @default false.
-	 */
-	updatePassedSnapshot?: boolean | undefined;
-
-	/**
-	 * Applies Gaussian Blur on compared images, accepts radius in pixels as value. Useful when you have noise after
-	 * scaling images per different resolutions on your target website, usually setting its value to 1-2 should be
-	 * enough to solve that problem.
-	 * @default 0.
-	 */
-	blur?: number | undefined;
-}
+*Note that certain settings are overridden by the individual endpoint options, e.g. `padding` and `capture` are overridden by the `padding` and `capture` options of an endpoint object if they exist, whereas other settings are combined, e.g. `blackout`.*
 
 
-```
+| Property | Description | Type |
+|---|---|---|
+| testDirectory | Path to directory of test suites. Default is the root of the project, where `package.json` is. | `string` |
+| ignoreDirectories | Paths which will not be included in the selection of test. `node_modules` dir is always ignored. | `string[]` |
+| screenshotOptions | Options to pass to Cypress when taking screenshots. | `CypressScreenshotOptions` |
+| comparisonOptions | Options to pass to the Jest comparison engine when comparing screenshots. | `JestMatchImageSnapshotOptions` |
+
+<br>
+
+### Screenshot options (*optional*)
+
+Reference:
+- https://docs.cypress.io/api/cypress-api/screenshot-api#Arguments
+- https://docs.cypress.io/api/commands/screenshot#Arguments
+  
+  
+<br>
+
+| Property | Description | Type |
+| --- | --- | --- |
+| blackout | Array of string selectors used to match elements that should be blacked out when the screenshot is taken. Does not apply to element screenshot captures. | `string[]` |
+| capture | Valid values are viewport or fullPage. When fullPage, the application under test is captured in its entirety from top to bottom. This value is ignored for element screenshot captures. | `'fullPage' \| 'viewport'` |
+| disableTimersAndAnimations | When true, prevents JavaScript timers (setTimeout, setInterval, etc) and CSS animations from running while the screenshot is taken. | `boolean` |
+| clip | Position and dimensions (in pixels) used to crop the final screenshot image. | `{ x: number; y: number; width: number; height: number;	}` |
+| padding | Padding used to alter the dimensions of a screenshot of an element. It can either be a number, or an array of up to four numbers using CSS shorthand notation. This property is only applied for element screenshots and is ignored for all other types. | `number \| [ number ] \| [ number, number ] \| [ number, number, number ] \| [ number, number, number, number ]` |
+| timeouts | Time to wait for .screenshot() to resolve before timing out. See [cypress timeouts options](https://docs.cypress.io/guides/references/configuration.html#Timeouts)  | `{ defaultCommandTimeout?: 4000, execTimeout?: 60000, taskTimeout?: 60000, pageLoadTimeout?: 60000, requestTimeout?: 5000, responseTimeout?: 30000;	}` |
+
+<br>
+
+### Jest snapshot comparison options (*optional*)
+
+Reference:
+- https://github.com/americanexpress/jest-image-snapshot#%EF%B8%8F-api
+
+<br>
+
+
+| Property | Description | Type |
+| --- | --- | --- |
+| customDiffConfig | Custom config passed to 'pixelmatch' or 'ssim'. See [pixelmatch api options](https://github.com/mapbox/pixelmatch?tab=readme-ov-file#api) and [ssim options](https://github.com/obartra/ssim/wiki/Usage#options) | `PixelmatchOptions \| Partial<SSIMOptions>` |
+| comparisonMethod | The method by which images are compared. `pixelmatch` does a pixel by pixel comparison, whereas `ssim` does a structural similarity comparison. | `'pixelmatch' \| 'ssim'` |
+| diffDirection | Changes diff image layout direction. | `'horizontal' \| 'vertical'` |
+| runtimeHooksPath | This needs to be set to a existing file, like `require.resolve('./runtimeHooksPath.cjs')`. This file can expose a few hooks: - `onBeforeWriteToDisc`: before saving any image to the disc, this function will be called (can be used to write EXIF data to images for instance) - `onBeforeWriteToDisc: (arguments: { buffer: Buffer; destination: string; testPath: string; currentTestName: string }) => Buffer` | `string` |
+| dumpDiffToConsole | Will output base64 string of a diff image to console in case of failed tests (in addition to creating a diff image). This string can be copy-pasted to a browser address string to preview the diff for a failed test. | `boolean` |
+| dumpInlineDiffToConsole | Will output the image to the terminal using iTerm's Inline Images Protocol. If the term is not compatible, it does the same thing as `dumpDiffToConsole`. | `boolean` |
+| noColors | Removes coloring from the console output, useful if storing the results to a file. | `boolean` |
+| failureThreshold | Sets the threshold that would trigger a test failure based on the failureThresholdType selected. This is different to the customDiffConfig.threshold above - the customDiffConfig.threshold is the per pixel failure threshold, whereas this is the failure threshold for the entire comparison. | `number` |
+| failureThresholdType | Sets the type of threshold that would trigger a failure. | `'pixel' \| 'percent'` |
+| updatePassedSnapshot | Updates a snapshot even if it passed the threshold against the existing one. | `boolean` |
+| blur | Applies Gaussian Blur on compared images, accepts radius in pixels as value. Useful when you have noise after scaling images per different resolutions on your target website, usually setting its value to 1-2 should be enough to solve that problem. | `number` |
+
+
 
 <br>
 
@@ -629,3 +476,4 @@ type JestMatchImageSnapshotOptions = {
 - Does not work on Windows.
 - If you only have one test suite it will be selected automatically
 - This module will create, move, and delete files and directories in your test suite directories. It will not touch any files outside of the test suite directories.
+- Built upon [cypress](https://www.cypress.io/), [local-cypress](https://www.npmjs.com/package/local-cypress), and [cypress-image-snapshot](https://github.com/simonsmith/cypress-image-snapshot).
