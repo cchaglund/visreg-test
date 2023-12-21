@@ -11,7 +11,8 @@
 		"create-symlink": "node -e \"require('fs').symlinkSync(path.join(process.cwd(), './dist'), process.argv[1] + '/node_modules/visreg-test/dist')\"",
 		"test-dev": "ts-node ./src/visreg.ts",
 		"pub": "npm install && tsc && npm version patch && npm publish",
-		"doc": "doctoc README.md --github --notitle"
+		"doc": "doctoc README.md --github --notitle",
+		"major": "npm install && tsc && npm version major && npm publish"
 	},
 	"bin": {
 		"visreg-test": "dist/visreg.js"
