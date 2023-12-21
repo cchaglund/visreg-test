@@ -1,4 +1,4 @@
-import { cy as originalCy } from 'local-cypress';
+import { cy as CypressCy } from 'local-cypress';
 
 declare global {
 	namespace Cypress {
@@ -18,11 +18,9 @@ declare global {
 	}
 }
 
-export declare function runVisreg(props: TestProps): void;
+export declare function runVisreg(props: TestConfig): void;
 
-export type CypressCy = typeof originalCy;
-
-export type RunTest = (props: TestProps) => void;
+export type RunTest = (props: TestConfig) => void;
 
 export type SnapConfig = {
 	path: string;
@@ -30,14 +28,16 @@ export type SnapConfig = {
 	title: string;
 };
 
-export type Endpoint = {
+export type OnVisitFunction = (cy: typeof CypressCy, cypress: Cypress.Cypress) => void;
+
+export type Endpoint = CypressScreenshotOptions & JestMatchImageSnapshotOptions & {
 	title: string;
 	path: string;
 	blackout?: string[];
 	elementToMatch?: string;
 	padding?: Cypress.Padding;
 	capture?: 'viewport' | 'fullPage';
-	onEndpointVisit?: () => void;
+	onEndpointVisit?: OnVisitFunction;
 };
 
 export type VisregViewport = Cypress.ViewportPreset | number[];
@@ -45,18 +45,18 @@ export type VisregViewport = Cypress.ViewportPreset | number[];
 export type PrepareForCaptureSettings = {
 	fullUrl: string;
 	viewport: VisregViewport;
-	onPageVisitFunctions?: ((() => void) | undefined)[];
+	onPageVisitFunctions?: ((OnVisitFunction) | undefined)[];
 	skipScrolling?: boolean;
 };
 
 
-export type TestProps = {
+export type TestConfig = {
 	suiteName: string;
 	baseUrl: string;
 	endpoints: Endpoint[];
 	viewports?: VisregViewport[];
 	formatUrl?: (path: string) => string;
-	onPageVisit?: () => void;
+	onPageVisit?: OnVisitFunction;
 };
 
 export type TestType = {
@@ -66,7 +66,7 @@ export type TestType = {
 };
 
 
-export type ConfigurationOptions = {
+export type ConfigurationSettings = {
 	/**
 	 * Relative or absolute path to directory of test suites. Default is the root of the project,
      * where package.json is.
@@ -231,27 +231,27 @@ export type JestMatchImageSnapshotOptions = {
 	 */
 	diffDirection?: "horizontal" | "vertical" | undefined;
 
-	/**
-	 * This needs to be set to a existing file, like `require.resolve('./runtimeHooksPath.cjs')`.
-	 * This file can expose a few hooks:
-	 * - `onBeforeWriteToDisc`: before saving any image to the disc, this function will be called (can be used to write EXIF data to images for instance)
-	 * - `onBeforeWriteToDisc: (arguments: { buffer: Buffer; destination: string; testPath: string; currentTestName: string }) => Buffer`
-	 */
-	runtimeHooksPath?: string | undefined;
+	// /**
+	//  * This needs to be set to a existing file, like `require.resolve('./runtimeHooksPath.cjs')`.
+	//  * This file can expose a few hooks:
+	//  * - `onBeforeWriteToDisc`: before saving any image to the disc, this function will be called (can be used to write EXIF data to images for instance)
+	//  * - `onBeforeWriteToDisc: (arguments: { buffer: Buffer; destination: string; testPath: string; currentTestName: string }) => Buffer`
+	//  */
+	// runtimeHooksPath?: string | undefined;
 
-	/**
-	 * Will output base64 string of a diff image to console in case of failed tests (in addition to creating a diff image).
-	 * This string can be copy-pasted to a browser address string to preview the diff for a failed test.
-	 * @default false
-	 */
-	dumpDiffToConsole?: boolean | undefined;
+	// /**
+	//  * Will output base64 string of a diff image to console in case of failed tests (in addition to creating a diff image).
+	//  * This string can be copy-pasted to a browser address string to preview the diff for a failed test.
+	//  * @default false
+	//  */
+	// dumpDiffToConsole?: boolean | undefined;
 
-	/**
-	 * Will output the image to the terminal using iTerm's Inline Images Protocol.
-	 * If the term is not compatible, it does the same thing as `dumpDiffToConsole`.
-	 * @default false
-	 */
-	dumpInlineDiffToConsole?: boolean | undefined;
+	// /**
+	//  * Will output the image to the terminal using iTerm's Inline Images Protocol.
+	//  * If the term is not compatible, it does the same thing as `dumpDiffToConsole`.
+	//  * @default false
+	//  */
+	// dumpInlineDiffToConsole?: boolean | undefined;
 
 	/**
 	 * Removes coloring from the console output, useful if storing the results to a file.
@@ -272,12 +272,6 @@ export type JestMatchImageSnapshotOptions = {
 	 * @default 'pixel'.
 	 */
 	failureThresholdType?: "pixel" | "percent" | undefined;
-
-	/**
-	 * Updates a snapshot even if it passed the threshold against the existing one.
-	 * @default false.
-	 */
-	updatePassedSnapshot?: boolean | undefined;
 
 	/**
 	 * Applies Gaussian Blur on compared images, accepts radius in pixels as value. Useful when you have noise after

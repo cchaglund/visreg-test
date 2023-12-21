@@ -1,6 +1,12 @@
+2.0.0
+- Breaking changes: cy object is no longer global - it is passed to onEndpointVisit and onPageVisit functions and must be explicitly accessed via the first argument
+- For typescript: You no longer need to import/declare the "cy" object, it is passed to the onEndpointVisit and onPageVisit functions
+- The second argument passed to onEndpointVisit and onPageVisit functions is the Cypress object, containing useful utilities  and info about the test being run.
+- Added support for all the module config options to endpoints
+
+1.10.0
 - you no longer need to have the .cy extension on your test files
 - better docs
-
 - added support for the Cypress and imageSnapshotOptions
 - better error handling
 - support for ts files

@@ -7,7 +7,7 @@ Cypress.Commands.add('prepareForCapture', (props: PrepareForCaptureSettings) => 
     cy.setResolution(viewport);
     cy.visit(fullUrl);
 
-    onPageVisitFunctions?.forEach((fn) => fn && fn());
+    onPageVisitFunctions?.forEach((fn) => fn && fn(cy, Cypress));
 
     if (skipScrolling) return;
 

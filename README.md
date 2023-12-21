@@ -22,11 +22,12 @@ A visual regression testing solution that offers an easy setup with simple yet p
   - [Setup dev environment](#setup-dev-environment)
   - [Running dev mode](#running-dev-mode)
 - [Configuration](#configuration)
-    - [Test options](#test-options)
-    - [Endpoint options](#endpoint-options)
-    - [Module configuration (*optional*)](#module-configuration-optional)
-    - [Screenshot options (*optional*)](#screenshot-options-optional)
-    - [Jest snapshot comparison options (*optional*)](#jest-snapshot-comparison-options-optional)
+    - [Test config | TestConfig | (*required*)](#test-config--testconfig--required)
+    - [OnVisitFunction passed props](#onvisitfunction-passed-props)
+    - [Endpoint config | Endpoint | (*required*)](#endpoint-config--endpoint--required)
+    - [Module configuration | ConfigurationSettings | (*optional*)](#module-configuration--configurationsettings--optional)
+    - [Screenshot options | CypressScreenshotOptions | (*optional*)](#screenshot-options--cypressscreenshotoptions--optional)
+    - [Comparison options | JestMatchImageSnapshotOptions | (*optional*)](#comparison-options--jestmatchimagesnapshotoptions--optional)
 - [Notes](#notes)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -112,7 +113,7 @@ run({
 <summary>Typescript</summary>
 
 ```typescript
-import { run, VisregViewport, Endpoint, TestProps } from 'visreg-test';
+import { run, VisregViewport, Endpoint, TestConfig } from 'visreg-test';
 
 const baseUrl: string = 'https://developer.mozilla.org';
 const endpoints: Endpoint[] = [
@@ -126,13 +127,13 @@ const endpoints: Endpoint[] = [
     }
 ];
 
-const options: TestProps = {
+const config: TestConfig = {
     baseUrl,
     endpoints,
     viewports,
 };
 
-run(options);
+run(config);
 
 ```
 
@@ -194,8 +195,13 @@ const endpoints = [
         /**
          * Place to manipulate the page specified in the endpoint before taking the snapshot.
          */
-        onEndpointVisit: () => {
+        onEndpointVisit: (cy, cypress) => {
             cy.get('button[id="expand-section"]').click();
+
+			const mobile = cypress.currentTest.title.includes('iphone-6');
+			if (mobile) {
+				cy.get('.mobile-button').click();
+			}
         },
     },
     {
@@ -214,7 +220,7 @@ const formatUrl = (path) => {
 /**
  * Code here will run when cypress has loaded the page but before it starts taking snapshots. Useful to prepare the page, e.g. by clicking to bypass cookie banners or hiding certain elements.
  */
-const onPageVisit = () => {
+const onPageVisit = (cy, cypress) => {
     cy.get('header').invoke('css', 'opacity', 0);
     cy.get('body').invoke('css', 'height', 'auto');
 }
@@ -238,12 +244,8 @@ run({
 <summary>Typescript</summary>
 
 ```typescript
-import { run, VisregViewport, Endpoint, TestProps, CypressCy, FormatUrl, OnPageVisit } from 'visreg-test';
+import { run, VisregViewport, Endpoint, TestConfig, CypressCy, FormatUrl, OnPageVisit } from 'visreg-test';
 
-/**
- * CypressCy is the type of the cy object, which is used to interact with the page. You only need to declare this if you are using onPageVisit functions and don't want typescript to complain, otherwise you can ignore it.
- */
-declare const cy: CypressCy;
 
 /**
  * This is only used when displaying the test results in the terminal. Suite directory names are used by default.
@@ -268,8 +270,13 @@ const endpoints: Endpoint[] = [
         /**
          * Place to manipulate the page specified in the endpoint before taking the snapshot.
          */
-        onEndpointVisit: () => {
+        onEndpointVisit: (cy: cy, cypress: Cypress) => {
             cy.get('button[id="expand-section"]').click();
+
+			const mobile = cypress.currentTest.title.includes('iphone-6');
+			if (mobile) {
+				cy.get('.mobile-button').click();
+			}
         },
     },
     {
@@ -288,12 +295,12 @@ const formatUrl: FormatUrl = (path) => {
 /**
  * Code here will run when cypress has loaded the page but before it starts taking snapshots. Useful to prepare the page, e.g. by clicking to bypass cookie banners or hiding certain elements.
  */
-const onPageVisit: OnPageVisit = () => {
+const onPageVisit: OnPageVisit = (cy: cy, cypress: Cypress) => {
     cy.get('header').invoke('css', 'opacity', 0);
     cy.get('body').invoke('css', 'height', 'auto');
 }
 
-const options: TestProps = {
+const config: TestConfig = {
     baseUrl,
     endpoints,
     viewports,
@@ -382,35 +389,54 @@ Want to contribute? Great! Here's how to get started:
 
 <br>
 
-### Test options
+Defaults:
 
-| Property             | Description                                                                                                 | Example                                                                                       | Type |
+```javascript
+{
+	capture: 'fullPage',
+	viewports: ['iphone-6', 'ipad-2', [1920, 1080]],
+	failureThresholdType: 'percent',
+	failureThreshold: 0.02,
+}
+```
+
+### Test config | TestConfig | (*required*)
+
+| Property        | Description                                                                                                 | Example                                                                                       | Type |
 |-----------------|-------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|---------|
 | baseUrl         | The base url of the site to test.                                                                           | `'https://developer.mozilla.org'`                                                                | `string`, *required* |
 | endpoints       | An array of endpoint objects.                                                                                | `[{ title: 'Start', path: '/' }]`                | `Endpoint[]`, *required* |
 | viewports       | An array of viewports to test.                                                                               | `['iphone-6', [1920, 1080]]`                                                           | `VisregViewport[]`, *optional* |
 | suiteName       | The name of the test suite. This is only used when displaying the test results in the terminal.             | `'MDN'`                                                                                         | `string`, *optional* |
 | formatUrl       | Apply some formatting to the url before a snapshot is taken, e.g. to add query params to the url.           | `(path) => [baseUrl, path, '?noexternal'].join('')`                                         | `(path: string) => string`, *optional* |
-| onPageVisit     | Code here will run when cypress has loaded the page but before it starts taking snapshots. Useful to prepare the page, e.g. by clicking to bypass cookie banners or hiding certain elements. See https://docs.cypress.io/api/table-of-contents#Commands. | `() => { cy.get('button').click() }` | `() => void`, *optional* |
+| onPageVisit     | Code here will run when cypress has loaded the page but before it starts taking snapshots. Useful to prepare the page, e.g. by clicking to bypass cookie banners or hiding certain elements. See https://docs.cypress.io/api/table-of-contents#Commands. | `() => { cy.get('button').click() }` | `OnVisitFunction`, *optional* |
 
 <br>
 
-### Endpoint options
+### OnVisitFunction passed props
 
-| Property             | Description                                                                                                 | Example                                                                                       | Type |
+| Property        | Description                                                                                                 | Example                                                                                       | Type |
+|-----------------|-------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|---------|
+| cy              | The chainable cypress cy object to manipulate the page. See [Cypress API](https://docs.cypress.io/api/table-of-contents#Cypress-API)                                                                 | `cy.get('button').click()`                                                                     | `cy`, *required* |
+| cypress         | Holds bundled Cypress utilities and constants. See [Cypress API](https://docs.cypress.io/api/table-of-contents#Cypress-API)                                                                                         | `cypress.currentTest.title.includes('iphone-6')`                                                | `Cypress`, *required* |
+
+
+<br>
+
+### Endpoint config | Endpoint | (*required*)
+
+| Property        | Description                                                                                                 | Example                                                                                       | Type |
 |-----------------|-------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|---------|
 | title           | The title of the endpoint.                                                                                  | `'Start'`                                                                                       | `string`, *required* |
 | path            | The path of the endpoint.                                                                                   | `'/start'`                                                                                      | `string`, *required*  |
-| blackout        | Blackout elements from the snapshot, useful for elements that change frequently and are not relevant to the test. | `['#sidebar', '.my-selector']`                                                            | `string[]`, *optional* |
+| onEndpointVisit | Place to manipulate the page specified in the endpoint before taking the snapshot.                      | `(cy: cy, cypress: Cypress) => { cy.get('.cookie-consent').click(); }`                                                    | `OnVisitFunction`, *optional* |
 | elementToMatch  | Capture a screenshot of a specific element on the page, rather than the whole page.                        | `'.my-element'`                                                                                  | `string`, *optional* |
-| padding         | Padding to add to the element screenshot. Ignored if elementToMatch is not set.                            | `[20, 40]`                                                                                       | `number[]`, *optional* |
-| capture         | Valid values are viewport or fullPage. Whether to capture the viewport or the whole page. This value is ignored for element screenshot captures. | `'viewport'`                                               | `'viewport' \| 'fullPage'`, *optional* |
-| onEndpointVisit | Place to manipulate the page specified in the endpoint before taking the snapshot.                      | `() => { cy.get('.cookie-consent').click(); }`                                                    | `() => void`, *optional* |
-
+| screenshot options | The properties of CypressScreenshotOptions of the module configuration are all applicable here | `blackout: ['#sidebar', '.my-selector']`                                                            | `...CypressScreenshotOptions`, *optional* |
+| comparison options | The properties of JestMatchImageSnapshotOptions of the module configuration are all applicable here | `customDiffConfig: { threshold: 0.1 }`                                                            | `...JestMatchImageSnapshotOptions`, *optional* |
 
 <br>
 
-### Module configuration (*optional*)
+### Module configuration | ConfigurationSettings | (*optional*)
 
 You can configure certain settings with a `visreg.config.json` file placed in the root of your project.
 
@@ -426,7 +452,7 @@ You can configure certain settings with a `visreg.config.json` file placed in th
 
 <br>
 
-### Screenshot options (*optional*)
+### Screenshot options | CypressScreenshotOptions | (*optional*)
 
 Reference:
 - https://docs.cypress.io/api/cypress-api/screenshot-api#Arguments
@@ -446,7 +472,7 @@ Reference:
 
 <br>
 
-### Jest snapshot comparison options (*optional*)
+### Comparison options | JestMatchImageSnapshotOptions | (*optional*)
 
 Reference:
 - https://github.com/americanexpress/jest-image-snapshot#%EF%B8%8F-api
@@ -459,13 +485,9 @@ Reference:
 | customDiffConfig | Custom config passed to 'pixelmatch' or 'ssim'. See [pixelmatch api options](https://github.com/mapbox/pixelmatch?tab=readme-ov-file#api) and [ssim options](https://github.com/obartra/ssim/wiki/Usage#options) | `PixelmatchOptions \| Partial<SSIMOptions>` |
 | comparisonMethod | The method by which images are compared. `pixelmatch` does a pixel by pixel comparison, whereas `ssim` does a structural similarity comparison. | `'pixelmatch' \| 'ssim'` |
 | diffDirection | Changes diff image layout direction. | `'horizontal' \| 'vertical'` |
-| runtimeHooksPath | This needs to be set to a existing file, like `require.resolve('./runtimeHooksPath.cjs')`. This file can expose a few hooks: - `onBeforeWriteToDisc`: before saving any image to the disc, this function will be called (can be used to write EXIF data to images for instance) - `onBeforeWriteToDisc: (arguments: { buffer: Buffer; destination: string; testPath: string; currentTestName: string }) => Buffer` | `string` |
-| dumpDiffToConsole | Will output base64 string of a diff image to console in case of failed tests (in addition to creating a diff image). This string can be copy-pasted to a browser address string to preview the diff for a failed test. | `boolean` |
-| dumpInlineDiffToConsole | Will output the image to the terminal using iTerm's Inline Images Protocol. If the term is not compatible, it does the same thing as `dumpDiffToConsole`. | `boolean` |
 | noColors | Removes coloring from the console output, useful if storing the results to a file. | `boolean` |
 | failureThreshold | Sets the threshold that would trigger a test failure based on the failureThresholdType selected. This is different to the customDiffConfig.threshold above - the customDiffConfig.threshold is the per pixel failure threshold, whereas this is the failure threshold for the entire comparison. | `number` |
 | failureThresholdType | Sets the type of threshold that would trigger a failure. | `'pixel' \| 'percent'` |
-| updatePassedSnapshot | Updates a snapshot even if it passed the threshold against the existing one. | `boolean` |
 | blur | Applies Gaussian Blur on compared images, accepts radius in pixels as value. Useful when you have noise after scaling images per different resolutions on your target website, usually setting its value to 1-2 should be enough to solve that problem. | `number` |
 
 
@@ -473,7 +495,10 @@ Reference:
 <br>
 
 # Notes
-- Does not work on Windows.
+- High-resolution, full-page, long pages take more time to process. Consider increasing the timeouts in the visreg.config file if you're timing out.
+- SSIM comparison requires more memory than pixelmatch, so if you're running into memory issues, try using pixelmatch instead (which is the default).
+- Does not work on Windows (yet). Untested on Linux (currently)
+- If you get an error: `"The 'files' list in config file 'tsconfig.json' is empty"` it means you're importing typescript files to your snap.ts file. Only snap.ts is automatically transpiled to js, so consider changing imports to js or running ts-node in your project and outputting js files instead.
 - If you only have one test suite it will be selected automatically
 - This module will create, move, and delete files and directories in your test suite directories. It will not touch any files outside of the test suite directories.
 - Built upon [cypress](https://www.cypress.io/), [local-cypress](https://www.npmjs.com/package/local-cypress), and [cypress-image-snapshot](https://github.com/simonsmith/cypress-image-snapshot).

@@ -3,7 +3,7 @@ import { addMatchImageSnapshotCommand } from 'cypress-image-snapshot-fork-2/comm
 import { delimiter } from '../../shared';
 import { cy, Cypress, describe, it } from 'local-cypress';
 import { SnapshotOptions } from 'cypress-image-snapshot-fork-2/types';
-import { Endpoint, SnapConfig, TestProps, VisregViewport } from 'src/types';
+import { Endpoint, SnapConfig, TestConfig, VisregViewport } from 'src/types';
 
 
 addMatchImageSnapshotCommand({
@@ -12,6 +12,7 @@ addMatchImageSnapshotCommand({
 	failureThresholdType: 'percent',
 	snapFilenameExtension: '.base',
 	capture: 'fullPage',
+    storeReceivedOnFailure: true,
     ...Cypress.env('SCREENSHOT_OPTIONS') ? Cypress.env('SCREENSHOT_OPTIONS') : {},
     ...Cypress.env('COMPARISON_OPTIONS') ? Cypress.env('COMPARISON_OPTIONS') : {},
 });
@@ -55,7 +56,6 @@ const defaultViewports: VisregViewport[] = [
 
 
 const defaultOptions: Partial<SnapshotOptions> = {
-    storeReceivedOnFailure: true,
     blackout: [],
     capture: 'fullPage',
     padding: 0,
@@ -68,17 +68,16 @@ type EnvsPassedViaCypress = {
     diffList?: string;
 }
 
-const takeSnaps = (props: TestProps, env: EnvsPassedViaCypress, viewport: VisregViewport, endpoint: Endpoint) => {
+const takeSnaps = (props: TestConfig, env: EnvsPassedViaCypress, viewport: VisregViewport, endpoint: Endpoint) => {
     const { baseUrl, formatUrl, onPageVisit, } = props;
 
     const {
         path,
         title,
-        blackout,
         elementToMatch,
-        padding,
-        capture = endpoint.capture ?? env.screenshotOptions?.capture,
         onEndpointVisit,
+        capture = endpoint.capture ?? env.screenshotOptions?.capture,
+        ...rest
     } = endpoint;
 
     const sanitizedBaseUrl = baseUrl.replace(/\/$/, '');
@@ -87,9 +86,8 @@ const takeSnaps = (props: TestProps, env: EnvsPassedViaCypress, viewport: Visreg
 
     const options = {
         ...defaultOptions,
-        blackout,
-        padding,
         capture,
+        ...rest,
     };
 
     it(snapName, () => {
@@ -109,7 +107,7 @@ const takeSnaps = (props: TestProps, env: EnvsPassedViaCypress, viewport: Visreg
 };
 
 
-export const runTest = (props: TestProps): void => {
+export const runTest = (props: TestConfig): void => {
     const env: EnvsPassedViaCypress = {
         testType: Cypress.env('testType'),
         target: Cypress.env('target'),

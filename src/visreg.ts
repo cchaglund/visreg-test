@@ -14,7 +14,11 @@ const pathExists = (dirPath: string) => {
 
 const removeDirIfEmpty = (dirPath: string) => {
     if (pathExists(dirPath) && !hasFiles(dirPath)) {
-        fs.rmdirSync(dirPath);
+		fs.rm(dirPath, { recursive: true }, (err) => {
+			if (err) {
+				console.error(err);
+			}
+		});
     }
 }
 
@@ -378,7 +382,7 @@ const openImage = (imageFile: string) => {
 
 const processImage = async (imageFile: string, index: number, total: number) => {
     const imageName = imageFile.replace('.diff.png', '');
-	printColorText(`\n${imageName}\x1b[2m - ${index}/${total}\x1b[0m`, '4');
+	printColorText(`${imageName}\x1b[2m - ${index + 1}/${total}\x1b[0m`, '4');
 
     openImage(imageFile);
 
@@ -415,7 +419,8 @@ const processImage = async (imageFile: string, index: number, total: number) => 
 
         if (answer === 'approve') {
             approvedFiles.push(imageName);
-			printColorText('✅  Approved changes\x1b[2m - updating baseline\x1b[0m', '32')
+			// printColorText('Approved', '32')
+			console.log('✅');
 
             const baselineName = `${imageName}.base.png`;
             const receivedName = `${imageName}-received.png`;
@@ -430,7 +435,9 @@ const processImage = async (imageFile: string, index: number, total: number) => 
         } else if (answer === 'reject') {
             rejectedFiles.push(imageName);
 			
-			printColorText('Rejected changes\x1b[2m - run test again after fixing\x1b[0m', '33');
+			// printColorText('Rejected', '33');
+			console.log('❌');
+			
             break;
         }
     }
@@ -443,7 +450,7 @@ const assessExistingDiffImages = async () => {
 	console.log('\n\n');
 
 	exitIfNoDIffs();
-	printColorText(`🚨  Detected ${fs.readdirSync(DIFF_DIR()).length} diffs, opening preview \x1b[2m- takes a couple of seconds\x1b[0m\n\n`, '31');
+	printColorText(`🚨  Detected ${fs.readdirSync(DIFF_DIR()).length} diffs, opening preview \x1b[2m- takes a couple of seconds\x1b[0m\n\n`, '33');
 
     const files = fs.readdirSync(DIFF_DIR()).filter(file => file.endsWith('.diff.png'));
 
@@ -455,7 +462,7 @@ const assessExistingDiffImages = async () => {
         execSync(`osascript -e 'quit app "Preview"'`);
     }
 
-	printColorText('Done!\n\n', '1');
+	printColorText('Done!\n', '1');
 
     if (approvedFiles.length > 0) {
 		printColorText('\nApproved:', '2');
@@ -471,13 +478,20 @@ const assessExistingDiffImages = async () => {
         }
     }
 
-	printColorText(`\nTotal files: ${approvedFiles.length + rejectedFiles.length}`, '2');
-	printColorText(`Total approved: ${approvedFiles.length}`, '32');
-	printColorText(`Total rejected: ${rejectedFiles.length}`, '31');
+	printColorText('\n\nSummary', '4');
+	printColorText(`Total: ${approvedFiles.length + rejectedFiles.length}`, '2');
 
-    if (rejectedFiles.length > 0) {		
-		printColorText('\n\n⚠️  You rejected some changes - \x1b[2mrun this test again after making the necessary fixes in order to update the baseline images.\x1b[0m', '33');
-    }
+	if (approvedFiles.length > 0) {
+		printColorText(`Approved: ${approvedFiles.length} - \x1b[32mbaselines have been updated\x1b[0m`, '2');
+	} else {
+		printColorText(`Approved: ${approvedFiles.length}`, '2');
+	}
+
+	if (rejectedFiles.length > 0) {
+		printColorText(`Rejected: ${rejectedFiles.length} - \x1b[31mrun test again after making changes\x1b[0m`, '2');
+	} else {
+		printColorText(`Rejected: ${rejectedFiles.length}`, '2');
+	}
 }
 
 process.on('SIGINT', () => {
