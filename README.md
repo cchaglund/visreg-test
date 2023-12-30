@@ -26,7 +26,7 @@ A visual regression testing solution that offers an easy setup with simple yet p
     - [Specify type to run:](#specify-type-to-run)
       - [More shorthand examples:](#more-shorthand-examples)
   - [Lab mode](#lab-mode)
-- [Contribution](#contribution)
+- [Contribute](#contribute)
   - [Setup dev environment](#setup-dev-environment)
   - [Running dev mode](#running-dev-mode)
 - [Configuration](#configuration)
@@ -125,14 +125,14 @@ import { run } from 'visreg-test';
 
 const baseUrl = 'https://developer.mozilla.org';
 
-const endpoints = [{
-	title: 'Start',
-	path: '/',
-}];
+const endpoints = [ {
+   title: 'Start',
+   path: '/',
+} ];
 
 run({
-    baseUrl,
-    endpoints,
+   baseUrl,
+   endpoints,
 });
 ```
 </details>
@@ -144,19 +144,18 @@ run({
 import { run, VisregViewport, Endpoint, TestConfig } from 'visreg-test';
 
 const baseUrl: string = 'https://developer.mozilla.org';
-const endpoints: Endpoint[] = [{
-	title: 'Start',
-	path: '/',
-}];
+const endpoints: Endpoint[] = [ {
+   title: 'Start',
+   path: '/',
+} ];
 
 const config: TestConfig = {
-    baseUrl,
-    endpoints,
-    viewports,
+   baseUrl,
+   endpoints,
+   viewports,
 };
 
 run(config);
-
 ```
 
 </details>
@@ -198,52 +197,52 @@ import { run } from 'visreg-test';
 const suiteName = 'MDN'; // only used when displaying the test results in the terminal. Suite directory names are used by default.
 const baseUrl = 'https://developer.mozilla.org';
 const viewports = [
-    'iphone-x',
-    'samsung-s10',
-    [960, 540]
+   'iphone-x',
+   'samsung-s10',
+   [ 960, 540 ]
 ];
 
 const endpoints = [
-    {
-        title: 'Start',
-        path: '/',
-        blackout: ['#sidebar', '.my-selector', 'footer'], // Blackout elements from the snapshot, useful for elements that change frequently and are not relevant to the test.
-        onEndpointVisit: (cy, cypress) => {
-			// Place to manipulate the page specified in the endpoint before taking the snapshot.
-            cy.get('button[id="expand-section"]').click();
+   {
+      title: 'Start',
+      path: '/',
+      blackout: [ '#sidebar', '.my-selector', 'footer' ], // Blackout elements from the snapshot, useful for elements that change frequently and are not relevant to the test.
+      onEndpointVisit: (cy, cypress) => {
+         // Place to manipulate the page specified in the endpoint before taking the snapshot.
+         cy.get('button[id="expand-section"]').click();
 
-			const mobile = cypress.currentTest.title.includes('iphone-6');
-			if (mobile) {
-				cy.get('.mobile-button').click();
-			}
-        },
-    },
-    {
-        title: 'Guides',
-        path: '/en-US/docs/Learn',
-    }
+         const mobile = cypress.currentTest.title.includes('iphone-6');
+         if (mobile) {
+            cy.get('.mobile-button').click();
+         }
+      },
+   },
+   {
+      title: 'Guides',
+      path: '/en-US/docs/Learn',
+   }
 ];
 
 
 const formatUrl = (path) => {
-	// Format to the url before a snapshot is taken, e.g. to add query params to the url.
-	return [ baseUrl, path, '?noexternal' ].join('');
-}
+   // Format to the url before a snapshot is taken, e.g. to add query params to the url.
+   return [ baseUrl, path, '?noexternal' ].join('');
+};
 
 const onPageVisit = (cy, cypress) => {
-	// Code here will run when cypress has loaded the page but before it starts taking snapshots. Useful to prepare the page, e.g. by clicking to bypass cookie banners or hiding certain elements.
-    cy.get('header').invoke('css', 'opacity', 0);
-    cy.get('body').invoke('css', 'height', 'auto');
-}
+   // Code here will run when cypress has loaded the page but before it starts taking snapshots. Useful to prepare the page, e.g. by clicking to bypass cookie banners or hiding certain elements.
+   cy.get('header').invoke('css', 'opacity', 0);
+   cy.get('body').invoke('css', 'height', 'auto');
+};
 
 run({
-    baseUrl,
-    endpoints,
-    viewports,
-    // Don't forget to add the new options here
-    suiteName,
-    formatUrl,
-    onPageVisit,
+   baseUrl,
+   endpoints,
+   viewports,
+   // Don't forget to add the new options here
+   suiteName,
+   formatUrl,
+   onPageVisit,
 });
 
 ```
@@ -260,51 +259,51 @@ import { run, VisregViewport, Endpoint, TestConfig, CypressCy, FormatUrl, OnPage
 const suiteName: string = 'MDN'; // only used when displaying the test results in the terminal. Suite directory names are used by default.
 const baseUrl: string = 'https://developer.mozilla.org';
 const viewports: VisregViewport[] = [
-    'iphone-x',
-    'samsung-s10',
-    [960, 540]
+   'iphone-x',
+   'samsung-s10',
+   [ 960, 540 ]
 ];
 
 const endpoints: Endpoint[] = [
-    {
-        title: 'Start',
-        path: '/',
-        blackout: ['#sidebar', '.my-selector', 'footer'], // Blackout elements from the snapshot, useful for elements that change frequently and are not relevant to the test.
-        onEndpointVisit: (cy: cy, cypress: Cypress) => {
-			// Place to manipulate the page specified in the endpoint before taking the snapshot.
-            cy.get('button[id="expand-section"]').click();
+   {
+      title: 'Start',
+      path: '/',
+      blackout: [ '#sidebar', '.my-selector', 'footer' ], // Blackout elements from the snapshot, useful for elements that change frequently and are not relevant to the test.
+      onEndpointVisit: (cy: cy, cypress: Cypress) => {
+         // Place to manipulate the page specified in the endpoint before taking the snapshot.
+         cy.get('button[id="expand-section"]').click();
 
-			const mobile = cypress.currentTest.title.includes('iphone-6');
-			if (mobile) {
-				cy.get('.mobile-button').click();
-			}
-        },
-    },
-    {
-        title: 'Guides',
-        path: '/en-US/docs/Learn',
-    }
+         const mobile = cypress.currentTest.title.includes('iphone-6');
+         if (mobile) {
+            cy.get('.mobile-button').click();
+         }
+      },
+   },
+   {
+      title: 'Guides',
+      path: '/en-US/docs/Learn',
+   }
 ];
 
 const formatUrl: FormatUrl = (path) => {
-	// Format to the url before a snapshot is taken, e.g. to add query params to the url.
-    return [ baseUrl, path, '?noexternal' ].join('');
-}
+   // Format to the url before a snapshot is taken, e.g. to add query params to the url.
+   return [ baseUrl, path, '?noexternal' ].join('');
+};
 
 const onPageVisit: OnPageVisit = (cy: cy, cypress: Cypress) => {
-	// Code here will run when cypress has loaded the page but before it starts taking snapshots. Useful to prepare the page, e.g. by clicking to bypass cookie banners or hiding certain elements.
-    cy.get('header').invoke('css', 'opacity', 0);
-    cy.get('body').invoke('css', 'height', 'auto');
-}
+   // Code here will run when cypress has loaded the page but before it starts taking snapshots. Useful to prepare the page, e.g. by clicking to bypass cookie banners or hiding certain elements.
+   cy.get('header').invoke('css', 'opacity', 0);
+   cy.get('body').invoke('css', 'height', 'auto');
+};
 
 const config: TestConfig = {
-    baseUrl,
-    endpoints,
-    viewports,
-    // Don't forget to add the new options here
-    suiteName,
-    formatUrl,
-    onPageVisit,
+   baseUrl,
+   endpoints,
+   viewports,
+   // Don't forget to add the new options here
+   suiteName,
+   formatUrl,
+   onPageVisit,
 };
 
 run(options);
@@ -437,7 +436,7 @@ npm visreg-test -lab my-test-suite:Start@iphone-6 -no-gui
 
 <br>
 
-# Contribution
+# Contribute
 
 Want to contribute? Great! Here's how to get started:
 
@@ -469,10 +468,10 @@ Defaults:
 
 ```javascript
 {
-	capture: 'fullPage',
-	viewports: ['iphone-6', 'ipad-2', [1920, 1080]],
-	failureThresholdType: 'percent',
-	failureThreshold: 0.02,
+  capture: 'fullPage',
+  viewports: ['iphone-6', 'ipad-2', [1920, 1080]],
+  failureThresholdType: 'percent',
+  failureThreshold: 0.02,
 }
 ```
 
