@@ -13,29 +13,32 @@ A visual regression testing solution that offers an easy setup with simple yet p
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
+- [Visreg-test](#visreg-test)
+- [What it does](#what-it-does)
+	- [Quick links](#quick-links)
 - [Setup](#setup)
-    - [Typescript](#typescript)
-    - [Folder structure](#folder-structure)
+		- [Typescript](#typescript)
+		- [Folder structure](#folder-structure)
 - [Writing tests](#writing-tests)
-    - [Minimal example](#minimal-example)
-  - [Test file (full example)](#test-file-full-example)
+		- [Minimal example](#minimal-example)
+	- [Test file (full example)](#test-file-full-example)
 - [Running the tests](#running-the-tests)
-  - [Updated folder structure](#updated-folder-structure)
-  - [Flags](#flags)
-    - [Specify what to test:](#specify-what-to-test)
-    - [Specify type to run:](#specify-type-to-run)
-      - [More shorthand examples:](#more-shorthand-examples)
-  - [Lab mode](#lab-mode)
+	- [Updated folder structure](#updated-folder-structure)
+	- [Flags](#flags)
+		- [Specify what to test:](#specify-what-to-test)
+		- [Specify type to run:](#specify-type-to-run)
+			- [More shorthand examples:](#more-shorthand-examples)
+	- [Lab mode](#lab-mode)
 - [Contribution](#contribution)
-  - [Setup dev environment](#setup-dev-environment)
-  - [Running dev mode](#running-dev-mode)
+	- [Setup dev environment](#setup-dev-environment)
+	- [Running dev mode](#running-dev-mode)
 - [Configuration](#configuration)
-    - [Test config | TestConfig | (*required*)](#test-config--testconfig--required)
-    - [OnVisitFunction passed props](#onvisitfunction-passed-props)
-    - [Endpoint config | Endpoint | (*required*)](#endpoint-config--endpoint--required)
-    - [Module configuration | ConfigurationSettings | (*optional*)](#module-configuration--configurationsettings--optional)
-    - [Screenshot options | CypressScreenshotOptions | (*optional*)](#screenshot-options--cypressscreenshotoptions--optional)
-    - [Comparison options | JestMatchImageSnapshotOptions | (*optional*)](#comparison-options--jestmatchimagesnapshotoptions--optional)
+		- [Test config | TestConfig | (*required*)](#test-config--testconfig--required)
+		- [OnVisitFunction passed props](#onvisitfunction-passed-props)
+		- [Endpoint config | Endpoint | (*required*)](#endpoint-config--endpoint--required)
+		- [Module configuration | ConfigurationSettings | (*optional*)](#module-configuration--configurationsettings--optional)
+		- [Screenshot options | CypressScreenshotOptions | (*optional*)](#screenshot-options--cypressscreenshotoptions--optional)
+		- [Comparison options | JestMatchImageSnapshotOptions | (*optional*)](#comparison-options--jestmatchimagesnapshotoptions--optional)
 - [Notes](#notes)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -125,12 +128,10 @@ import { run } from 'visreg-test';
 
 const baseUrl = 'https://developer.mozilla.org';
 
-const endpoints = [
-    {
-        title: 'Start',
-        path: '/',
-    }
-];
+const endpoints = [{
+	title: 'Start',
+	path: '/',
+}];
 
 run({
     baseUrl,
@@ -146,12 +147,10 @@ run({
 import { run, VisregViewport, Endpoint, TestConfig } from 'visreg-test';
 
 const baseUrl: string = 'https://developer.mozilla.org';
-const endpoints: Endpoint[] = [
-    {
-        title: 'Start',
-        path: '/',
-    }
-];
+const endpoints: Endpoint[] = [{
+	title: 'Start',
+	path: '/',
+}];
 
 const config: TestConfig = {
     baseUrl,
@@ -199,10 +198,7 @@ Here's a slightly more realistic example, expanding on the minimal example above
 ```javascript
 import { run } from 'visreg-test';
 
-/**
- * This suiteName only used when displaying the test results in the terminal. Suite directory names are used by default.
- */
-const suiteName = 'MDN';
+const suiteName = 'MDN'; // only used when displaying the test results in the terminal. Suite directory names are used by default.
 const baseUrl = 'https://developer.mozilla.org';
 const viewports = [
     'iphone-x',
@@ -214,14 +210,9 @@ const endpoints = [
     {
         title: 'Start',
         path: '/',
-        /**
-         * Blackout elements from the snapshot, useful for elements that change frequently and are not relevant to the test.
-         */
-        blackout: ['#sidebar', '.my-selector', 'footer'],
-        /**
-         * Place to manipulate the page specified in the endpoint before taking the snapshot.
-         */
+        blackout: ['#sidebar', '.my-selector', 'footer'], // Blackout elements from the snapshot, useful for elements that change frequently and are not relevant to the test.
         onEndpointVisit: (cy, cypress) => {
+			// Place to manipulate the page specified in the endpoint before taking the snapshot.
             cy.get('button[id="expand-section"]').click();
 
 			const mobile = cypress.currentTest.title.includes('iphone-6');
@@ -236,17 +227,14 @@ const endpoints = [
     }
 ];
 
-/**
- * Apply some formatting to the url before a snapshot is taken, e.g. to add query params to the url.
- */
+
 const formatUrl = (path) => {
+	// Format to the url before a snapshot is taken, e.g. to add query params to the url.
 	return [ baseUrl, path, '?noexternal' ].join('');
 }
 
-/**
- * Code here will run when cypress has loaded the page but before it starts taking snapshots. Useful to prepare the page, e.g. by clicking to bypass cookie banners or hiding certain elements.
- */
 const onPageVisit = (cy, cypress) => {
+	// Code here will run when cypress has loaded the page but before it starts taking snapshots. Useful to prepare the page, e.g. by clicking to bypass cookie banners or hiding certain elements.
     cy.get('header').invoke('css', 'opacity', 0);
     cy.get('body').invoke('css', 'height', 'auto');
 }
@@ -272,11 +260,7 @@ run({
 ```typescript
 import { run, VisregViewport, Endpoint, TestConfig, CypressCy, FormatUrl, OnPageVisit } from 'visreg-test';
 
-
-/**
- * This is only used when displaying the test results in the terminal. Suite directory names are used by default.
- */
-const suiteName: string = 'MDN';
+const suiteName: string = 'MDN'; // only used when displaying the test results in the terminal. Suite directory names are used by default.
 const baseUrl: string = 'https://developer.mozilla.org';
 const viewports: VisregViewport[] = [
     'iphone-x',
@@ -288,15 +272,9 @@ const endpoints: Endpoint[] = [
     {
         title: 'Start',
         path: '/',
-        /**
-         * Blackout elements from the snapshot, useful for elements that change frequently and are not relevant to the test.
-         */
-        blackout: ['#sidebar', '.my-selector', 'footer'],
-
-        /**
-         * Place to manipulate the page specified in the endpoint before taking the snapshot.
-         */
+        blackout: ['#sidebar', '.my-selector', 'footer'], // Blackout elements from the snapshot, useful for elements that change frequently and are not relevant to the test.
         onEndpointVisit: (cy: cy, cypress: Cypress) => {
+			// Place to manipulate the page specified in the endpoint before taking the snapshot.
             cy.get('button[id="expand-section"]').click();
 
 			const mobile = cypress.currentTest.title.includes('iphone-6');
@@ -311,17 +289,13 @@ const endpoints: Endpoint[] = [
     }
 ];
 
-/**
- * Apply some formatting to the url before a snapshot is taken, e.g. to add query params to the url.
- */
 const formatUrl: FormatUrl = (path) => {
+	// Format to the url before a snapshot is taken, e.g. to add query params to the url.
     return [ baseUrl, path, '?noexternal' ].join('');
 }
 
-/**
- * Code here will run when cypress has loaded the page but before it starts taking snapshots. Useful to prepare the page, e.g. by clicking to bypass cookie banners or hiding certain elements.
- */
 const onPageVisit: OnPageVisit = (cy: cy, cypress: Cypress) => {
+	// Code here will run when cypress has loaded the page but before it starts taking snapshots. Useful to prepare the page, e.g. by clicking to bypass cookie banners or hiding certain elements.
     cy.get('header').invoke('css', 'opacity', 0);
     cy.get('body').invoke('css', 'height', 'auto');
 }
