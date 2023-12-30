@@ -1,22 +1,9 @@
 import '../support/commands';
 import { addMatchImageSnapshotCommand } from 'cypress-image-snapshot-fork-2/command';
-import { delimiter } from '../../shared';
 import { cy, Cypress, describe, it } from 'local-cypress';
-import { SnapshotOptions } from 'cypress-image-snapshot-fork-2/types';
-import { Endpoint, SnapConfig, TestConfig, VisregViewport } from 'src/types';
+import { Endpoint, EnvsPassedViaCypress, SnapConfig, TestConfig, VisregViewport } from '../../types';
 
-
-addMatchImageSnapshotCommand({
-	useRelativeSnapshotsDir: true,
-	failureThreshold: 0.02,
-	failureThresholdType: 'percent',
-	snapFilenameExtension: '.base',
-	capture: 'fullPage',
-    storeReceivedOnFailure: true,
-    ...Cypress.env('SCREENSHOT_OPTIONS') ? Cypress.env('SCREENSHOT_OPTIONS') : {},
-    ...Cypress.env('COMPARISON_OPTIONS') ? Cypress.env('COMPARISON_OPTIONS') : {},
-});
-
+addMatchImageSnapshotCommand();
 
 Cypress.on('uncaught:exception', () => {
 	/**
@@ -27,48 +14,28 @@ Cypress.on('uncaught:exception', () => {
 })
 
 
-const parseSnapConfigFromName = (name: string, pages: Endpoint[]): SnapConfig | null => {
-    const divider = ' @ ';
+const parseSnapConfigFromName = (name: string, endpoints: Endpoint[]): SnapConfig | null => {
+    const divider = '@';
     const nameParts = name.split(divider);
-    const title = nameParts[0];
-    const sizeRaw = nameParts[1].replace('.diff.png', '') as Cypress.ViewportPreset;
+    const title = nameParts[0].trim();
+    const sizeRaw = nameParts[1].trim().replace('.diff.png', '') as Cypress.ViewportPreset;
 
-    let size: VisregViewport = sizeRaw;
+    let viewportSize: VisregViewport = sizeRaw;
     if (sizeRaw.includes(',')) {
-        size = sizeRaw.split(',').map(dimension => parseInt(dimension));
+        viewportSize = sizeRaw.split(',').map(dimension => parseInt(dimension));
     }
     
-    const page = pages.find(page => page.title === title);
-    if (!page) return null;
+    const endpoint = endpoints.find(endpoint => endpoint.title === title);
+    if (!endpoint) return null;
 
     return {
-        path: page.path,
-        size,
+        path: endpoint.path,
+        viewportSize,
         title,
     };    
 };
 
-const defaultViewports: VisregViewport[] = [
-    'iphone-6',
-    'ipad-2',
-    [1920, 1080],
-];
-
-
-const defaultOptions: Partial<SnapshotOptions> = {
-    blackout: [],
-    capture: 'fullPage',
-    padding: 0,
-};
-
-type EnvsPassedViaCypress = {
-    testType: 'test-all' | 'retest-diffs-only';
-    target: string;
-    screenshotOptions?: SnapshotOptions;
-    diffList?: string;
-}
-
-const takeSnaps = (props: TestConfig, env: EnvsPassedViaCypress, viewport: VisregViewport, endpoint: Endpoint) => {
+const takeSnaps = (props: TestConfig, viewport: VisregViewport, endpoint: Endpoint) => {
     const { baseUrl, formatUrl, onPageVisit, } = props;
 
     const {
@@ -76,80 +43,138 @@ const takeSnaps = (props: TestConfig, env: EnvsPassedViaCypress, viewport: Visre
         title,
         elementToMatch,
         onEndpointVisit,
-        capture = endpoint.capture ?? env.screenshotOptions?.capture,
-        ...rest
+        ...endpointOptions
     } = endpoint;
+
+    const options = {
+        ...Cypress.env('NON_OVERRIDABLE_SETTINGS'),
+        ...Cypress.env('SNAPSHOT_SETTINGS'),
+        ...endpointOptions,
+    };
 
     const sanitizedBaseUrl = baseUrl.replace(/\/$/, '');
     const snapName = `${title} @ ${viewport}`;
     const fullUrl = formatUrl ? formatUrl(path) : `${sanitizedBaseUrl}${path}`;
-
-    const options = {
-        ...defaultOptions,
-        capture,
-        ...rest,
-    };
 
     it(snapName, () => {
         cy.prepareForCapture({
             fullUrl,
             viewport,
             onPageVisitFunctions: [onPageVisit, onEndpointVisit],
-            skipScrolling: !!(elementToMatch || capture === 'viewport'),
+            fullPageCapture: !(elementToMatch || options.capture === 'viewport'),
+            options,
         });
 
-        if (elementToMatch) {
-            cy.get(elementToMatch).matchImageSnapshot( snapName, options);
-        } else {
-            cy.matchImageSnapshot( snapName, options);
-        }
+        const cyTarget = elementToMatch ? cy.get(elementToMatch) : cy;
+        cyTarget.matchImageSnapshot(snapName, options);
     });
 };
 
+const limitMessage = (endpoints: Endpoint[], viewports: VisregViewport[], endpointTitle: string | undefined, viewport: VisregViewport | undefined) => {
+    const ep = endpointTitle && endpoints.length === 1 && endpoints[0].title === endpointTitle ? endpointTitle : '';
+    const vp = viewport && viewports.length === 1 && viewports[0] === viewport ? viewport : '';
+    const epText = ep ? `"${ep}" ` : '';
+    const vpText = vp ? `@ ${vp}` : '';
+    const limitText = epText || vpText ? ` - limiting test to ${epText}${vpText}` : '';
+    return limitText;
+}
+
+const allowedViewports = (viewports: VisregViewport[], viewport: VisregViewport | undefined) => {
+    if (!viewport) return viewports;
+
+    const match = viewports.find(vp => {
+        if (typeof vp === 'string' && typeof viewport === 'string' ) {
+            return vp === viewport;
+        }
+
+        if (Array.isArray(vp) && Array.isArray(viewport)) {
+            return vp.toString() === viewport.toString()
+        }
+
+        return false;
+    });
+
+    if (!match) return [];
+
+    return [match]
+}
+
+const allowedEndpoints = (endpoints: Endpoint[], endpointTitle: string | undefined) => {
+    if (!endpointTitle) return endpoints;
+    const match = endpoints.find(ep => ep.title === endpointTitle);
+    if (!match) return [];
+    
+    return [match]
+}
 
 export const runTest = (props: TestConfig): void => {
-    const env: EnvsPassedViaCypress = {
-        testType: Cypress.env('testType'),
-        target: Cypress.env('target'),
-        screenshotOptions: Cypress.env('SCREENSHOT_OPTIONS'),
-        diffList: Cypress.env('diffListString'),
+    const defaultViewports: VisregViewport[] = [
+        'iphone-6',
+        'ipad-2',
+        [1920, 1080],
+    ];
+
+    const {
+        testType,
+        suite,
+        diffList,
+        endpointTitle,
+        viewport,
+    }: EnvsPassedViaCypress = {
+        ...JSON.parse(Buffer.from(Cypress.env('TEST_SETTINGS'), 'base64').toString('utf8'))
     }
 
     const { 
-        suiteName = props.suiteName ?? env.target,
-        viewports = props.viewports ?? defaultViewports,
-        endpoints,
+        suiteName = props.suiteName ?? suite,
+        viewports: registeredViewports = props.viewports ?? defaultViewports,
+        endpoints: registeredEndpoints,
     } = props;
 
+    const viewportsToTest = allowedViewports(registeredViewports, viewport)
+    const endpointsToTest = allowedEndpoints(registeredEndpoints, endpointTitle)
 
-    describe(`Visual regression - ${suiteName}`, () => {
+    const limitText = limitMessage(endpointsToTest, viewportsToTest, endpointTitle, viewport);
 
-        if (env.testType === 'test-all') {
-            describe('Full visual regression test', () => {
-                viewports.forEach((size) => {
-                    endpoints.forEach((endpoint) => {
-                        takeSnaps(props, env, size, endpoint)
+    describe(`${suiteName}`, () => {
+
+        if (testType === 'lab') {
+            describe('Lab' + limitText, () => {
+                /**
+                 * Lab tests require a viewport and endpoint to be specified.
+                 * Viewport can be anything in lab mode, but endpoint must still be a valid endpoint.
+                 */
+                const validEndpoint = endpointsToTest.find(ep => ep.title === endpointTitle);
+                if (!viewport || !validEndpoint) return;
+                takeSnaps(props, viewport, validEndpoint)
+            });
+        }
+
+        if (testType === 'full-test') {
+            describe('Full visual regression test' + limitText, () => {
+                viewportsToTest.forEach((vp) => {
+                    endpointsToTest.forEach((ep) => {
+                        takeSnaps(props, vp, ep)
                     });
                 });
             });
         }
         
-        if (env.testType === 'retest-diffs-only') {
-            describe('Retesting diffing snapshots only', () => {
-                if (!env.diffList) return;
+        if (testType === 'diffs-only') {
+            describe('Retesting diffing snapshots only' + limitText, () => {
+                if (!diffList) return;
 
-                const decodedString = Buffer.from(env.diffList, 'base64').toString('utf8');
-                const diffs = decodedString.split(delimiter);
-
-                diffs.forEach(diffSnapName => {
-                    const config = parseSnapConfigFromName(diffSnapName, endpoints)
+                diffList.forEach(diffSnapName => {
+                    const config = parseSnapConfigFromName(diffSnapName, endpointsToTest)
                     if (!config) return;
 
-                    const { size, title }: SnapConfig = config;
-                    const endpoint = endpoints.find(endpoint => endpoint.title === title);
-                    if (!endpoint) return;
+                    const { viewportSize, title }: SnapConfig = config;
 
-                    takeSnaps(props, env, size, endpoint);
+                    const viewport = viewportsToTest.includes(viewportSize) ? viewportSize : undefined;
+                    const endpoint = endpointsToTest.find(ep => ep.title === title);
+
+                    if (viewport && endpoint) {
+                        takeSnaps(props, viewportSize, endpoint);
+                    }
                 });
             });
         }

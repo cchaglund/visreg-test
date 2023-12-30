@@ -24,7 +24,7 @@ export type RunTest = (props: TestConfig) => void;
 
 export type SnapConfig = {
 	path: string;
-	size: Cypress.ViewportPreset | number[];
+	viewportSize: Cypress.ViewportPreset | number[];
 	title: string;
 };
 
@@ -46,9 +46,9 @@ export type PrepareForCaptureSettings = {
 	fullUrl: string;
 	viewport: VisregViewport;
 	onPageVisitFunctions?: ((OnVisitFunction) | undefined)[];
-	skipScrolling?: boolean;
+	fullPageCapture?: boolean;
+	options: CypressScreenshotOptions & JestMatchImageSnapshotOptions;
 };
-
 
 export type TestConfig = {
 	suiteName: string;
@@ -65,23 +65,57 @@ export type TestType = {
 	description: string;
 };
 
+export type EnvsPassedViaCypress = {
+    testType: 'full-test' | 'diffs-only' | 'lab';
+    diffList: string[];
+    suite?: string;
+	endpointTitle?: string;
+	viewport?: VisregViewport;
+}
 
 export type ConfigurationSettings = {
 	/**
 	 * Relative or absolute path to directory of test suites. Default is the root of the project,
      * where package.json is.
 	 */
-	testDirectory: string;
+	testDirectory?: string;
 	/**
 	* These will not be included in the selection of test suites. node_modules is always ignored
 	*/
-	ignoreDirectories: string[];
-	screenshotOptions: CypressScreenshotOptions; // https://docs.cypress.io/api/cypress-api/screenshot-api#Arguments
-	comparisonOptions: JestMatchImageSnapshotOptions; // https://github.com/americanexpress/jest-image-snapshot#%EF%B8%8F-api
+	ignoreDirectories?: string[];
+	/**
+	 * maxViewport sets the maximum viewport dimensions that will be used for screenshots. 
+	 * If you define a viewport in your tests that is larger than these values, it will be cropped to these values.
+	 * I.e. the screenshot will not be the full viewport size.
+	 */
+	maxViewport?: {
+		width?: number;
+		height?: number;
+	};
+	screenshotOptions?: CypressScreenshotOptions; // https://docs.cypress.io/api/cypress-api/screenshot-api#Arguments
+	comparisonOptions?: JestMatchImageSnapshotOptions; // https://github.com/americanexpress/jest-image-snapshot#%EF%B8%8F-api
 };
+
+export type NonOverridableSettings = {
+	projectRoot: string;
+	useRelativeSnapshotsDir: true,
+	storeReceivedOnFailure: true,
+	snapFilenameExtension: '.lab' | '.base',
+	customSnapshotsDir: 'lab' | '',
+}
+
+export type VisregOptions = CypressScreenshotOptions & JestMatchImageSnapshotOptions;
 
 
 export type CypressScreenshotOptions = {
+	/**
+	 * Amount of time, in milliseconds, to scroll the page prior to taking screenshots (1 second down, 1 second up)
+	 * When "capture" is set to "viewport", this time is halved.
+	 * @type {number}
+	 * @default 1000
+	 */
+	scrollDuration?: number;
+
 	/**
 	 * Array of string selectors used to match elements that should be blacked out when the screenshot is taken.
 	 * Does not apply to element screenshot captures.
@@ -101,10 +135,14 @@ export type CypressScreenshotOptions = {
 	capture?: 'viewport' | 'fullPage';
 
 	/**
-	 * When true, prevents JavaScript timers (setTimeout, setInterval, etc) and CSS animations from running
-	 * while the screenshot is taken.
+	 * When true, prevents JavaScript timers (setTimeout, setInterval, etc) and CSS animations from running while the screenshot is taken.
+	 * This is set to false by default and the resulting snapshot may more closely resemble a visitor's experience than when set to true.
+	 * If you for example have images that lazy-load, use IntersectionObserver to load them, and animate in when loaded, these will render/load properly.
+	 * You may get more inconsistent results when set to false, since timers and animations are allowed to run.
+	 * This setting is highly dependent on what is being tested, but having it set to false per default results in a more expected experience.
+	 * Tests will take slighly longer when set to false because a certain amount of time is allowed to pass before the screenshot is taken, to allow for animations to finish.
 	 * @type {boolean}
-	 * @default true
+	 * @default false
 	 */
 	disableTimersAndAnimations?: boolean;
 

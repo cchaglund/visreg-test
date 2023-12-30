@@ -4,52 +4,172 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { execSync, spawn } from 'child_process';
 import * as readline from 'readline';
-import { delimiter } from './shared';
-import { TestType } from './types';
-import { transpileModule,  ModuleKind } from 'typescript';
+import { ConfigurationSettings, NonOverridableSettings, TestType } from './types';
+import { Command } from 'commander';
 
-const pathExists = (dirPath: string) => {
-	return fs.existsSync(dirPath);
+const program = new Command();
+
+program
+	.option('-s, --suite <char>')
+	.option('-e, --endpoint-title <char>')
+	.option('-v, --viewport <char>')
+	.option('-f, --full-test [specs]')
+	.option('-d, --diffs-only [specs]')
+	.option('-a, --assess-existing-diffs [specs]')
+	.option('-lab, --lab [specs]')
+	.option('-no-gui, --no-gui')
+
+program.parse();
+
+type ProgramChoices = {
+	suite?: string,
+	endpointTitle?: string,
+	viewport?: string | number[],
+	fullTest?: boolean | string,
+	diffsOnly?: boolean | string,
+	assessExistingDiffs?: boolean | string,
+	lab?: boolean,
+	testType?: string,
+	gui?: boolean,
 }
+
+const parsedViewport = (viewport?: string | number[]) => {	
+	if (!viewport) {
+		return;
+	}
+
+	const stringedViewport = viewport.toString();
+	if (!stringedViewport?.includes(',')) {
+		return viewport;
+	}
+
+	return stringedViewport.split(',').map((pixels: string) => parseInt(pixels))
+}
+
+const extractProgramChoices = () => {	
+	const opts: ProgramChoices = program.opts();
+
+	let testType = '';
+	let specificationShorthand: string | boolean = '';
+
+	switch (true) {
+		case opts.assessExistingDiffs !== undefined:
+			testType = 'assess-existing-diffs';
+			specificationShorthand = opts.assessExistingDiffs;
+			break;
+		case opts.lab !== undefined:
+			testType = 'lab';
+			specificationShorthand = opts.lab;
+			break;
+		case opts.diffsOnly !== undefined:
+			testType = 'diffs-only';
+			specificationShorthand = opts.diffsOnly;
+			break;
+		case opts.fullTest !== undefined:
+			testType = 'full-test';
+			specificationShorthand = opts.fullTest;
+			break;
+	}
+	
+    const args: ProgramChoices = {
+		suite: opts?.suite,
+		endpointTitle: opts?.endpointTitle,
+        viewport: parsedViewport(opts?.viewport),
+		testType,
+		gui: opts?.gui,
+    };
+
+    if (typeof specificationShorthand !== 'string') {
+		return args;
+	}
+
+	return extractSpecificationShorthand(args, specificationShorthand);
+}
+
+const extractSpecificationShorthand = (args: ProgramChoices, specificationShorthand: string) => {	
+	const shortSpec = specificationShorthand;
+    const colonPosition = shortSpec.indexOf(':');
+    const atPosition = shortSpec.indexOf('@') === -1 ? shortSpec.length : shortSpec.indexOf('@');	
+
+    let suite = '';
+    let endpointTitle = '';
+
+    if (colonPosition > 0) {
+        suite = shortSpec.substring(0, colonPosition);
+        endpointTitle = shortSpec.substring(colonPosition + 1, atPosition);
+    } else if (colonPosition === -1) {
+		suite = shortSpec.substring(0, atPosition);
+    } else {		
+        endpointTitle = shortSpec.substring(1, atPosition);
+    }
+
+    const viewport = parsedViewport(shortSpec.substring(atPosition + 1, shortSpec.length));
+
+    const updatedArgs = {
+		...args,
+		suite: args.suite || suite,
+        endpointTitle : args.endpointTitle || endpointTitle,
+        viewport : args.viewport || viewport,
+    }
+
+    return updatedArgs;
+}
+
+
+const programChoices: ProgramChoices = extractProgramChoices();
+process.env.PROGRAM_CHOICES = JSON.stringify(programChoices);
+
+const pathExists = (dirPath: string) => fs.existsSync(dirPath);
+
+const hasFiles = (dirPath: string) => fs.readdirSync(dirPath).length > 0;
 
 const removeDirIfEmpty = (dirPath: string) => {
-    if (pathExists(dirPath) && !hasFiles(dirPath)) {
-		fs.rm(dirPath, { recursive: true }, (err) => {
-			if (err) {
-				console.error(err);
-			}
-		});
-    }
+    if (!pathExists(dirPath) || hasFiles(dirPath)) {
+		return;
+	}
+
+	fs.rm(dirPath, { recursive: true }, (err) => {
+		if (err) console.error(err);
+	});
 }
 
-const hasFiles = (dirPath: string) => {
-	return fs.readdirSync(dirPath).length > 0;
-}
 
-const printColorText = (text: string, colorCode: string): void => {
+const printColorText = (text: string, colorCode: string) => {
 	console.log(`\x1b[${ colorCode }m${ text }\x1b[0m`);
 };
 
-const projectDir = process.cwd();
-process.env.PROJECT_DIR = projectDir;
+const projectRoot = process.cwd();
+const configPath = path.join(projectRoot, 'visreg.config.json');
+const visregConfig: ConfigurationSettings = pathExists(configPath) ? JSON.parse(fs.readFileSync(configPath, 'utf-8')) : {};
 
-const configPath = path.join(projectDir, 'visreg.config.json');
-const visregConfig = pathExists(configPath) ? JSON.parse(fs.readFileSync(configPath, 'utf-8')) : {};
-process.env.CYPRESS_SCREENSHOT_OPTIONS = visregConfig.screenshotOptions ? JSON.stringify(visregConfig.screenshotOptions) : '';
-process.env.CYPRESS_COMPARISON_OPTIONS = visregConfig.comparisonOptions ? JSON.stringify(visregConfig.comparisonOptions) : '';
+const { 
+	screenshotOptions,
+	comparisonOptions,
+	...conf
+} = visregConfig;
 
-if (pathExists(configPath)) {
-	printColorText(`\nUsing config file: ${configPath}`, '2');
+process.env.CYPRESS_VISREG_OPTIONS = JSON.stringify(conf)
+
+const snapshotSettings = {
+	failureThreshold: 0.02,
+	failureThresholdType: 'percent',
+	capture: 'fullPage',
+	disableTimersAndAnimations: false,
+	scrollDuration: 1000,
+	...screenshotOptions,
+	...comparisonOptions,
 }
 
-let selectedTargetName = '';
-let testTypeSlug = '';
+process.env.CYPRESS_SNAPSHOT_SETTINGS = JSON.stringify(snapshotSettings);
+
+if (pathExists(configPath)) {
+	printColorText(`\nLoaded config ${configPath}`, '2');
+}
+
 let approvedFiles: string[] = [];
 let rejectedFiles: string[] = [];
-let diffFiles = [];
-let autoCreatedSpecFile = false;
 
-const SUITE_SNAPS_DIR = () => path.join(projectDir, selectedTargetName, 'snapshots', 'snaps');
+const SUITE_SNAPS_DIR = () => path.join(projectRoot, programChoices.suite || '', 'snapshots', 'snaps');
 const DIFF_DIR = () => path.join(SUITE_SNAPS_DIR(), '__diff_output__');
 const BACKUP_DIFF_DIR = () => path.join(SUITE_SNAPS_DIR(), 'backup-diffs');
 const RECEIVED_DIR = () => path.join(SUITE_SNAPS_DIR(), '__received_output__');
@@ -58,41 +178,98 @@ const BACKUP_RECEIVED_DIR = () => path.join(SUITE_SNAPS_DIR(), 'backup-received'
 const typesList: TestType[] = [
 	{
 		name: 'Full',
-		slug: 'test-all',
+		slug: 'full-test',
 		description: 'Run a full visual regression test of all endpoints and viewports (previous diffs are deleted)'
 	},
 	{
 		name: 'Retest diffs only',
-		slug: 'retest-diffs-only',
+		slug: 'diffs-only',
 		description: 'Run only the tests which failed in the last run'
 	},
 	{
 		name: 'Assess diffs',
 		slug: 'assess-existing-diffs',
 		description: 'Assess the existing diffs (no tests are run)'
-	}
+	},
+	{
+		name: 'Lab',
+		slug: 'lab',
+		description: 'Run the tests in lab mode'
+	},
 ];
 
 // Print header
 printColorText('\n _  _  __  ____  ____  ____  ___ \n/ )( \\(  )/ ___)(  _ \\(  __)/ __)\n\\ \\/ / )( \\___ \\ )   / ) _)( (_ \\ \n \\__/ (__)(____/(__\\_)(____)\\___/\n', '36;1');
 
+const promptForEndpointTitle = async () => {
+	const rl = readline.createInterface({
+		input: process.stdin,
+		output: process.stdout
+	});
+
+	await new Promise<void>((resolve) => {
+		if (programChoices.endpointTitle) resolve();
+
+		rl.question('Enter endpoint title: ', (endpointTitle) => {
+			programChoices.endpointTitle = endpointTitle;
+			resolve();
+		});
+	})
+
+	rl.close();
+}
+
+
+const promptForViewport = async () => {
+	const rl = readline.createInterface({
+		input: process.stdin,
+		output: process.stdout
+	});
+
+	await new Promise<void>((resolve) => {
+		if (programChoices.viewport) resolve();
+
+		rl.question('Enter viewport (e.g. 1920,1080, or iphone-6): ', (viewport) => {
+			programChoices.viewport = parsedViewport(viewport);
+			resolve();
+		});
+	})
+	
+	rl.close();
+}
 
 // Main function
 const main = async (): Promise<void> => {
-	selectedTargetName = await selectTarget();
+	await selectSuite();
+	await selectType();
 
-	const type = await selectType();
-	testTypeSlug = type.slug;
+	const { testType } = programChoices;
+
+	if (testType === 'lab') {
+		if (!programChoices.viewport || !programChoices.endpointTitle) {
+			printColorText('Lab mode requires both endpoint title and viewport to be specified\n', '2');
+
+			await promptForEndpointTitle();
+			await promptForViewport();
+
+			if (!programChoices.viewport || !programChoices.endpointTitle) {
+				printColorText('Lab mode requires both endpoint title and viewport to be specified', '31');
+				return;
+			}
+		}
+
+		runCypressTest();
+	}
 	
-	if (testTypeSlug === 'test-all') {
+	if (testType === 'full-test') {
 		fullRegressionTest();
 	}
 
-	if (testTypeSlug === 'retest-diffs-only') {
+	if (testType === 'diffs-only') {
 		diffsOnly();
 	}
 
-	if (testTypeSlug === 'assess-existing-diffs') {
+	if (testType === 'assess-existing-diffs') {
 		assessExistingDiffs();
 	}
 };
@@ -105,18 +282,18 @@ const getDirectories = (source: string): string[] =>
 
 
 
-const selectTarget = async (): Promise<string> => {
-	let testDirectory = projectDir;
+const selectSuite = async () => {
+	let testDirectory = projectRoot;
 	let ignoreDirectories: string[] = [ 'node_modules' ];
 	
 	if (visregConfig.testDirectory) {
-		testDirectory = path.isAbsolute(visregConfig.testDirectory) ? visregConfig.testDirectory : path.resolve(projectDir, visregConfig.testDirectory);
+		testDirectory = path.isAbsolute(visregConfig.testDirectory) ? visregConfig.testDirectory : path.resolve(projectRoot, visregConfig.testDirectory);
 	}
 	if (visregConfig.ignoreDirectories) {
 		ignoreDirectories.push(...visregConfig.ignoreDirectories);
 	}
 
-	const targets: string[] = getDirectories(testDirectory)
+	const suites: string[] = getDirectories(testDirectory)
 		.filter(dirName => !ignoreDirectories.includes(dirName))
 		.filter(dirName => {
 			const fileName = 'snaps';
@@ -124,40 +301,48 @@ const selectTarget = async (): Promise<string> => {
 				fs.existsSync(path.join(testDirectory, dirName, fileName + '.js')) ||
 				fs.existsSync(path.join(testDirectory, dirName, fileName + '.ts'))
 			);
-		});
+		})
 
-	if (targets.length === 0) {
-		printColorText('No test targets found - see README', '31');
+	if (suites.length === 0) {
+		printColorText('No test suites found - see README', '31');
 		process.exit(1);
 	}
 
-	let selectedTargetName: string = "";
-	if (targets.length === 1) {
-		selectedTargetName = targets[ 0 ];
-	} else {
-		console.log('Select target:\n');
-		targets.forEach((target, index) => {
-			console.log(`${index + 1} ${target}`);
-		});
-
-		const rl = readline.createInterface({
-			input: process.stdin,
-			output: process.stdout
-		});
-
-		selectedTargetName = await new Promise((resolve) => {
-			rl.question('\nEnter the number of the target you want to select: ', (targetNum) => {
-				resolve(targets[ parseInt(targetNum) - 1 ]);
-			});
-		});
-
-		rl.close();
+	if (suites.length === 1) {
+		programChoices.suite = suites[ 0 ];
+		return;
 	}
 
-	return selectedTargetName;
+	if (programChoices.suite && suites.includes(programChoices.suite)) {
+		return;
+	}
+
+	console.log('Select target:\n');
+	suites.forEach((target, index) => {
+		console.log(`${index + 1} ${target}`);
+	});
+
+	const rl = readline.createInterface({
+		input: process.stdin,
+		output: process.stdout
+	});
+
+	await new Promise<void>((resolve) => {
+		rl.question('\nEnter the number of the target you want to select: ', (targetNum) => {
+			programChoices.suite = suites[ parseInt(targetNum) - 1 ];
+			resolve();
+		});
+	});
+
+	rl.close();
 };
 
-const selectType = async (): Promise<TestType> => {
+const selectType = async () => {
+	const specifiedType = typesList.find(type => type.slug === programChoices.testType);
+	if (specifiedType) {
+		return specifiedType.slug;
+	}
+	
 	console.log('Select type:\n');
 	typesList.forEach((type, index) => {
 		printColorText(`${index + 1} ${type.name}\x1b[2m - ${type.description}\x1b[0m`, '0');
@@ -168,75 +353,79 @@ const selectType = async (): Promise<TestType> => {
 		output: process.stdout
 	});
 
-	const selectedTest: TestType = await new Promise((resolve) => {
+	await new Promise<void>((resolve) => {
 		rl.question('\nEnter the number of the type you want to select: ', (id) => {
-			resolve(typesList[ parseInt(id) - 1 ]);
+			const slug = typesList[ parseInt(id) - 1 ].slug;
+			programChoices.testType = slug;
+			resolve();
 		});
 	});
 
 	rl.close();
-
-	return selectedTest;
 };
 
-const preparedSpecFile = () => {
-let specPath = path.join(projectDir, selectedTargetName, 'snaps.js');
-	
-	if (fs.existsSync(specPath)) {
-		return specPath;
+const getSpecPath = () => {
+	if (!programChoices.suite) {
+		return;
 	}
 
-	autoCreatedSpecFile = true;
-	const tsFilePath = path.join(projectDir, selectedTargetName, 'snaps.ts');
+	const specDir = path.join(projectRoot, programChoices.suite);
 
-	if (fs.existsSync(tsFilePath)) {
-		const source = fs.readFileSync(tsFilePath, 'utf8');
+	if (fs.existsSync(specDir)) {
+		return specDir;
+	}
 
-		const result = transpileModule(source, {
-			compilerOptions: { module: ModuleKind.CommonJS }
-		});
-
-		const specPath = path.join(projectDir, selectedTargetName, 'snaps.js');
-
-		if (pathExists(specPath)) {
-			fs.unlinkSync(specPath);
-		}
-
-		fs.writeFileSync(specPath, result.outputText);
-		return specPath;
+	const files = fs.readdirSync(specDir);
+	const snapsFile = files.find(file => file.startsWith('snaps'));
+	if (snapsFile) {
+		return path.join(specDir, snapsFile);
 	}
 	
-	printColorText('No test targets found - see README', '31');
+	printColorText('No test suites found - see README', '31');
 	process.exit(1);
 };
 
-const runCypressTest = async (diffListString?: string): Promise<void> => {
-	printColorText(`\nStarting Cypress\n`, '2');
+const isSpecifiedTest = () => !!(programChoices.viewport || programChoices.endpointTitle);
+
+const runCypressTest = async (diffList: string[] = []): Promise<void> => {
+	const labModeOn = programChoices.testType === 'lab';
+
+	printColorText(`\nStarting Cypress ${labModeOn ? 'in lab mode' : '' }\n`, '2');
+
     return new Promise((resolve, reject) => {
-		const specPath = preparedSpecFile();
-		const gui = process.argv.includes('--gui');
-
-		let encodedDiff = '';
-		if (diffListString) {
-			encodedDiff = Buffer.from(diffListString).toString('base64');
-		}
+		const specPath = getSpecPath();
 		
-		const envs = [
-			`testType=${testTypeSlug}`,
-			'failOnSnapshotDiff=false',
-			`target=${selectedTargetName}`,
-			`diffListString=${diffListString ? encodedDiff : 'false'}`,
-			`projectDir=${projectDir}`,
-		];
+		const testSettings = {
+			testType: programChoices.testType,
+			suite: programChoices.suite,
+			diffList,
+			mytest: ['test1', 'test2'],
+			viewport: programChoices.viewport,
+			endpointTitle: programChoices.endpointTitle,
+		}
 
-		let cypressCommand: string
-		if (gui) {
-			printColorText('Running in GUI mode - Assessment of eventual diffs must be done manually', '2')
-			cypressCommand = `npx cypress open --env ${envs.join(',')}`;
+		const nonOverridableSettings: NonOverridableSettings = {
+			projectRoot,
+			useRelativeSnapshotsDir: true,
+			storeReceivedOnFailure: true,
+			snapFilenameExtension: labModeOn ? '.lab' : '.base',
+			customSnapshotsDir: labModeOn ? 'lab' : '',
+		};
+
+		// process.env.CYPRESS_debugSnapshots = 'true';
+		process.env.CYPRESS_failOnSnapshotDiff = 'false';
+		process.env.CYPRESS_updateSnapshots = labModeOn ? 'true' : 'false';
+		process.env.CYPRESS_TEST_SETTINGS = Buffer.from(JSON.stringify(testSettings)).toString('base64');
+		process.env.CYPRESS_NON_OVERRIDABLE_SETTINGS = JSON.stringify(nonOverridableSettings);		
+
+		process.chdir(__dirname); 
+		let cypressCommand: string		
+		
+		if (labModeOn && programChoices.gui) {
+			cypressCommand = 'npx cypress open';
+			
 		} else {
-			process.chdir(__dirname); // __dirname is the directory where the current file is located
-			// cypressCommand = `../node_modules/.bin/cypress run --spec "${specPath}" --env ${envs.join(',')} `; // when run as a locally-installed module
-			cypressCommand = `npx cypress run --spec "${specPath}" --env ${envs.join(',')} `; // when run as an npm package
+			cypressCommand = `npx cypress run --spec "${specPath}"`;
 		}
 
 		const parts = cypressCommand.split(' ');
@@ -256,11 +445,21 @@ const runCypressTest = async (diffListString?: string): Promise<void> => {
         child.on('close', (code) => {
 			let msg = '';
 
+			if (isSpecifiedTest() && code === 0) {
+				/**
+				 * Restore the files which were not specified in the test. 
+				 * Why not just omit them from the backup in the first place? Because we need to remove 
+				 * all the files from diff and received folders before running the test (so that cypress 
+				 * can do clean comparisons).
+				 */
+				const unaffectedFiles = (fileName: string) => !includedInSpecification(fileName);
+				restoreFromBackup(unaffectedFiles);
+			}
+
             if (code !== 0) {
 				restoreFromBackup();
 				let msg = `Child process exited with code ${code}.`;
-				msg += diffListString ? `\nDiffListString: ${diffListString}.` : '';
-				msg += gui ? `\nIf you are running the tests in GUI mode, you must manually assess the diffs.` : '';
+				msg += diffList ? `\nDiff list: ${diffList.join()}.` : '';
             }
 
 			cleanUp();
@@ -271,37 +470,61 @@ const runCypressTest = async (diffListString?: string): Promise<void> => {
 
 
 const cleanUp = () => {
-	if (autoCreatedSpecFile) {
-		fs.unlinkSync(path.join(projectDir, selectedTargetName, 'snaps.js'));
-	}
-
-	pathExists(BACKUP_DIFF_DIR()) && fs.rmdirSync(BACKUP_DIFF_DIR(), { recursive: true });
-	pathExists(BACKUP_RECEIVED_DIR()) && fs.rmdirSync(BACKUP_RECEIVED_DIR(), { recursive: true });
+	pathExists(BACKUP_DIFF_DIR()) && fs.rmSync(BACKUP_DIFF_DIR(), { recursive: true });
+	pathExists(BACKUP_RECEIVED_DIR()) && fs.rmSync(BACKUP_RECEIVED_DIR(), { recursive: true });
 
 	removeDirIfEmpty(DIFF_DIR());
 	removeDirIfEmpty(RECEIVED_DIR());
 }
 
-const restoreFromBackup = () => {
+const includedInSpecification = (fileName: string) => {
+	if (!programChoices.viewport && !programChoices.endpointTitle) {
+		return true;
+	}
+
+	let viewportScreeningPassed = true
+	let endpointScreeningPassed = true
+
+	if (programChoices.viewport) {
+		const viewportString = programChoices.viewport?.toString();
+		viewportScreeningPassed = fileName.includes(viewportString);
+	}
+
+	if (programChoices.endpointTitle) {
+		endpointScreeningPassed = fileName.includes(programChoices.endpointTitle);
+	}	
+	
+	return viewportScreeningPassed && endpointScreeningPassed;
+}
+
+const restoreFromBackup = (restoreCondition: (fileName: string) => boolean = () => true) => {
 	const backupDiffDir = BACKUP_DIFF_DIR();
 	const backupReceivedDir = BACKUP_RECEIVED_DIR();
 
 	if (pathExists(backupDiffDir)) {
-		const files = fs.readdirSync(backupDiffDir);
-		files.forEach(file => {
-			fs.renameSync(path.join(backupDiffDir, file), path.join(DIFF_DIR(), file));
-		});
+		fs.readdirSync(backupDiffDir)
+			.filter(restoreCondition)
+			.forEach(fileName => {
+				// restore the files which were not specified in the test
+				fs.renameSync(path.join(backupDiffDir, fileName), path.join(DIFF_DIR(), fileName));
+			});
 	}
 
 	if (pathExists(backupReceivedDir)) {
-		const files = fs.readdirSync(backupReceivedDir);
-		files.forEach(file => {
-			fs.renameSync(path.join(backupReceivedDir, file), path.join(RECEIVED_DIR(), file));
-		});
+		fs.readdirSync(backupReceivedDir)
+			.filter(restoreCondition)
+			.forEach(fileName => {
+				// restore the files which were not specified in the test
+				fs.renameSync(path.join(backupReceivedDir, fileName), path.join(RECEIVED_DIR(), fileName));
+			});
 	}
 }
 
 const exitIfNoDIffs = () => {
+	if (programChoices.testType === 'lab') {
+		process.exit();
+	}
+	
 	if (!pathExists(DIFF_DIR()) || !hasFiles(DIFF_DIR())) {
 		printColorText('🎉  Visual regression passed! (No diffs found)', '32');
 		process.exit();
@@ -318,10 +541,10 @@ const fullRegressionTest = async () => {
 const diffsOnly = async () => {
 	exitIfNoDIffs();
 
-    const diffListString = createTemporaryDiffList();
+    const diffList = createTemporaryDiffList();
     remove_diffs();
     remove_received();
-	await runCypressTest(diffListString);
+	await runCypressTest(diffList);
     assessExistingDiffImages();
 }
 
@@ -363,12 +586,8 @@ const remove_received = () => {
 }
 
 const createTemporaryDiffList = () => {
-	if (!pathExists(DIFF_DIR())) {
-		return '';
-	}
-
-	diffFiles = fs.readdirSync(DIFF_DIR()).filter(file => file.endsWith('.diff.png'));
-	return diffFiles.join(delimiter);
+	if (!pathExists(DIFF_DIR())) return [];
+	return fs.readdirSync(DIFF_DIR()).filter(file => file.endsWith('.diff.png'));
 }
 
 
@@ -419,7 +638,6 @@ const processImage = async (imageFile: string, index: number, total: number) => 
 
         if (answer === 'approve') {
             approvedFiles.push(imageName);
-			// printColorText('Approved', '32')
 			console.log('✅');
 
             const baselineName = `${imageName}.base.png`;
@@ -434,8 +652,6 @@ const processImage = async (imageFile: string, index: number, total: number) => 
             openImage(imageFile);
         } else if (answer === 'reject') {
             rejectedFiles.push(imageName);
-			
-			// printColorText('Rejected', '33');
 			console.log('❌');
 			
             break;
@@ -450,9 +666,24 @@ const assessExistingDiffImages = async () => {
 	console.log('\n\n');
 
 	exitIfNoDIffs();
-	printColorText(`🚨  Detected ${fs.readdirSync(DIFF_DIR()).length} diffs, opening preview \x1b[2m- takes a couple of seconds\x1b[0m\n\n`, '33');
 
-    const files = fs.readdirSync(DIFF_DIR()).filter(file => file.endsWith('.diff.png'));
+	let files = fs.readdirSync(DIFF_DIR())
+		.filter(file => {
+			if (isSpecifiedTest()) {
+				return includedInSpecification(file)
+			}
+
+			return true;
+		})
+		.filter(file => file.endsWith('.diff.png'));
+
+	if (files.length === 0) {
+		printColorText('🎉  Visual regression passed! (No diffs found)', '32');
+		process.exit();
+	}
+
+	printColorText(`🚨 Detected ${files.length} diffs, opening preview \x1b[2m- takes a couple of seconds\x1b[0m\n\n`, '33');
+		
 
 	for (const [index, file] of files.entries()) {
 		await processImage(file, index, files.length);
@@ -495,8 +726,13 @@ const assessExistingDiffImages = async () => {
 }
 
 process.on('SIGINT', () => {
+	restoreFromBackup();
+	cleanUp();
     process.stdin.removeAllListeners('keypress');
+
     process.exit();
 });
 
 main();
+
+
