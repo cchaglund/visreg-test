@@ -1,44 +1,60 @@
-# Visreg-test
+`visreg-test` enhances visual regression testing with quick setup and user-friendly yet powerful test writing, simplifying snapshot management and comparison to ensure UI consistency with minimal effort.
 
-A visual regression testing solution that offers an easy setup with simple yet powerful customisation options, wrapped up in a convenient CLI runner to make assessing and accepting/rejecting diffs a breeze.
+### Features
+- Create baseline snapshots or compare to existing ones
+- Automated assessment flow:
+	- Diff is opened in an image previewer
+	- Accept/reject the changes from the CLI
+	- The next differing snapshot is opened, and so on
+- Minimal setup - [get started](#setup) in minutes
+- Multiple [test modes](#running-tests)
+- ["Lab mode"](#lab-mode) - for visualising and developing your tests in the Cypress GUI
+- [Simple API](#writing-tests) - write your tests in a single file
+- [Customise](#optional-configuration) your tests, enabling you to do things like:
+  - specify your viewports
+  - capture the full page or just a portion of it
+  - take snapshots of specific elements
+  - hide certain elements
+  - manipulate the page
+  - format the url
+  - and more...
 
-# What it does
-- Run `npx visreg-test` to start the **terminal-based** test runner.
-- **UI** to select which test *suite* and *type* of test to run.
-- Take **snapshots** and *compare* them to existing baseline snapshots.
-- **Assess** any diffs, which will be *automatically* opened in an image previewer - accept/reject them from the CLI.
+<br>
 
+# Table of contents
 
-## Quick links
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
+- [About](#about)
 - [Setup](#setup)
     - [Typescript](#typescript)
     - [Folder structure](#folder-structure)
 - [Writing tests](#writing-tests)
     - [Minimal example](#minimal-example)
-  - [Test file (full example)](#test-file-full-example)
-- [Running the tests](#running-the-tests)
+  - [Full example](#full-example)
+- [Running tests](#running-tests)
   - [Updated folder structure](#updated-folder-structure)
   - [Flags](#flags)
-    - [Specify what to test:](#specify-what-to-test)
-    - [Specify type to run:](#specify-type-to-run)
-      - [More shorthand examples:](#more-shorthand-examples)
   - [Lab mode](#lab-mode)
 - [Contribute](#contribute)
-  - [Setup dev environment](#setup-dev-environment)
-  - [Running dev mode](#running-dev-mode)
-- [Configuration](#configuration)
-    - [Test config | TestConfig | (*required*)](#test-config--testconfig--required)
-    - [OnVisitFunction passed props](#onvisitfunction-passed-props)
-    - [Endpoint config | Endpoint | (*required*)](#endpoint-config--endpoint--required)
-    - [Module configuration | ConfigurationSettings | (*optional*)](#module-configuration--configurationsettings--optional)
-    - [Screenshot options | CypressScreenshotOptions | (*optional*)](#screenshot-options--cypressscreenshotoptions--optional)
-    - [Comparison options | JestMatchImageSnapshotOptions | (*optional*)](#comparison-options--jestmatchimagesnapshotoptions--optional)
+- [Optional Configuration](#optional-configuration)
 - [Notes](#notes)
+- [Credits](#credits)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<br>
+
+# About
+
+Other solutions often stumble in a few important ways:
+
+- Too complex and fragile, requiring a lot of setup and configuration
+- No granular control - run all the tests or none at all.
+- Assumes that all diffs are bad - handling of acceptable diffs, i.e. updating a baseline, usually entails running the test again with a flag which updates *all* snapshots, or the user manually has to delete the old baseline and replace it with the diffing file - if the diffing result, not just the diff between them, was even saved in the first place. This is tedious and error-prone.
+
+`visreg-test` aims to solve these problems by providing a simple yet powerful API and automating the process of evaluating and approving changes, allowing you to focus on the important part - guarding your UI against regressions.
 
 
 
@@ -71,15 +87,13 @@ touch my-test-suite/snaps.js # or snaps.ts if using typescript
 
 ### Typescript 
 
-To get full typescript support:
-
-**Install typescript:**
+For full typescript support, install it:
 
 ```bash
 npm install --save-dev typescript
 ```
 
-**Add a `tsconfig.json` file to the root of your project:**
+And add a `tsconfig.json` file to the root of your project:
 
 ```json
 {
@@ -96,7 +110,6 @@ npm install --save-dev typescript
 At this point your directory should look something like the following:
     
 ```
-
 my-project
 ├── node_modules
 ├── package.json
@@ -104,7 +117,6 @@ my-project
 ├── tsconfig.json (if using typescript)
 └── test-suite
    └── snaps.js (or snaps.ts)
-
 ```
 
 <br>
@@ -144,6 +156,7 @@ run({
 import { run, VisregViewport, Endpoint, TestConfig } from 'visreg-test';
 
 const baseUrl: string = 'https://developer.mozilla.org';
+
 const endpoints: Endpoint[] = [ {
    title: 'Start',
    path: '/',
@@ -161,14 +174,13 @@ run(config);
 </details>
 <br>
 
-<!-- For more information on the options available, see [Configuration options](#configuration-options). -->
 
 **That's it!**
 
-You can now [run your first test](#running-the-tests).
+You can now [run your first test](#running-tests).
 
 
-## Test file (full example)
+## Full example
 
 Realistically, you will probably want to customise the tests a bit more.
 
@@ -184,9 +196,9 @@ But you can hook into some functions and/or add some configuration options, enab
 - hide certain elements before taking snapshots (e.g. highly dynamic parts of the page which give false positives)
 - take snapshots of specific elements (allows for reliable component testing)
 - manipulate the page before taking snapshots (e.g. clicking away cookie consent banners or expanding sections, navigation, etc.)
-- and [more](#configuration)...
+- and [more](#optional-configuration)...
 
-Here's a slightly more realistic example, expanding on the minimal example above:
+Here's a slightly more realistic example, expanding on the minimal example above (comments explain the new bits):
 
 <details open>
 <summary>JavaScript</summary>
@@ -206,7 +218,7 @@ const endpoints = [
    {
       title: 'Start',
       path: '/',
-      blackout: [ '#sidebar', '.my-selector', 'footer' ], // Blackout elements from the snapshot, useful for elements that change frequently and are not relevant to the test.
+      blackout: [ '#sidebar', '.my-selector', 'footer' ], // Blackout elements from the snapshot
       onEndpointVisit: (cy, cypress) => {
          // Place to manipulate the page specified in the endpoint before taking the snapshot.
          cy.get('button[id="expand-section"]').click();
@@ -225,12 +237,12 @@ const endpoints = [
 
 
 const formatUrl = (path) => {
-   // Format to the url before a snapshot is taken, e.g. to add query params to the url.
+   // Format to the url before a snapshot is taken
    return [ baseUrl, path, '?noexternal' ].join('');
 };
 
 const onPageVisit = (cy, cypress) => {
-   // Code here will run when cypress has loaded the page but before it starts taking snapshots. Useful to prepare the page, e.g. by clicking to bypass cookie banners or hiding certain elements.
+   // Code here will run when cypress has loaded the page but before it starts taking snapshots
    cy.get('header').invoke('css', 'opacity', 0);
    cy.get('body').invoke('css', 'height', 'auto');
 };
@@ -268,7 +280,7 @@ const endpoints: Endpoint[] = [
    {
       title: 'Start',
       path: '/',
-      blackout: [ '#sidebar', '.my-selector', 'footer' ], // Blackout elements from the snapshot, useful for elements that change frequently and are not relevant to the test.
+      blackout: [ '#sidebar', '.my-selector', 'footer' ], // Blackout elements from the snapshot
       onEndpointVisit: (cy: cy, cypress: Cypress) => {
          // Place to manipulate the page specified in the endpoint before taking the snapshot.
          cy.get('button[id="expand-section"]').click();
@@ -286,12 +298,12 @@ const endpoints: Endpoint[] = [
 ];
 
 const formatUrl: FormatUrl = (path) => {
-   // Format to the url before a snapshot is taken, e.g. to add query params to the url.
+   // Format to the url before a snapshot is taken
    return [ baseUrl, path, '?noexternal' ].join('');
 };
 
 const onPageVisit: OnPageVisit = (cy: cy, cypress: Cypress) => {
-   // Code here will run when cypress has loaded the page but before it starts taking snapshots. Useful to prepare the page, e.g. by clicking to bypass cookie banners or hiding certain elements.
+   // Code here will run when cypress has loaded the page but before it starts taking snapshots
    cy.get('header').invoke('css', 'opacity', 0);
    cy.get('body').invoke('css', 'height', 'auto');
 };
@@ -313,12 +325,22 @@ run(options);
 </details>
 <br>
 
-Many more options are available, see [Configuration options](#configuration-options) for more information.
+Many more options are available, see [Configuration](#optional-configuration) for more information.
 
 To create another test suite, simply create a new directory and add a `snaps` file to it (`snaps.js or snaps.ts`). When you run visreg-test you will be prompted to select which suite to run.
 
 
-# Running the tests
+# Running tests
+
+
+There are 4 **types** of test:
+
+- **Full** - run all tests in a suite and generate baseline snapshots or compare to existing baseline snapshots (previous diffs are deleted)
+- **Retest diffs only** - only run the tests which diffed and were rejected in the last run
+- **Assess diffs** - assess existing diffs (no tests are run)
+- **Lab** - visualise and develop your tests in the Cypress GUI, isolated from the rest of your snapshots and with hot reloading.
+
+To run the tests:
 
 - Run `npx visreg-test` from your project
 - Select a suite 
@@ -333,7 +355,6 @@ To create another test suite, simply create a new directory and add a `snaps` fi
 After running the tests your project will look something like this:
 
 ```
-
 my-project
 ├── node_modules
 ├── package.json
@@ -349,28 +370,15 @@ my-project
          ├── Start @ iphone-x.base.png
          ├── Start @ samsung-s10.base.png
          └── Start @ 960,540.base.png
-
-
 ```
 
-
-There are 4 **types** of test:
-
-- **Full suite** - run all tests in a suite and generate baseline snapshots or compare to existing baseline snapshots
-- **Retest diffs** - only run the tests which diffed and were rejected in the last run
-- **Assess diffs** - assess existing diffs (no tests are run)
-- **Lab** - run a single, specific test in isolation from the rest of your snapshots within the Cypress GUI
-
-
-
-<br>
 
 
 ## Flags
 
 You can pass flags in the command line to run specific tests and even skip the CLI prompts completely:
 
-### Specify what to test:
+**Specify what to test:**
 
 ```bash
 -s, --suite <suite name> # (i.e. directory)
@@ -380,7 +388,7 @@ You can pass flags in the command line to run specific tests and even skip the C
 
 Specifications will be made in the context of the test type you're running.
 
-### Specify type to run:
+**Specify type to run:**
 
 ```bash
 -f, --full-test
@@ -403,7 +411,8 @@ You can also pass the specifications to the type flag as an argument, where the 
 npx visreg-test -d my-test-suite@samsung-s10
 ```
 
-#### More shorthand examples:
+**More shorthand examples:**
+
 ```bash
 npx visreg-test -d my-test-suite # run the diffs-only tests in the "my-test-suite" suite
 npx visreg-test -f my-test-suite:Start # only test the Start endpoint. 
@@ -413,11 +422,9 @@ npx visreg-test -lab :Start@samsung-s10 # isolated test for Start endpointwith t
 ```
 
 
-<br>
-
 ## Lab mode
 
-Develop and try out your code before it's used in a full test run.
+A way to develop and try out your code before it's used in a real test.
 
 - See the test in real-time in the Cypress GUI
 - Hot reloading for quick iteration
@@ -440,7 +447,7 @@ npm visreg-test -lab my-test-suite:Start@iphone-6 -no-gui
 
 Want to contribute? Great! Here's how to get started:
 
-## Setup dev environment
+**Setup dev environment**
 
 - Clone this repo and run `npm install` to install the dependencies, e.g. into a directory called `visreg/repo`.
 - Create a directory for testing the module elsewhere (e.g. `visreg/dev-testing-grounds`) and set up the tests according to the instructions above.
@@ -448,7 +455,9 @@ Want to contribute? Great! Here's how to get started:
 - From `visreg/repo` run `npm run create-symlink -- [Absolute path]` where the absolute path should be your newly created testing directory (i.e. using the examples above it should be something like `npm run create-symlink -- /Users/.../dev-testing-grounds`). Please note that the path should not end with a slash, because we append some stuff to it.
 - This will create a symlink between the `dist` directory in the repo and the `node_modules/visreg-test` directory in your testing directory.
 
-## Running dev mode
+<br>
+
+**Running dev mode**
 
 - From `visreg/repo` run `npm run dev` to start watching the files and compiling them to the `dist` directory, which will be mirrored to your testing directory if you followed the dev setup. Any changes you make will automatically be reflected in your testing directory visreg-test package, allowing you to test your changes to the package in real time without having to publish and reinstall it all of the time.
 - From your testing directory, run the tests. Normally you would use `npx visreg-test` to do so, but due to the symlinking npx doesn't work (you'll get a "permission denied"), so you need to explicityly run it like so, instead: `node ./node_modules/.bin/visreg-test`.
@@ -460,22 +469,27 @@ Want to contribute? Great! Here's how to get started:
 
 <br>
 
-# Configuration
+# Optional Configuration
+
+Reference the [typescript](#full-example) test examples for what goes where.
+
+Default values are as follows:
+
+```javascript
+capture: 'fullPage',
+viewports: [ 'iphone-6', 'ipad-2', [ 1920, 1080 ] ],
+failureThresholdType: 'percent',
+failureThreshold: 0.02,
+disableTimersAndAnimations: false,
+scrollDuration: 1000,
+```
+
+
 
 <br>
 
-Defaults:
 
-```javascript
-{
-  capture: 'fullPage',
-  viewports: ['iphone-6', 'ipad-2', [1920, 1080]],
-  failureThresholdType: 'percent',
-  failureThreshold: 0.02,
-}
-```
-
-### Test config | TestConfig | (*required*)
+**Test config | TestConfig | (*required*)**
 
 | Property        | Description                                                                                                 | Example                                                                                       | Type |
 |-----------------|-------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|---------|
@@ -487,8 +501,9 @@ Defaults:
 | onPageVisit     | Code here will run when cypress has loaded the page but before it starts taking snapshots. Useful to prepare the page, e.g. by clicking to bypass cookie banners or hiding certain elements. See https://docs.cypress.io/api/table-of-contents#Commands. | `() => { cy.get('button').click() }` | `OnVisitFunction`, *optional* |
 
 <br>
+<br>
 
-### OnVisitFunction passed props
+**OnVisitFunction passed props**
 
 | Property        | Description                                                                                                 | Example                                                                                       | Type |
 |-----------------|-------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|---------|
@@ -497,8 +512,9 @@ Defaults:
 
 
 <br>
+<br>
 
-### Endpoint config | Endpoint | (*required*)
+**Endpoint config | Endpoint | (*required*)**
 
 | Property        | Description                                                                                                 | Example                                                                                       | Type |
 |-----------------|-------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|---------|
@@ -510,8 +526,9 @@ Defaults:
 | comparisonOptions | The properties of JestMatchImageSnapshotOptions of the module configuration are all applicable here | `customDiffConfig: { threshold: 0.1 }`                                                            | `...JestMatchImageSnapshotOptions`, *optional* |
 
 <br>
+<br>
 
-### Module configuration | ConfigurationSettings | (*optional*)
+**Module configuration | ConfigurationSettings | (*optional*)**
 
 You can configure certain settings with a `visreg.config.json` file placed in the root of your project.
 
@@ -527,8 +544,9 @@ You can configure certain settings with a `visreg.config.json` file placed in th
 | comparisonOptions | Options to pass to the Jest comparison engine when comparing screenshots. | `JestMatchImageSnapshotOptions` |
 
 <br>
+<br>
 
-### Screenshot options | CypressScreenshotOptions | (*optional*)
+**Screenshot options | CypressScreenshotOptions | (*optional*)**
 
 Reference:
 - https://docs.cypress.io/api/cypress-api/screenshot-api#Arguments
@@ -548,8 +566,9 @@ Reference:
 | timeouts | Time to wait for .screenshot() to resolve before timing out. See [cypress timeouts options](https://docs.cypress.io/guides/references/configuration.html#Timeouts)  | `{ defaultCommandTimeout?: 4000, execTimeout?: 60000, taskTimeout?: 60000, pageLoadTimeout?: 60000, requestTimeout?: 5000, responseTimeout?: 30000;	}` |
 
 <br>
+<br>
 
-### Comparison options | JestMatchImageSnapshotOptions | (*optional*)
+**Comparison options | JestMatchImageSnapshotOptions | (*optional*)**
 
 Reference:
 - https://github.com/americanexpress/jest-image-snapshot#%EF%B8%8F-api
@@ -574,11 +593,13 @@ Reference:
 # Notes
 - If you only have one test suite it will be selected automatically.
 - Green checks in the UI indicate that the test ran successfully, not that no diffs were detected. Diffs will be opened for preview at the end of the test run.
-- High-resolution, full-page, long pages take more time to process. Consider increasing the timeouts in the visreg.config file if you're timing out.
+- High-resolution, full-page, long pages take more time to process. Consider increasing the timeouts in the `visreg.config` file if you're timing out.
 - SSIM comparison requires more memory than pixelmatch, so if you're running into memory issues, try using pixelmatch instead (which is the default).
 - Logging: use cy.log() to log to the console. This will be displayed in the terminal when running the tests. Typescript will complain if you're passing an object and not a string, but you can cast it to "any" to get around that.
-- If the result of the snapshot isn't what you were expecting, it may be due to animations and timeouts not being allowed to run. Try setting disableTimersAndAnimations to false.
 - Does not work on Windows (yet). Untested on Linux (currently)
 - If you get an error: `"The 'files' list in config file 'tsconfig.json' is empty"` it means you're attempting to run tests written in typescript but haven't followed the instructions above to set up typescript support.
 - This module will create, move, and delete files and directories in your test suite directories. It will not touch any files outside of the test suite directories.
-- Built upon [cypress](https://www.cypress.io/), [local-cypress](https://www.npmjs.com/package/local-cypress), and [cypress-image-snapshot](https://github.com/simonsmith/cypress-image-snapshot).
+
+# Credits
+
+`visreg-test` utilizes [Cypress](https://www.cypress.io/) and [cypress-image-snapshot](https://www.npmjs.com/package/@simonsmith/cypress-image-snapshot) for the heavy lifting and image diffing, encapsulating them in a simple API and automating the process of evaluating and approving changes.
