@@ -71,8 +71,14 @@ const takeSnaps = (props: TestConfig, viewport: VisregViewport, endpoint: Endpoi
 };
 
 const limitMessage = (endpoints: Endpoint[], viewports: VisregViewport[], endpointTitle: string | undefined, viewport: VisregViewport | undefined) => {
-    const ep = endpointTitle && endpoints.length === 1 && endpoints[0].title === endpointTitle ? endpointTitle : '';
-    const vp = viewport && viewports.length === 1 && JSON.stringify(viewports[0]) === JSON.stringify(viewport) ? viewport : '';
+    const ep = endpointTitle && endpoints.length === 1 && matchingEndpointTitle(endpoints[0].title, endpointTitle)
+        ? endpoints[0].title
+        : '';
+
+    const vp = viewport && viewports.length === 1 && JSON.stringify(viewports[0]) === JSON.stringify(viewport)
+        ? viewport
+        : '';
+        
     const epText = ep ? `"${ep}" ` : '';
     const vpText = vp ? `@ ${vp}` : '';
     const limitText = epText || vpText ? ` - limiting test to ${epText}${vpText}` : '';
@@ -99,9 +105,16 @@ const allowedViewports = (viewports: VisregViewport[], viewport: VisregViewport 
     return [match]
 }
 
+const matchingEndpointTitle = (endpoint1: string | undefined, endpoint2: string | undefined) => {
+    if (!endpoint1 || !endpoint2) return '';
+    const normalized1 = endpoint1.toLowerCase().replace(/ /g, '-');
+    const normalized2 = endpoint2.toLowerCase().replace(/ /g, '-');
+    return normalized1 === normalized2;
+}
+
 const allowedEndpoints = (endpoints: Endpoint[], endpointTitle: string | undefined) => {
     if (!endpointTitle) return endpoints;
-    const match = endpoints.find(ep => ep.title === endpointTitle);
+    const match = endpoints.find(ep => matchingEndpointTitle(endpointTitle, ep.title));
     if (!match) return [];
     
     return [match]
@@ -144,7 +157,7 @@ export const runTest = (props: TestConfig): void => {
                  * Lab tests require a viewport and endpoint to be specified.
                  * Viewport can be anything in lab mode, but endpoint must still be a valid endpoint.
                  */
-                const validEndpoint = endpointsToTest.find(ep => ep.title === endpointTitle);
+                const validEndpoint = endpointsToTest.find(ep => matchingEndpointTitle(ep.title, endpointTitle));
                 if (!viewport || !validEndpoint) return;
                 takeSnaps(props, viewport, validEndpoint)
             });
@@ -171,7 +184,7 @@ export const runTest = (props: TestConfig): void => {
                     const { viewportSize, title }: SnapConfig = config;
 
                     const viewport = viewportsToTest.includes(viewportSize) ? viewportSize : undefined;
-                    const endpoint = endpointsToTest.find(ep => ep.title === title);
+                    const endpoint = endpointsToTest.find(ep => matchingEndpointTitle(ep.title, title));
 
                     if (viewport && endpoint) {
                         takeSnaps(props, viewportSize, endpoint);

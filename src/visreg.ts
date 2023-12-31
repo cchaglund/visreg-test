@@ -317,9 +317,9 @@ const selectSuite = async () => {
 		return;
 	}
 
-	console.log('Select target:\n');
-	suites.forEach((target, index) => {
-		console.log(`${index + 1} ${target}`);
+	console.log('Suites:\n');
+	suites.forEach((suite, index) => {
+		console.log(`${index + 1} ${suite}`);
 	});
 
 	const rl = readline.createInterface({
@@ -328,7 +328,7 @@ const selectSuite = async () => {
 	});
 
 	await new Promise<void>((resolve) => {
-		rl.question('\nEnter the number of the target you want to select: ', (targetNum) => {
+		rl.question('\nEnter number of suite: ', (targetNum) => {
 			programChoices.suite = suites[ parseInt(targetNum) - 1 ];
 			resolve();
 		});
@@ -343,7 +343,7 @@ const selectType = async () => {
 		return specifiedType.slug;
 	}
 	
-	console.log('Select type:\n');
+	console.log('Types of test:\n');
 	typesList.forEach((type, index) => {
 		printColorText(`${index + 1} ${type.name}\x1b[2m - ${type.description}\x1b[0m`, '0');
 	});
@@ -354,7 +354,7 @@ const selectType = async () => {
 	});
 
 	await new Promise<void>((resolve) => {
-		rl.question('\nEnter the number of the type you want to select: ', (id) => {
+		rl.question('\nEnter number of type: ', (id) => {
 			const slug = typesList[ parseInt(id) - 1 ].slug;
 			programChoices.testType = slug;
 			resolve();
@@ -399,7 +399,6 @@ const runCypressTest = async (diffList: string[] = []): Promise<void> => {
 			testType: programChoices.testType,
 			suite: programChoices.suite,
 			diffList,
-			mytest: ['test1', 'test2'],
 			viewport: programChoices.viewport,
 			endpointTitle: programChoices.endpointTitle,
 		}

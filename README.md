@@ -26,6 +26,7 @@
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
+- [Table of contents](#table-of-contents)
 - [About](#about)
 - [Setup](#setup)
     - [Typescript](#typescript)
@@ -382,7 +383,7 @@ You can pass flags in the command line to run specific tests and even skip the C
 
 ```bash
 -s, --suite <suite name> # (i.e. directory)
--e, --endpoint-title <endpoint title>
+-e, --endpoint-title <endpoint title> # case insensitive, spaces should be replaced with dashes
 -v, --viewport <viewport>
 ```
 
@@ -415,10 +416,10 @@ npx visreg-test -d my-test-suite@samsung-s10
 
 ```bash
 npx visreg-test -d my-test-suite # run the diffs-only tests in the "my-test-suite" suite
-npx visreg-test -f my-test-suite:Start # only test the Start endpoint. 
-npx visreg-test -f :Start # test the Start endpoint in all viewports (If you only have one suite, you can omit the suite name)
-npx visreg-test -a :Start@samsung-s10 # assess only the Start endpoint with the samsung-s10 viewport
-npx visreg-test -lab :Start@samsung-s10 # isolated test for Start endpointwith the samsung-s10 viewport
+npx visreg-test -f my-test-suite:Home # only test the Home endpoint. 
+npx visreg-test -f :Home # test the Home endpoint in all viewports (If you only have one suite, you can omit the suite name)
+npx visreg-test -a :Home@samsung-s10 # assess only the Home endpoint with the samsung-s10 viewport
+npx visreg-test -lab :getting-started@samsung-s10 # isolated test for "Getting started" endpoint with the samsung-s10 viewport
 ```
 
 

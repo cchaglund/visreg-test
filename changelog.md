@@ -1,3 +1,6 @@
+2.1.5
+- Now handles endpoints titles with spaces in them
+
 2.1.0
 - "Lab mode" - utilize the Cypress GUI and develop your tests isolated from the rest of your snapshots
 - Full typescript support

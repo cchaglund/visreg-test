@@ -17,8 +17,11 @@ Cypress.Commands.add('prepareForCapture', (props: PrepareForCaptureSettings) => 
     }     
 
     cy.window().then(win => {
+        // We scroll a little even if capture is set to viewport, to trigger any lazy loading/interscetion observer.
         cy.scrollTo(0, win.innerHeight, { duration: duration / 2, ensureScrollable: false });
         cy.scrollTo('top', { duration: duration / 2, ensureScrollable: false });
+        // Pause at top to allow scrollbar to disappear if it was present.
+        cy.wait(100);
     });
 });
 
