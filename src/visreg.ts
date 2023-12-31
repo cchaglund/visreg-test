@@ -412,7 +412,6 @@ const runCypressTest = async (diffList: string[] = []): Promise<void> => {
 			customSnapshotsDir: labModeOn ? 'lab' : '',
 		};
 
-		// process.env.CYPRESS_debugSnapshots = 'true';
 		process.env.CYPRESS_failOnSnapshotDiff = 'false';
 		process.env.CYPRESS_updateSnapshots = labModeOn ? 'true' : 'false';
 		process.env.CYPRESS_TEST_SETTINGS = Buffer.from(JSON.stringify(testSettings)).toString('base64');

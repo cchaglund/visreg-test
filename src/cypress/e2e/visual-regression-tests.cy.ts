@@ -72,7 +72,7 @@ const takeSnaps = (props: TestConfig, viewport: VisregViewport, endpoint: Endpoi
 
 const limitMessage = (endpoints: Endpoint[], viewports: VisregViewport[], endpointTitle: string | undefined, viewport: VisregViewport | undefined) => {
     const ep = endpointTitle && endpoints.length === 1 && endpoints[0].title === endpointTitle ? endpointTitle : '';
-    const vp = viewport && viewports.length === 1 && viewports[0] === viewport ? viewport : '';
+    const vp = viewport && viewports.length === 1 && JSON.stringify(viewports[0]) === JSON.stringify(viewport) ? viewport : '';
     const epText = ep ? `"${ep}" ` : '';
     const vpText = vp ? `@ ${vp}` : '';
     const limitText = epText || vpText ? ` - limiting test to ${epText}${vpText}` : '';
@@ -114,15 +114,16 @@ export const runTest = (props: TestConfig): void => {
         [1920, 1080],
     ];
 
-    const {
-        testType,
-        suite,
-        diffList,
-        endpointTitle,
-        viewport,
-    }: EnvsPassedViaCypress = {
+    const envs: EnvsPassedViaCypress = {
         ...JSON.parse(Buffer.from(Cypress.env('TEST_SETTINGS'), 'base64').toString('utf8'))
     }
+
+    const {
+        viewport,
+        endpointTitle,
+        testType,
+        diffList,
+    } = envs;    
 
     const { 
         suiteName = props.suiteName ?? suite,
