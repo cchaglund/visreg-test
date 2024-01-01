@@ -1,3 +1,6 @@
+2.1.6
+- Allow for skipping snapshots all together
+
 2.1.5
 - Now handles endpoints titles with spaces in them
 

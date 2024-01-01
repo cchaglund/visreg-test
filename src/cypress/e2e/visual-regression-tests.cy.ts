@@ -35,7 +35,7 @@ const parseSnapConfigFromName = (name: string, endpoints: Endpoint[]): SnapConfi
     };    
 };
 
-const takeSnaps = (props: TestConfig, viewport: VisregViewport, endpoint: Endpoint) => {
+const takeSnaps = (props: TestConfig, viewport: VisregViewport, endpoint: Endpoint, noSnap?: boolean) => {
     const { baseUrl, formatUrl, onPageVisit, } = props;
 
     const {
@@ -65,6 +65,8 @@ const takeSnaps = (props: TestConfig, viewport: VisregViewport, endpoint: Endpoi
             options,
         });
 
+        if (noSnap) return;
+
         const cyTarget = elementToMatch ? cy.get(elementToMatch) : cy;
         cyTarget.matchImageSnapshot(snapName, options);
     });
@@ -75,10 +77,10 @@ const limitMessage = (endpoints: Endpoint[], viewports: VisregViewport[], endpoi
         ? endpoints[0].title
         : '';
 
-    const vp = viewport && viewports.length === 1 && JSON.stringify(viewports[0]) === JSON.stringify(viewport)
+    const vp = viewport && viewports.length === 1 && matchingViewport(viewports[0], viewport)
         ? viewport
         : '';
-        
+
     const epText = ep ? `"${ep}" ` : '';
     const vpText = vp ? `@ ${vp}` : '';
     const limitText = epText || vpText ? ` - limiting test to ${epText}${vpText}` : '';
@@ -112,6 +114,13 @@ const matchingEndpointTitle = (endpoint1: string | undefined, endpoint2: string 
     return normalized1 === normalized2;
 }
 
+const matchingViewport = (viewport1: any, viewport2: any) => {
+    if (!viewport1 || !viewport2) return '';
+    const normalized1 = JSON.stringify(viewport1);
+    const normalized2 = JSON.stringify(viewport2);
+    return normalized1 === normalized2;
+}
+
 const allowedEndpoints = (endpoints: Endpoint[], endpointTitle: string | undefined) => {
     if (!endpointTitle) return endpoints;
     const match = endpoints.find(ep => matchingEndpointTitle(endpointTitle, ep.title));
@@ -136,6 +145,7 @@ export const runTest = (props: TestConfig): void => {
         endpointTitle,
         testType,
         diffList,
+        noSnap,
     } = envs;    
 
     const { 
@@ -146,7 +156,6 @@ export const runTest = (props: TestConfig): void => {
 
     const viewportsToTest = allowedViewports(registeredViewports, viewport)
     const endpointsToTest = allowedEndpoints(registeredEndpoints, endpointTitle)
-
     const limitText = limitMessage(endpointsToTest, viewportsToTest, endpointTitle, viewport);
 
     describe(`${suiteName}`, () => {
@@ -159,7 +168,7 @@ export const runTest = (props: TestConfig): void => {
                  */
                 const validEndpoint = endpointsToTest.find(ep => matchingEndpointTitle(ep.title, endpointTitle));
                 if (!viewport || !validEndpoint) return;
-                takeSnaps(props, viewport, validEndpoint)
+                takeSnaps(props, viewport, validEndpoint, noSnap)
             });
         }
 
@@ -167,7 +176,7 @@ export const runTest = (props: TestConfig): void => {
             describe('Full visual regression test' + limitText, () => {
                 viewportsToTest.forEach((vp) => {
                     endpointsToTest.forEach((ep) => {
-                        takeSnaps(props, vp, ep)
+                        takeSnaps(props, vp, ep, noSnap)
                     });
                 });
             });
@@ -179,15 +188,16 @@ export const runTest = (props: TestConfig): void => {
 
                 diffList.forEach(diffSnapName => {
                     const config = parseSnapConfigFromName(diffSnapName, endpointsToTest)
+                    
                     if (!config) return;
 
                     const { viewportSize, title }: SnapConfig = config;
 
-                    const viewport = viewportsToTest.includes(viewportSize) ? viewportSize : undefined;
+                    const viewport = viewportsToTest.find(vp => matchingViewport(vp, viewportSize));
                     const endpoint = endpointsToTest.find(ep => matchingEndpointTitle(ep.title, title));
 
                     if (viewport && endpoint) {
-                        takeSnaps(props, viewportSize, endpoint);
+                        takeSnaps(props, viewportSize, endpoint, noSnap);
                     }
                 });
             });

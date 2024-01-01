@@ -26,6 +26,7 @@
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
+- [Table of contents](#table-of-contents)
 - [About](#about)
 - [Setup](#setup)
     - [Typescript](#typescript)
@@ -376,49 +377,68 @@ my-project
 
 ## Flags
 
-You can pass flags in the command line to run specific tests and even skip the CLI prompts completely:
-
-**Specify what to test:**
+Flags just allow you to skip the UI and run specific tests. The complete list is:
 
 ```bash
--s, --suite <suite name> # (i.e. directory)
--e, --endpoint-title <endpoint title> # case insensitive, spaces should be replaced with dashes
+-f, --full-test <spec> 
+-d, --diffs-only <spec>
+-a, --assess-existing-diffs <spec>
+-lab, --lab-mode <spec>
+# accepts an optional argument to specify what to test, e.g. "my-test-suite:Home-page@iphone-6"
+
+-no-gui, --no-gui
+# run lab mode without the Cypress GUI
+
+-no-snap, --no-snap
+# skip taking snapshots
+
+-s, --suite <suite name>
+# <suite name> is the directory name of the suite to run
+
+-e, --endpoint-title <endpoint title> 
+# <endpoint title> is the title, but where any spaces must be replaced by dashes, e.g. "Getting Started" becomes "Getting-Started" (or "getting-started" as it's case insensitive)
+
 -v, --viewport <viewport>
+# <viewport> is a string, e.g. "iphone-6" or "1920,1080"
 ```
+ 
 
-Specifications will be made in the context of the test type you're running.
-
-**Specify type to run:**
+For example, to re-run a test for the diffing snapshots with the viewport `samsung-s10` (in the `my-test-suite` suite), you could run either of these:
 
 ```bash
--f, --full-test
--d, --diffs-only
--a, --assess-existing-diffs
--lab, --lab
-```
-
-For example, to re-run a test for the diffing snapshots with the viewport `samsung-s10` (in the `my-test-suite` suite), you would run:
-
-```bash
-npx visreg-test -d -s my-test-suite -v samsung-s10
-# i.e.:
 npx visreg-test --diffs-only --suite my-test-suite --viewport samsung-s10
-```
 
-You can also pass the specifications to the type flag as an argument, where the format is `suite:endpoint-title@viewport`. For example:
+# or
 
-```bash
+npx visreg-test -d -s my-test-suite -v samsung-s10
+
+# or
+
 npx visreg-test -d my-test-suite@samsung-s10
 ```
 
-**More shorthand examples:**
+**Shorthand spec**
+
+The shorthand specification format is `suite:endpoint-title@viewport`. If you only have one suite, you can omit the suite name. Endpoint is prefaced with a colon, viewport is prefaced with an @. All are optional.
+
+
+**Examples:**
 
 ```bash
-npx visreg-test -d my-test-suite # run the diffs-only tests in the "my-test-suite" suite
-npx visreg-test -f my-test-suite:Home # only test the Home endpoint. 
-npx visreg-test -f :Home # test the Home endpoint in all viewports (If you only have one suite, you can omit the suite name)
-npx visreg-test -a :Home@samsung-s10 # assess only the Home endpoint with the samsung-s10 viewport
-npx visreg-test -lab :getting-started@samsung-s10 # isolated test for "Getting started" endpoint with the samsung-s10 viewport
+# run the diffs-only tests in the "my-test-suite" suite
+-d my-test-suite
+
+# only test the Home endpoint. 
+-f my-test-suite:Home
+
+# test the Home endpoint in all viewports (If you only have one suite, you can omit the suite name)
+-f :Home
+
+# assess only the Home endpoint with the samsung-s10 viewport
+-a :Home@samsung-s10
+
+# isolated test for "Getting started" endpoint with the samsung-s10 viewport
+-lab :getting-started@samsung-s10
 ```
 
 
@@ -432,12 +452,25 @@ A way to develop and try out your code before it's used in a real test.
 - No diffs are generated
 - Only runs a single specified test
 
-Once Cypress opens, click on `E2E Testing`, then select the Electron browser and click `Start E2E Testing in Electron`, and then click on `snaps.js` (or `snaps.ts` if using typescript) to run the test.
+Once Cypress opens, click on `E2E Testing`, then select the Electron browser and click `Start E2E Testing in Electron`, and then click on your suite and finally `snaps.js` (or `snaps.ts` if using typescript) to run the test.
 
-By default lab mode is run within the Cypress GUI, but you can run it in the terminal. This will disable hot reloading. Pass the `-no-gui` flag to do so, e.g.:
+There are two lab-only flags:
+
+```bash
+-no-gui
+-no-snap
+```
+
+By default lab mode is run within the Cypress GUI, but you can run it in the terminal (this will also disable hot reloading).
 
 ```bash
 npm visreg-test -lab my-test-suite:Start@iphone-6 -no-gui
+```
+
+You can also skip taking snapshots altogether, which is especially useful if you're just using lab mode to develop your tests.
+
+```bash
+npm visreg-test -lab my-test-suite:Start@iphone-6 -no-snap
 ```
 
 
@@ -599,6 +632,7 @@ Reference:
 - Does not work on Windows (yet). Untested on Linux (currently)
 - If you get an error: `"The 'files' list in config file 'tsconfig.json' is empty"` it means you're attempting to run tests written in typescript but haven't followed the instructions above to set up typescript support.
 - This module will create, move, and delete files and directories in your test suite directories. It will not touch any files outside of the test suite directories.
+- When taking snapshots in lab mode, if you have the dev tools panel open in the Cypress GUI, the snapshots will be cropped by that portion of the screen. Simply close the dev tools panel before taking a snapshot to avoid this.
 
 # Credits
 

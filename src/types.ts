@@ -71,6 +71,20 @@ export type EnvsPassedViaCypress = {
     suite?: string;
 	endpointTitle?: string;
 	viewport?: VisregViewport;
+	noSnap?: boolean;
+}
+
+export type ProgramChoices = {
+	suite?: string,
+	endpointTitle?: string,
+	viewport?: string | number[],
+	fullTest?: boolean | string,
+	diffsOnly?: boolean | string,
+	assessExistingDiffs?: boolean | string,
+	labMode?: boolean,
+	testType?: string,
+	gui?: boolean,
+	snap?: boolean,
 }
 
 export type ConfigurationSettings = {

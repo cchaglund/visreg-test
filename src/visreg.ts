@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { execSync, spawn } from 'child_process';
 import * as readline from 'readline';
-import { ConfigurationSettings, NonOverridableSettings, TestType } from './types';
+import { ConfigurationSettings, NonOverridableSettings, ProgramChoices, TestType } from './types';
 import { Command } from 'commander';
 
 const program = new Command();
@@ -16,22 +16,12 @@ program
 	.option('-f, --full-test [specs]')
 	.option('-d, --diffs-only [specs]')
 	.option('-a, --assess-existing-diffs [specs]')
-	.option('-lab, --lab [specs]')
+	.option('-lab, --lab-mode [specs]')
 	.option('-no-gui, --no-gui')
+	.option('-no-snap, --no-snap')
 
 program.parse();
 
-type ProgramChoices = {
-	suite?: string,
-	endpointTitle?: string,
-	viewport?: string | number[],
-	fullTest?: boolean | string,
-	diffsOnly?: boolean | string,
-	assessExistingDiffs?: boolean | string,
-	lab?: boolean,
-	testType?: string,
-	gui?: boolean,
-}
 
 const parsedViewport = (viewport?: string | number[]) => {	
 	if (!viewport) {
@@ -57,9 +47,9 @@ const extractProgramChoices = () => {
 			testType = 'assess-existing-diffs';
 			specificationShorthand = opts.assessExistingDiffs;
 			break;
-		case opts.lab !== undefined:
+		case opts.labMode !== undefined:
 			testType = 'lab';
-			specificationShorthand = opts.lab;
+			specificationShorthand = opts.labMode;
 			break;
 		case opts.diffsOnly !== undefined:
 			testType = 'diffs-only';
@@ -77,6 +67,7 @@ const extractProgramChoices = () => {
         viewport: parsedViewport(opts?.viewport),
 		testType,
 		gui: opts?.gui,
+		snap: opts?.snap,
     };
 
     if (typeof specificationShorthand !== 'string') {
@@ -317,7 +308,7 @@ const selectSuite = async () => {
 		return;
 	}
 
-	console.log('Suites:\n');
+	console.log('Select suite:\n');
 	suites.forEach((suite, index) => {
 		console.log(`${index + 1} ${suite}`);
 	});
@@ -340,10 +331,10 @@ const selectSuite = async () => {
 const selectType = async () => {
 	const specifiedType = typesList.find(type => type.slug === programChoices.testType);
 	if (specifiedType) {
-		return specifiedType.slug;
+		return;
 	}
 	
-	console.log('Types of test:\n');
+	console.log('\nSelect type of test:\n');
 	typesList.forEach((type, index) => {
 		printColorText(`${index + 1} ${type.name}\x1b[2m - ${type.description}\x1b[0m`, '0');
 	});
@@ -390,7 +381,11 @@ const isSpecifiedTest = () => !!(programChoices.viewport || programChoices.endpo
 const runCypressTest = async (diffList: string[] = []): Promise<void> => {
 	const labModeOn = programChoices.testType === 'lab';
 
-	printColorText(`\nStarting Cypress ${labModeOn ? 'in lab mode' : '' }\n`, '2');
+	let labModeText = '- lab mode';
+	labModeText += programChoices?.gui ? ' (GUI)' : '';
+	labModeText += !programChoices?.snap ? ' (no snapshot)' : '';
+
+	printColorText(`\nStarting Cypress ${ labModeOn ? labModeText : '' }\n`, '2');
 
     return new Promise((resolve, reject) => {
 		const specPath = getSpecPath();
@@ -401,6 +396,7 @@ const runCypressTest = async (diffList: string[] = []): Promise<void> => {
 			diffList,
 			viewport: programChoices.viewport,
 			endpointTitle: programChoices.endpointTitle,
+			noSnap: !programChoices.snap,
 		}
 
 		const nonOverridableSettings: NonOverridableSettings = {
@@ -421,7 +417,6 @@ const runCypressTest = async (diffList: string[] = []): Promise<void> => {
 		
 		if (labModeOn && programChoices.gui) {
 			cypressCommand = 'npx cypress open';
-			
 		} else {
 			cypressCommand = `npx cypress run --spec "${specPath}"`;
 		}
@@ -432,17 +427,11 @@ const runCypressTest = async (diffList: string[] = []): Promise<void> => {
 
         const child = spawn(`DEBUG=cypress ${command}`, args, { shell: true, stdio: 'inherit' });
 
-        child.on('data', (data) => {
-			console.log(`${data}`);
-        });
-
-        child.on('error', (error) => {
-            // console.error(`exec error: ${error}`);
-        });
-
+        child.on('data', (data) => console.log(`${data}`));
+		child.on('error', (error) => console.error(`exec error: ${error}`));
         child.on('close', (code) => {
-			let msg = '';
-
+			if (labModeOn) resolve();
+			
 			if (isSpecifiedTest() && code === 0) {
 				/**
 				 * Restore the files which were not specified in the test. 
@@ -452,16 +441,15 @@ const runCypressTest = async (diffList: string[] = []): Promise<void> => {
 				 */
 				const unaffectedFiles = (fileName: string) => !includedInSpecification(fileName);
 				restoreFromBackup(unaffectedFiles);
+				resolve();
 			}
 
             if (code !== 0) {
 				restoreFromBackup();
-				let msg = `Child process exited with code ${code}.`;
-				msg += diffList ? `\nDiff list: ${diffList.join()}.` : '';
+				reject(new Error(`Cypress failed with code ${code}`));
             }
 
-			cleanUp();
-			code === 0 ? resolve() : reject(new Error(msg));
+			resolve();
         });
 	});
 };
@@ -489,7 +477,9 @@ const includedInSpecification = (fileName: string) => {
 	}
 
 	if (programChoices.endpointTitle) {
-		endpointScreeningPassed = fileName.includes(programChoices.endpointTitle);
+		const endpointLower = programChoices.endpointTitle.toLowerCase();
+		const fileNameLowerAndReplacedSpaces = fileName.toLowerCase().replace(/ /g, '-');
+		endpointScreeningPassed = fileNameLowerAndReplacedSpaces.includes(endpointLower);
 	}	
 	
 	return viewportScreeningPassed && endpointScreeningPassed;
@@ -501,21 +491,21 @@ const restoreFromBackup = (restoreCondition: (fileName: string) => boolean = () 
 
 	if (pathExists(backupDiffDir)) {
 		fs.readdirSync(backupDiffDir)
-			.filter(restoreCondition)
+			.filter(restoreCondition) // restore the files which were not specified in the test
 			.forEach(fileName => {
-				// restore the files which were not specified in the test
 				fs.renameSync(path.join(backupDiffDir, fileName), path.join(DIFF_DIR(), fileName));
 			});
 	}
 
 	if (pathExists(backupReceivedDir)) {
 		fs.readdirSync(backupReceivedDir)
-			.filter(restoreCondition)
+			.filter(restoreCondition) // restore the files which were not specified in the test
 			.forEach(fileName => {
-				// restore the files which were not specified in the test
 				fs.renameSync(path.join(backupReceivedDir, fileName), path.join(RECEIVED_DIR(), fileName));
 			});
 	}
+
+	cleanUp();
 }
 
 const exitIfNoDIffs = () => {
@@ -588,15 +578,6 @@ const createTemporaryDiffList = () => {
 	return fs.readdirSync(DIFF_DIR()).filter(file => file.endsWith('.diff.png'));
 }
 
-
-const openImage = (imageFile: string) => {
-    if (process.platform === 'darwin') {
-        execSync(`open -g "${path.join(DIFF_DIR(), imageFile)}"`);
-    } else {
-        execSync(`xdg-open "${path.join(DIFF_DIR(), imageFile)}"`);
-    }
-}
-
 const processImage = async (imageFile: string, index: number, total: number) => {
     const imageName = imageFile.replace('.diff.png', '');
 	printColorText(`${imageName}\x1b[2m - ${index + 1}/${total}\x1b[0m`, '4');
@@ -615,7 +596,10 @@ const processImage = async (imageFile: string, index: number, total: number) => 
 
 			// Listen for keypress event
 			process.stdin.on('keypress', (str, key) => {
-			if (key.name === 'r') {
+			if (key.ctrl && key.name === 'c') {
+				closeImagePreview();
+				process.exit();
+			} else if (key.name === 'r') {
 				resolve('reopen');
 				process.stdin.removeAllListeners('keypress');
 			} else if (key.name === 'space') {
@@ -629,10 +613,6 @@ const processImage = async (imageFile: string, index: number, total: number) => 
 
 			printColorText('ENTER to approve, SPACEBAR to reject, R to reopen image', '2');
         });
-
-        if (process.platform === 'linux') {
-            execSync(`pkill -f "${path.join(DIFF_DIR(), imageFile)}"`);
-        }
 
         if (answer === 'approve') {
             approvedFiles.push(imageName);
@@ -682,15 +662,11 @@ const assessExistingDiffImages = async () => {
 
 	printColorText(`🚨 Detected ${files.length} diffs, opening preview \x1b[2m- takes a couple of seconds\x1b[0m\n\n`, '33');
 		
-
 	for (const [index, file] of files.entries()) {
 		await processImage(file, index, files.length);
 	}
 
-    if (process.platform === 'darwin') {
-        execSync(`osascript -e 'quit app "Preview"'`);
-    }
-
+	closeImagePreview();
 	printColorText('Done!\n', '1');
 
     if (approvedFiles.length > 0) {
@@ -723,12 +699,30 @@ const assessExistingDiffImages = async () => {
 	}
 }
 
-process.on('SIGINT', () => {
-	restoreFromBackup();
-	cleanUp();
-    process.stdin.removeAllListeners('keypress');
+const openImage = (imageFile: string) => {
+    if (process.platform === 'darwin') {
+        execSync(`open -g "${path.join(DIFF_DIR(), imageFile)}"`);
+    } else {
+        execSync(`xdg-open "${path.join(DIFF_DIR(), imageFile)}"`);
+    }
+}
 
-    process.exit();
+const closeImagePreview = () => {
+	if (process.platform === 'darwin') {
+		execSync('pkill Preview');
+	} else if (process.platform === 'linux') {
+		execSync('pkill eog');
+	}
+}
+
+process.on('SIGINT', () => {
+	if (programChoices.testType === 'lab') {
+		process.exit();
+	}
+
+	console.log('\n\nTerminated, restoring backup diffs...');
+	restoreFromBackup();
+	process.exit();
 });
 
 main();
