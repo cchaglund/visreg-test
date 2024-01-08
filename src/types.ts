@@ -51,7 +51,7 @@ export type PrepareForCaptureSettings = {
 };
 
 export type TestConfig = {
-	suiteName: string;
+	suiteName?: string;
 	baseUrl: string;
 	endpoints: Endpoint[];
 	viewports?: VisregViewport[];

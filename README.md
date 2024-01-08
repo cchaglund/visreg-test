@@ -64,25 +64,22 @@ Other solutions often stumble in a few important ways:
 
 Let's install the package and create our first test suite - a directory containing a test configuration file and any generated snapshots.
 
-Go to your project directory:
-    
-```bash
-cd my-project
-```
+Navigate to your project directory (or create one), then install the package:
 
-Install the package:
 ```bash
 npm install visreg-test
 ``` 
 
-Create a new directory for your test suites:
+Create a directory for your first test suite:
 ```bash
 mkdir my-test-suite
 ```
 
 Create a file for your test configuration:
 ```bash
-touch my-test-suite/snaps.js # or snaps.ts if using typescript
+touch my-test-suite/snaps.js
+# or
+touch my-test-suite/snaps.ts # if using typescript
 ```
 
 ### Typescript 
@@ -115,7 +112,7 @@ my-project
 ├── package.json
 ├── package-lock.json
 ├── tsconfig.json (if using typescript)
-└── test-suite
+└── my-test-suite
    └── snaps.js (or snaps.ts)
 ```
 
@@ -125,7 +122,7 @@ my-project
 
 The test configuration file (`snaps.js/ts`) is where you define how your tests should be run, which endpoints to test, which viewports to test them in, and any other customisations you want to make.
 
-Let's create a minimal example, followed by a more realistic and fleshed-out one.
+Let's create a minimal example first, followed by a more realistic and fleshed-out one after that.
 
 ### Minimal example
 
@@ -332,27 +329,39 @@ To create another test suite, simply create a new directory and add a `snaps` fi
 
 # Running tests
 
+**Creating baselines**
 
-There are 4 **types** of test:
+- Run `npx visreg-test` from your project
+- When prompted, select the type of test to run - select `"Full"` your first time
+
+`visreg-test` will now go through all your endpoints and viewports and if there are no previous images to compare to it will create baseline snapshots.
+
+>💡 You can specify what to run (and more) via [flags](#flags).
+>
+> 🗒️ If you only have one suite, it will be selected automatically. If you have multiple suites, you will be prompted to select one.
+
+**Visual regression testing**
+
+- Run `npx visreg-test` and select `"Full"` again
+- Comparisons will be made against the baselines
+- Diffs will be opened in an image previewer
+- Accept/reject the changes from the CLI
+
+If you reject a diff it will be stored in the diffs directory. Next time you run `visreg-test` you can select `"Retest diffs only"` to only run the tests against these. Fix your issues, retest diffs, and repeat until there are no diffs left.
+
+
+**Types of test**
 
 - **Full** - run all tests in a suite and generate baseline snapshots or compare to existing baseline snapshots (previous diffs are deleted)
 - **Retest diffs only** - only run the tests which diffed and were rejected in the last run
 - **Assess diffs** - assess existing diffs (no tests are run)
 - **Lab** - visualise and develop your tests in the Cypress GUI, isolated from the rest of your snapshots and with hot reloading.
 
-To run the tests:
 
-- Run `npx visreg-test` from your project
-- Select a suite 
-- Select the type of test to run
-- Wait for the tests to finish
-- A preview of diffing snapshots will be shown
-- Accept or reject them as the new baseline
-- Repeat until all diffs have been assessed
 
 ## Updated folder structure
 
-After running the tests your project will look something like this:
+After running the tests the first time your project will look something like this:
 
 ```
 my-project
@@ -365,13 +374,34 @@ my-project
    └── snapshots
       └── snaps  
          ├── Guides @ iphone-x.base.png
-         ├── Guides @ samsung-s10.base.png
          ├── Guides @ 960,540.base.png
          ├── Start @ iphone-x.base.png
-         ├── Start @ samsung-s10.base.png
          └── Start @ 960,540.base.png
 ```
 
+And after running the tests again, this time with diffs:
+
+```
+my-project
+├── node_modules
+├── package.json
+├── package-lock.json
+├── tsconfig.json (if using typescript)
+└── test-suite
+   └── snaps.js (or snaps.ts)
+   └── snapshots
+      └── snaps  
+         ├── __diffs__
+         │  ├── Guides @ iphone-x.diff.png
+         │  └── Guides @ 960,540.diff.png
+         ├── __received__
+         │  ├── Guides @ iphone-x-received.png
+         │  └── Guides @ 960,540-received.png
+         ├── Guides @ iphone-x.base.png
+         ├── Guides @ 960,540.base.png
+         ├── Start @ iphone-x.base.png
+         └── Start @ 960,540.base.png
+```
 
 
 ## Flags
@@ -383,7 +413,7 @@ Flags just allow you to skip the UI and run specific tests. The complete list is
 -d, --diffs-only <spec>
 -a, --assess-existing-diffs <spec>
 -lab, --lab-mode <spec>
-# accepts an optional argument to specify what to test, e.g. "my-test-suite:Home-page@iphone-6"
+# accepts an optional shorthand argument to specify what to test, e.g. "my-test-suite:Home-page@iphone-6"
 
 -no-gui, --no-gui
 # run lab mode without the Cypress GUI
@@ -406,19 +436,15 @@ For example, to re-run a test for the diffing snapshots with the viewport `samsu
 
 ```bash
 npx visreg-test --diffs-only --suite my-test-suite --viewport samsung-s10
-
 # or
-
 npx visreg-test -d -s my-test-suite -v samsung-s10
-
 # or
-
 npx visreg-test -d my-test-suite@samsung-s10
 ```
 
 **Shorthand spec**
 
-The shorthand specification format is `suite:endpoint-title@viewport`. If you only have one suite, you can omit the suite name. Endpoint is prefaced with a colon, viewport is prefaced with an @. All are optional.
+The shorthand specification format is `suite:endpoint-title@viewport`. If you only have one suite, you can omit the suite name. Endpoint is prefaced with `:`, viewport is prefaced with  `@`. All are optional.
 
 
 **Examples:**
@@ -564,7 +590,7 @@ scrollDuration: 1000,
 
 You can configure certain settings with a `visreg.config.json` file placed in the root of your project.
 
-*Note that certain settings are overridden by the individual endpoint options, e.g. `padding` and `capture` are overridden by the `padding` and `capture` options of an endpoint object if they exist, whereas other settings are combined, e.g. `blackout`.*
+>🗒️ Certain settings are overridden by the individual endpoint options, e.g. `padding` and `capture` are overridden by the `padding` and `capture` options of an endpoint object if they exist, whereas other settings are combined, e.g. `blackout`.
 
 
 | Property | Description | Type |

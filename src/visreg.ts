@@ -449,6 +449,7 @@ const runCypressTest = async (diffList: string[] = []): Promise<void> => {
 				reject(new Error(`Cypress failed with code ${code}`));
             }
 
+			cleanUp();
 			resolve();
         });
 	});
@@ -660,7 +661,7 @@ const assessExistingDiffImages = async () => {
 		process.exit();
 	}
 
-	printColorText(`🚨 Detected ${files.length} diffs, opening preview \x1b[2m- takes a couple of seconds\x1b[0m\n\n`, '33');
+	printColorText(`🚨 Detected ${files.length} diffs, opening image preview \x1b[2m- takes a couple of seconds\x1b[0m\n\n`, '33');
 		
 	for (const [index, file] of files.entries()) {
 		await processImage(file, index, files.length);
@@ -687,16 +688,19 @@ const assessExistingDiffImages = async () => {
 	printColorText(`Total: ${approvedFiles.length + rejectedFiles.length}`, '2');
 
 	if (approvedFiles.length > 0) {
-		printColorText(`Approved: ${approvedFiles.length} - \x1b[32mbaselines have been updated\x1b[0m`, '2');
-	} else {
-		printColorText(`Approved: ${approvedFiles.length}`, '2');
+		console.log(`\x1b[2mApproved: \x1b[0m\x1b[32m${approvedFiles.length}\x1b[0m`)
 	}
 
 	if (rejectedFiles.length > 0) {
-		printColorText(`Rejected: ${rejectedFiles.length} - \x1b[31mrun test again after making changes\x1b[0m`, '2');
-	} else {
-		printColorText(`Rejected: ${rejectedFiles.length}`, '2');
+		console.log(`\x1b[2mRejected: \x1b[0m\x1b[31m${rejectedFiles.length}\x1b[0m`)
 	}
+
+	console.log(`\x1b[2mType: \x1b[0m\x1b[0m${programChoices.testType}\x1b[0m`)
+	console.log(`\x1b[2mSuite: \x1b[0m\x1b[0m${programChoices.suite}\x1b[0m`)
+	programChoices.endpointTitle && 
+		console.log(`\x1b[2mEndpoint: \x1b[0m\x1b[0m${programChoices.endpointTitle}\x1b[0m`)
+	programChoices.viewport &&
+		console.log(`\x1b[2mViewport: \x1b[0m\x1b[0m${programChoices.viewport}\x1b[0m`)
 }
 
 const openImage = (imageFile: string) => {
@@ -709,7 +713,8 @@ const openImage = (imageFile: string) => {
 
 const closeImagePreview = () => {
 	if (process.platform === 'darwin') {
-		execSync('pkill Preview');
+		// execSync('pkill Preview');
+	    execSync(`osascript -e 'quit app "Preview"'`);
 	} else if (process.platform === 'linux') {
 		execSync('pkill eog');
 	}
