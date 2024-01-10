@@ -6,7 +6,7 @@
 	"types": "dist/types.d.ts",
 	"scripts": {
 		"dev": "npm run watch",
-		"build": "npm run clear && tsc",
+		"build": "npm run clear && tsc && cp -r src/scaffold dist/",
 		"clear": "rm -rf dist && mkdir dist",
 		"watch": "tsc --watch",
 		"create-symlink": "node -e \"require('fs').symlinkSync(path.join(process.cwd(), './dist'), process.argv[1] + '/node_modules/visreg-test/dist')\"",

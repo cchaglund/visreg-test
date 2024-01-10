@@ -1,8 +1,11 @@
+2.3.0
+- `npx visreg --scaffold` will create a scaffold for you to get started with.
+
 2.1.6
-- Allow for skipping snapshots all together
+- Allow for skipping snapshots all together.
 
 2.1.5
-- Now handles endpoints titles with spaces in them
+- Now handles endpoints titles with spaces in them.
 
 2.1.0
 - "Lab mode" - utilize the Cypress GUI and develop your tests isolated from the rest of your snapshots

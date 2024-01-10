@@ -70,16 +70,18 @@ Navigate to your project directory (or create one), then install the package:
 npm install visreg-test
 ``` 
 
+>💡 Follow the step-by-step directory/file creation below or simply run `npx visreg-test --scaffold`, alternatively `--scaffold-ts` for typescript, from your project directory. If choosing typescript you will still have to run `npm install --save-dev typescript` (a tsconfig will be created for you)
+
 Create a directory for your first test suite:
 ```bash
-mkdir my-test-suite
+mkdir test-suite
 ```
 
 Create a file for your test configuration:
 ```bash
-touch my-test-suite/snaps.js
+touch test-suite/snaps.js
 # or
-touch my-test-suite/snaps.ts # if using typescript
+touch test-suite/snaps.ts # if using typescript
 ```
 
 ### Typescript 
@@ -112,7 +114,7 @@ my-project
 ├── package.json
 ├── package-lock.json
 ├── tsconfig.json (if using typescript)
-└── my-test-suite
+└── test-suite
    └── snaps.js (or snaps.ts)
 ```
 
@@ -130,7 +132,7 @@ Let's create a minimal example first, followed by a more realistic and fleshed-o
 <summary>JavaScript</summary>
 
 ```javascript
-import { run } from 'visreg-test';
+import { runVisreg } from 'visreg-test';
 
 const baseUrl = 'https://developer.mozilla.org';
 
@@ -139,7 +141,7 @@ const endpoints = [ {
    path: '/',
 } ];
 
-run({
+runVisreg({
    baseUrl,
    endpoints,
 });
@@ -150,7 +152,7 @@ run({
 <summary>Typescript</summary>
 
 ```typescript
-import { run, VisregViewport, Endpoint, TestConfig } from 'visreg-test';
+import { runVisreg, VisregViewport, Endpoint, TestConfig } from 'visreg-test';
 
 const baseUrl: string = 'https://developer.mozilla.org';
 
@@ -165,7 +167,7 @@ const config: TestConfig = {
    viewports,
 };
 
-run(config);
+runVisreg(config);
 ```
 
 </details>
@@ -201,7 +203,7 @@ Here's a slightly more realistic example, expanding on the minimal example above
 <summary>JavaScript</summary>
 
 ```javascript
-import { run } from 'visreg-test';
+import { runVisreg } from 'visreg-test';
 
 const suiteName = 'MDN'; // only used when displaying the test results in the terminal. Suite directory names are used by default.
 const baseUrl = 'https://developer.mozilla.org';
@@ -244,7 +246,7 @@ const onPageVisit = (cy, cypress) => {
    cy.get('body').invoke('css', 'height', 'auto');
 };
 
-run({
+runVisreg({
    baseUrl,
    endpoints,
    viewports,
@@ -263,7 +265,7 @@ run({
 <summary>Typescript</summary>
 
 ```typescript
-import { run, VisregViewport, Endpoint, TestConfig, CypressCy, FormatUrl, OnPageVisit } from 'visreg-test';
+import { runVisreg, VisregViewport, Endpoint, TestConfig, FormatUrl, OnPageVisit } from 'visreg-test';
 
 const suiteName: string = 'MDN'; // only used when displaying the test results in the terminal. Suite directory names are used by default.
 const baseUrl: string = 'https://developer.mozilla.org';
@@ -305,7 +307,7 @@ const onPageVisit: OnPageVisit = (cy: cy, cypress: Cypress) => {
    cy.get('body').invoke('css', 'height', 'auto');
 };
 
-const config: TestConfig = {
+runVisreg({
    baseUrl,
    endpoints,
    viewports,
@@ -313,9 +315,7 @@ const config: TestConfig = {
    suiteName,
    formatUrl,
    onPageVisit,
-};
-
-run(options);
+} as TestConfig);
 
 ```
 
@@ -413,7 +413,7 @@ Flags just allow you to skip the UI and run specific tests. The complete list is
 -d, --diffs-only <spec>
 -a, --assess-existing-diffs <spec>
 -lab, --lab-mode <spec>
-# accepts an optional shorthand argument to specify what to test, e.g. "my-test-suite:Home-page@iphone-6"
+# accepts an optional shorthand argument to specify what to test, e.g. "test-suite:Home-page@iphone-6"
 
 -no-gui, --no-gui
 # run lab mode without the Cypress GUI
@@ -429,17 +429,21 @@ Flags just allow you to skip the UI and run specific tests. The complete list is
 
 -v, --viewport <viewport>
 # <viewport> is a string, e.g. "iphone-6" or "1920,1080"
+
+-scaffold, --scaffold
+-scaffold-ts, --scaffold-ts
+# scaffolds a test suite for you to get started with
 ```
  
 
-For example, to re-run a test for the diffing snapshots with the viewport `samsung-s10` (in the `my-test-suite` suite), you could run either of these:
+For example, to re-run a test for the diffing snapshots with the viewport `samsung-s10` (in the `test-suite` suite), you could run either of these:
 
 ```bash
-npx visreg-test --diffs-only --suite my-test-suite --viewport samsung-s10
+npx visreg-test --diffs-only --suite test-suite --viewport samsung-s10
 # or
-npx visreg-test -d -s my-test-suite -v samsung-s10
+npx visreg-test -d -s test-suite -v samsung-s10
 # or
-npx visreg-test -d my-test-suite@samsung-s10
+npx visreg-test -d test-suite@samsung-s10
 ```
 
 **Shorthand spec**
@@ -450,11 +454,11 @@ The shorthand specification format is `suite:endpoint-title@viewport`. If you on
 **Examples:**
 
 ```bash
-# run the diffs-only tests in the "my-test-suite" suite
--d my-test-suite
+# run the diffs-only tests in the "test-suite" suite
+-d test-suite
 
 # only test the Home endpoint. 
--f my-test-suite:Home
+-f test-suite:Home
 
 # test the Home endpoint in all viewports (If you only have one suite, you can omit the suite name)
 -f :Home
@@ -489,13 +493,13 @@ There are two lab-only flags:
 By default lab mode is run within the Cypress GUI, but you can run it in the terminal (this will also disable hot reloading).
 
 ```bash
-npm visreg-test -lab my-test-suite:Start@iphone-6 -no-gui
+npm visreg-test -lab test-suite:Start@iphone-6 -no-gui
 ```
 
 You can also skip taking snapshots altogether, which is especially useful if you're just using lab mode to develop your tests.
 
 ```bash
-npm visreg-test -lab my-test-suite:Start@iphone-6 -no-snap
+npm visreg-test -lab test-suite:Start@iphone-6 -no-snap
 ```
 
 

@@ -85,6 +85,8 @@ export type ProgramChoices = {
 	testType?: string,
 	gui?: boolean,
 	snap?: boolean,
+	scaffold?: boolean,
+	scaffoldTs?: boolean,
 }
 
 export type ConfigurationSettings = {

@@ -14,7 +14,7 @@
 		"src/**/*.ts",
 	],
 	"exclude": [
-		"src/e2e/_example_/*.ts"
+		"src/scaffold/**/*",
 	],
 	"moduleResolution": "node",
 }

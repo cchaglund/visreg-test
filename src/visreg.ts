@@ -19,6 +19,8 @@ program
 	.option('-lab, --lab-mode [specs]')
 	.option('-no-gui, --no-gui')
 	.option('-no-snap, --no-snap')
+	.option('-scaffold, --scaffold')
+	.option('-scaffold-ts, --scaffold-ts')
 
 program.parse();
 
@@ -36,8 +38,31 @@ const parsedViewport = (viewport?: string | number[]) => {
 	return stringedViewport.split(',').map((pixels: string) => parseInt(pixels))
 }
 
+const createScaffold = () => {
+	const typescript = program.opts().scaffoldTs;
+	const scaffoldRoot = path.join(__dirname, 'scaffold');
+	const fileName = typescript ? 'snaps.ts' : 'snaps.js';
+	const source = path.join(scaffoldRoot, fileName);
+	const destination = path.join(projectRoot, 'test-suite');
+
+	if (!pathExists(destination)) {
+		fs.mkdirSync(destination);
+	}
+
+	fs.copyFileSync(source, path.join(destination, fileName));
+
+	if (typescript) {
+		fs.copyFileSync(path.join(scaffoldRoot, 'tsconfig-scaffold.json'), path.join(projectRoot, 'tsconfig.json'));
+	}
+}
+
 const extractProgramChoices = () => {	
 	const opts: ProgramChoices = program.opts();
+
+	if (opts.scaffold || opts.scaffoldTs) {
+		createScaffold();
+		process.exit();
+	}
 
 	let testType = '';
 	let specificationShorthand: string | boolean = '';
@@ -106,10 +131,6 @@ const extractSpecificationShorthand = (args: ProgramChoices, specificationShorth
     return updatedArgs;
 }
 
-
-const programChoices: ProgramChoices = extractProgramChoices();
-process.env.PROGRAM_CHOICES = JSON.stringify(programChoices);
-
 const pathExists = (dirPath: string) => fs.existsSync(dirPath);
 
 const hasFiles = (dirPath: string) => fs.readdirSync(dirPath).length > 0;
@@ -129,6 +150,7 @@ const printColorText = (text: string, colorCode: string) => {
 	console.log(`\x1b[${ colorCode }m${ text }\x1b[0m`);
 };
 
+
 const projectRoot = process.cwd();
 const configPath = path.join(projectRoot, 'visreg.config.json');
 const visregConfig: ConfigurationSettings = pathExists(configPath) ? JSON.parse(fs.readFileSync(configPath, 'utf-8')) : {};
@@ -138,8 +160,6 @@ const {
 	comparisonOptions,
 	...conf
 } = visregConfig;
-
-process.env.CYPRESS_VISREG_OPTIONS = JSON.stringify(conf)
 
 const snapshotSettings = {
 	failureThreshold: 0.02,
@@ -151,7 +171,11 @@ const snapshotSettings = {
 	...comparisonOptions,
 }
 
+const programChoices: ProgramChoices = extractProgramChoices();
+
+process.env.CYPRESS_VISREG_OPTIONS = JSON.stringify(conf)
 process.env.CYPRESS_SNAPSHOT_SETTINGS = JSON.stringify(snapshotSettings);
+process.env.PROGRAM_CHOICES = JSON.stringify(programChoices);
 
 if (pathExists(configPath)) {
 	printColorText(`\nLoaded config ${configPath}`, '2');
