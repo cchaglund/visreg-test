@@ -35,8 +35,18 @@ const parseSnapConfigFromName = (name: string, endpoints: Endpoint[]): SnapConfi
     };    
 };
 
+const getFullUrl = (props: TestConfig, path: string) => {
+    const { baseUrl, formatUrl } = props;
+    const sanitizedBaseUrl = baseUrl.replace(/\/$/, '');
+    const formattedUrl = formatUrl && formatUrl(path);
+    const fullUrl = formattedUrl && typeof formattedUrl === 'string' && formattedUrl !== '' 
+        ? formattedUrl
+        : `${sanitizedBaseUrl}${path}`;
+    return fullUrl;
+}
+
 const takeSnaps = (props: TestConfig, viewport: VisregViewport, endpoint: Endpoint, noSnap?: boolean) => {
-    const { baseUrl, formatUrl, onPageVisit, } = props;
+    const { onPageVisit } = props;
 
     const {
         path,
@@ -52,9 +62,8 @@ const takeSnaps = (props: TestConfig, viewport: VisregViewport, endpoint: Endpoi
         ...endpointOptions,
     };
 
-    const sanitizedBaseUrl = baseUrl.replace(/\/$/, '');
     const snapName = `${title} @ ${viewport}`;
-    const fullUrl = formatUrl ? formatUrl(path) : `${sanitizedBaseUrl}${path}`;
+    const fullUrl = getFullUrl(props, path);
 
     it(snapName, () => {
         cy.prepareForCapture({
@@ -141,6 +150,7 @@ export const runTest = (props: TestConfig): void => {
     }
 
     const {
+        suite,
         viewport,
         endpointTitle,
         testType,

@@ -659,9 +659,12 @@ Reference:
 - SSIM comparison requires more memory than pixelmatch, so if you're running into memory issues, try using pixelmatch instead (which is the default).
 - Logging: use cy.log() to log to the console. This will be displayed in the terminal when running the tests. Typescript will complain if you're passing an object and not a string, but you can cast it to "any" to get around that.
 - Does not work on Windows (yet). Untested on Linux (currently)
-- If you get an error: `"The 'files' list in config file 'tsconfig.json' is empty"` it means you're attempting to run tests written in typescript but haven't followed the instructions above to set up typescript support.
 - This module will create, move, and delete files and directories in your test suite directories. It will not touch any files outside of the test suite directories.
 - When taking snapshots in lab mode, if you have the dev tools panel open in the Cypress GUI, the snapshots will be cropped by that portion of the screen. Simply close the dev tools panel before taking a snapshot to avoid this.
+- Blackout settings only affect the snapshot - you will not see the blacked out elements in the Cypress GUI when running in lab mode.
+- Errors:
+  - `"The 'files' list in config file 'tsconfig.json' is empty"` means you're attempting to run tests written in typescript but haven't followed the instructions above to set up typescript support.
+  - `RangeError: The value of "targetStart" is out of range. It must be >= 0.` means you're attempting to diff very large images, e.g. very long, full page screenshots.
 
 # Credits
 
