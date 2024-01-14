@@ -1,3 +1,6 @@
+2.5.0
+- Support for having multiple visreg config files, one per suite (as well as the global one in the project root)
+  
 2.4.0
 - Fixed an issue where snapshots taken on a high dpi screen would be twice as large as the viewport size. By default now the snapshots are taken at 1x resolution, but you can change this by setting the `devicePixelRatio` option in the config file.
 - Added some more options to the config file, specifically intended for Linux users (imagePreviewProcess and disableAutoPreviewClose). See the README for more info.

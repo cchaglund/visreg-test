@@ -147,40 +147,16 @@ const removeDirIfEmpty = (dirPath: string) => {
     }
 }
 
-
 const printColorText = (text: string, colorCode: string) => {
 	console.log(`\x1b[${ colorCode }m${ text }\x1b[0m`);
 };
 
-
+const programChoices: ProgramChoices = extractProgramChoices();
 const projectRoot = process.cwd();
 const configPath = path.join(projectRoot, 'visreg.config.json');
-const visregConfig: ConfigurationSettings = pathExists(configPath) ? JSON.parse(fs.readFileSync(configPath, 'utf-8')) : {};
-
-const { 
-	screenshotOptions,
-	comparisonOptions,
-	...conf
-} = visregConfig;
-
-const snapshotSettings = {
-	failureThreshold: 0.02,
-	failureThresholdType: 'percent',
-	capture: 'fullPage',
-	disableTimersAndAnimations: false,
-	scrollDuration: 1000,
-	devicePixelRatio: 1,
-	disableAutoPreviewClose: false,
-	imagePreviewProcess: 'eog',
-	...screenshotOptions,
-	...comparisonOptions,
-}
-
-const programChoices: ProgramChoices = extractProgramChoices();
-
-process.env.CYPRESS_VISREG_OPTIONS = JSON.stringify(conf)
-process.env.CYPRESS_SNAPSHOT_SETTINGS = JSON.stringify(snapshotSettings);
-process.env.PROGRAM_CHOICES = JSON.stringify(programChoices);
+const visregConfig: ConfigurationSettings = pathExists(configPath)
+	? JSON.parse(fs.readFileSync(configPath, 'utf-8') || '{}')
+	: {};
 
 if (pathExists(configPath)) {
 	printColorText(`\nLoaded config ${configPath}`, '2');
@@ -410,7 +386,41 @@ const getSpecPath = () => {
 
 const isSpecifiedTest = () => !!(programChoices.viewport || programChoices.endpointTitle);
 
+const prepareConfig = () => {
+	const suiteRoot = path.join(projectRoot, programChoices.suite || '');
+	const suiteConfigPath = path.join(suiteRoot, 'visreg.config.json');
+	const suiteConfig: ConfigurationSettings = pathExists(suiteConfigPath)
+		? JSON.parse(fs.readFileSync(suiteConfigPath, 'utf-8') || '{}')
+		: {};
+
+	Object.assign(visregConfig, suiteConfig);
+
+	const { 
+		screenshotOptions,
+		comparisonOptions,
+		...conf
+	} = visregConfig;
+	
+	const snapshotSettings = {
+		failureThreshold: 0.02,
+		failureThresholdType: 'percent',
+		capture: 'fullPage',
+		disableTimersAndAnimations: false,
+		scrollDuration: 1000,
+		devicePixelRatio: 1,
+		disableAutoPreviewClose: false,
+		imagePreviewProcess: 'eog',
+		...screenshotOptions,
+		...comparisonOptions,
+	}
+	
+	process.env.CYPRESS_VISREG_OPTIONS = JSON.stringify(conf)
+	process.env.CYPRESS_SNAPSHOT_SETTINGS = JSON.stringify(snapshotSettings);
+	process.env.PROGRAM_CHOICES = JSON.stringify(programChoices);
+}	
+
 const runCypressTest = async (diffList: string[] = []): Promise<void> => {
+	prepareConfig();
 	start = Date.now();
 	const labModeOn = programChoices.testType === 'lab';
 
