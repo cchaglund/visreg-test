@@ -140,9 +140,11 @@ const removeDirIfEmpty = (dirPath: string) => {
 		return;
 	}
 
-	fs.rm(dirPath, { recursive: true }, (err) => {
-		if (err) console.error(err);
-	});
+	try {
+		fs.rmSync(dirPath, { recursive: true })
+    } catch (err) {
+        console.error(err);
+    }
 }
 
 
@@ -167,6 +169,9 @@ const snapshotSettings = {
 	capture: 'fullPage',
 	disableTimersAndAnimations: false,
 	scrollDuration: 1000,
+	devicePixelRatio: 1,
+	disableAutoPreviewClose: false,
+	imagePreviewProcess: 'eog',
 	...screenshotOptions,
 	...comparisonOptions,
 }
@@ -183,6 +188,9 @@ if (pathExists(configPath)) {
 
 let approvedFiles: string[] = [];
 let rejectedFiles: string[] = [];
+let start: number;
+let duration: number;
+let failed = false;
 
 const SUITE_SNAPS_DIR = () => path.join(projectRoot, programChoices.suite || '', 'snapshots', 'snaps');
 const DIFF_DIR = () => path.join(SUITE_SNAPS_DIR(), '__diff_output__');
@@ -403,6 +411,7 @@ const getSpecPath = () => {
 const isSpecifiedTest = () => !!(programChoices.viewport || programChoices.endpointTitle);
 
 const runCypressTest = async (diffList: string[] = []): Promise<void> => {
+	start = Date.now();
 	const labModeOn = programChoices.testType === 'lab';
 
 	let labModeText = '- lab mode';
@@ -469,21 +478,33 @@ const runCypressTest = async (diffList: string[] = []): Promise<void> => {
 			}
 
             if (code !== 0) {
+				failed = true;
+
+				console.log('\n\n');
+				console.log('------------------');
+				console.log('\n');
+				
+				printColorText('Cypress failed. See above for details.', '31');
 				restoreFromBackup();
-				reject(new Error(`Cypress failed with code ${code}`));
+				resolve()
             }
 
-			cleanUp();
+			// Images have been created, so we can remove the backups
+			removeBackups();
+
+			duration = Math.round((Date.now() - start) / 1000);
 			resolve();
         });
 	});
 };
 
-
-const cleanUp = () => {
+const removeBackups = () => {
 	pathExists(BACKUP_DIFF_DIR()) && fs.rmSync(BACKUP_DIFF_DIR(), { recursive: true });
 	pathExists(BACKUP_RECEIVED_DIR()) && fs.rmSync(BACKUP_RECEIVED_DIR(), { recursive: true });
+}
 
+const cleanUp = () => {
+	removeBackups();
 	removeDirIfEmpty(DIFF_DIR());
 	removeDirIfEmpty(RECEIVED_DIR());
 }
@@ -539,7 +560,7 @@ const exitIfNoDIffs = () => {
 	}
 	
 	if (!pathExists(DIFF_DIR()) || !hasFiles(DIFF_DIR())) {
-		printColorText('🎉  Visual regression passed! (No diffs found)', '32');
+		summarizeResultsAndQuit();
 		process.exit();
 	}
 }
@@ -603,9 +624,20 @@ const createTemporaryDiffList = () => {
 	return fs.readdirSync(DIFF_DIR()).filter(file => file.endsWith('.diff.png'));
 }
 
+const getFileSizeInMegabytes = (filePath: string) => {
+    const stats = fs.statSync(filePath);
+	const fileSizeInBytes = stats.size;
+	const fileSizeInMegabytes = fileSizeInBytes / 1000000.0;
+	return fileSizeInMegabytes.toFixed(2) + 'MB';
+}
+
 const processImage = async (imageFile: string, index: number, total: number) => {
     const imageName = imageFile.replace('.diff.png', '');
-	printColorText(`${imageName}\x1b[2m - ${index + 1}/${total}\x1b[0m`, '4');
+
+	const pathToRecievedFile = path.join(RECEIVED_DIR(), imageName + '-received.png');
+	const recievedSize = getFileSizeInMegabytes(pathToRecievedFile);
+
+	printColorText(`${imageName}\x1b[2m - ${recievedSize} - ${index + 1}/${total}\x1b[0m`, '4');
 
     openImage(imageFile);
 
@@ -665,12 +697,10 @@ const processImage = async (imageFile: string, index: number, total: number) => 
     console.log('\n');
 }
 
-const assessExistingDiffImages = async () => {
-	console.log('\n\n');
-
-	exitIfNoDIffs();
-
-	let files = fs.readdirSync(DIFF_DIR())
+const getDiffingFiles = () => {
+	if (!pathExists(DIFF_DIR())) return [];
+	
+	return fs.readdirSync(DIFF_DIR())
 		.filter(file => {
 			if (isSpecifiedTest()) {
 				return includedInSpecification(file)
@@ -679,15 +709,21 @@ const assessExistingDiffImages = async () => {
 			return true;
 		})
 		.filter(file => file.endsWith('.diff.png'));
+}
+
+const assessExistingDiffImages = async () => {
+	exitIfNoDIffs();
+	let files = getDiffingFiles();
 
 	if (files.length === 0) {
-		printColorText('🎉  Visual regression passed! (No diffs found)', '32');
-		process.exit();
+		summarizeResultsAndQuit();
 	}
+
+	console.log('\n\n');
 
 	printColorText(`🚨 Detected ${files.length} diffs, opening image preview \x1b[2m- takes a couple of seconds\x1b[0m\n\n`, '33');
 		
-	for (const [index, file] of files.entries()) {
+	for (const [index, file] of files.entries()) {	
 		await processImage(file, index, files.length);
 	}
 
@@ -708,8 +744,35 @@ const assessExistingDiffImages = async () => {
         }
     }
 
+	summarizeResultsAndQuit();
+}
+
+const summarizeResultsAndQuit = () => {
 	printColorText('\n\nSummary', '4');
-	printColorText(`Total: ${approvedFiles.length + rejectedFiles.length}`, '2');
+	failed &&
+		console.log(`\x1b[2mStatus: \x1b[0m\x1b[31mfailed\x1b[0m`)
+
+	console.log(`\x1b[2mType: \x1b[0m\x1b[0m${programChoices.testType}\x1b[0m`)
+
+	console.log(`\x1b[2mSuite: \x1b[0m\x1b[0m${programChoices.suite}\x1b[0m`)
+
+	programChoices.endpointTitle && 
+		console.log(`\x1b[2mEndpoint: \x1b[0m\x1b[0m${programChoices.endpointTitle}\x1b[0m`)
+
+	programChoices.viewport &&
+		console.log(`\x1b[2mViewport: \x1b[0m\x1b[0m${programChoices.viewport}\x1b[0m`)
+
+	start &&
+		console.log(`\x1b[2mDuration: \x1b[0m\x1b[0m${duration}s\x1b[0m`)
+
+	let files = getDiffingFiles();
+
+	if (!files) {
+		printColorText('🎉  Visual regression passed! (No diffs found)', '32');
+		process.exit();
+	}
+		
+	printColorText(`Total diffs: ${approvedFiles.length + rejectedFiles.length}`, '2');
 
 	if (approvedFiles.length > 0) {
 		console.log(`\x1b[2mApproved: \x1b[0m\x1b[32m${approvedFiles.length}\x1b[0m`)
@@ -719,12 +782,8 @@ const assessExistingDiffImages = async () => {
 		console.log(`\x1b[2mRejected: \x1b[0m\x1b[31m${rejectedFiles.length}\x1b[0m`)
 	}
 
-	console.log(`\x1b[2mType: \x1b[0m\x1b[0m${programChoices.testType}\x1b[0m`)
-	console.log(`\x1b[2mSuite: \x1b[0m\x1b[0m${programChoices.suite}\x1b[0m`)
-	programChoices.endpointTitle && 
-		console.log(`\x1b[2mEndpoint: \x1b[0m\x1b[0m${programChoices.endpointTitle}\x1b[0m`)
-	programChoices.viewport &&
-		console.log(`\x1b[2mViewport: \x1b[0m\x1b[0m${programChoices.viewport}\x1b[0m`)
+	cleanUp();
+	process.exit();
 }
 
 const openImage = (imageFile: string) => {
@@ -736,12 +795,21 @@ const openImage = (imageFile: string) => {
 }
 
 const closeImagePreview = () => {
-	if (process.platform === 'darwin') {
-		// execSync('pkill Preview');
-	    execSync(`osascript -e 'quit app "Preview"'`);
-	} else if (process.platform === 'linux') {
-		execSync('pkill eog');
-	}
+	if (process.platform === 'win32') return;
+	if (visregConfig.disableAutoPreviewClose) return;
+
+    try {
+		const darwin = `osascript -e 'quit app "Preview"'`;
+		const linux = `pkill ${visregConfig.imagePreviewProcess}`;
+		execSync(process.platform === 'darwin' ? darwin : linux);
+    } catch (error) {
+        console.error('Failed to close image preview:', error);
+		console.log('------------------')
+		console.log('Linux users, you have some options:');
+		console.log('- Specify the process name of your image previewer in visreg.config.json (imagePreviewProcess) so that it can be closed automatically');
+		console.log('- Set disableAutoPreviewClose to true in visreg.config.json to prevent the warning message (you will have to close the image previewer manually');
+		console.log('- Install Gnome Image Viewer (eog) and set it as your default image previewer');	
+    }
 }
 
 process.on('SIGINT', () => {
@@ -749,7 +817,7 @@ process.on('SIGINT', () => {
 		process.exit();
 	}
 
-	console.log('\n\nTerminated, restoring backup diffs...');
+	console.log('\n\nTerminated by user, restoring backups\n');
 	restoreFromBackup();
 	process.exit();
 });

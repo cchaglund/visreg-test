@@ -48,6 +48,7 @@
 		"local-cypress": "1.2.6"
 	},
 	"devDependencies": {
+		"cypress-set-device-pixel-ratio": "^1.0.4",
 		"doctoc": "2.2.1",
 		"ts-node": "10.2.1",
 		"typescript": "5.3.2"

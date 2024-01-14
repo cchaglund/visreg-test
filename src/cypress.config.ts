@@ -13,11 +13,8 @@ export default defineConfig({
 		// screenshotsFolder: path.join(process.env.PROJECT_DIR || '', programOptions.suite, 'orange'),
 		setupNodeEvents(on, config) {
 			on('before:browser:launch', (browser, launchOptions) => {
-				if (browser.name === 'electron') {
-					launchOptions.preferences.width = maxViewportWidth;
-					launchOptions.preferences.height = maxViewportHeight
-				}
-
+				launchOptions.preferences.width = maxViewportWidth;
+				launchOptions.preferences.height = maxViewportHeight
 				return launchOptions;
 			});
 

@@ -14,6 +14,13 @@ declare global {
 			 * @example cy.prepareForCapture('/home', 'samsung-s10')
 			 */
 			prepareForCapture(args: PrepareForCaptureSettings): Chainable<JQuery<HTMLElement>>;
+
+			/**
+			 * Set the device pixel ratio for the test run.
+			 * @param ratio 
+			 * @param opts 
+			 */
+			setDevicePixelRatio(ratio: number): Chainable<JQuery<HTMLElement>>;
 		}
 	}
 }
@@ -95,10 +102,12 @@ export type ConfigurationSettings = {
      * where package.json is.
 	 */
 	testDirectory?: string;
+
 	/**
 	* These will not be included in the selection of test suites. node_modules is always ignored
 	*/
 	ignoreDirectories?: string[];
+
 	/**
 	 * maxViewport sets the maximum viewport dimensions that will be used for screenshots. 
 	 * If you define a viewport in your tests that is larger than these values, it will be cropped to these values.
@@ -108,6 +117,23 @@ export type ConfigurationSettings = {
 		width?: number;
 		height?: number;
 	};
+
+	/**
+	 * This is for Linux users to specify the image preview program they are using.
+	 * It is used to automatically close the previewer at the end of diff assessment with a `pkill` command. 
+	 * By default visreg-test will attempt to close Gnome (i.e. 'pkill eog').
+	 * @type {string}
+	 * @default 'eog'
+	 */	
+	imagePreviewProcess: string;
+
+	/**
+	 * Prevent visreg-test from attempting to automatically close the image previewer at the end of diff assessment. 
+	 * @type {boolean}
+	 * @default false
+	 */
+	disableAutoPreviewClose: boolean;
+
 	screenshotOptions?: CypressScreenshotOptions; // https://docs.cypress.io/api/cypress-api/screenshot-api#Arguments
 	comparisonOptions?: JestMatchImageSnapshotOptions; // https://github.com/americanexpress/jest-image-snapshot#%EF%B8%8F-api
 };
@@ -124,6 +150,20 @@ export type VisregOptions = CypressScreenshotOptions & JestMatchImageSnapshotOpt
 
 
 export type CypressScreenshotOptions = {
+	/**
+	 * Change the pixel density of the screenshot. 
+	 * Mobile devices often have a pixel density of 2, and retina displays have a pixel density of 2 or 3.
+	 * With the default value of 1, the screenshot will be the same size as the viewport.
+	 * They will be noticeably lower resolution than what you'd see on a mobile device or retina display.
+	 * Pros and cons of setting this to a higher value:
+	 * - Screenshots resemble what you'd see on a mobile device or retina display.
+	 * - Screenshot files sizes will be larger, and they will take longer to process and store
+	 * 
+	 * @type {number}
+	 * @default 1
+	 */
+	devicePixelRatio?: number;
+
 	/**
 	 * Amount of time, in milliseconds, to scroll the page prior to taking screenshots (1 second down, 1 second up)
 	 * When "capture" is set to "viewport", this time is halved.
@@ -209,6 +249,13 @@ export type CypressScreenshotOptions = {
 		requestTimeout?: 5000,
 		responseTimeout?: 30000;
 	};
+
+	/**
+	 * Whether Cypress should fail on a non-2xx response code from your server.
+	 * @type {boolean}
+	 * @default true
+	 */
+	failOnStatusCode?: boolean;
 };
 
 

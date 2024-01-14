@@ -1,3 +1,9 @@
+2.4.0
+- Fixed an issue where snapshots taken on a high dpi screen would be twice as large as the viewport size. By default now the snapshots are taken at 1x resolution, but you can change this by setting the `devicePixelRatio` option in the config file.
+- Added some more options to the config file, specifically intended for Linux users (imagePreviewProcess and disableAutoPreviewClose). See the README for more info.
+- Added another screenshot option: failOnStatusCode. If you set this to false, the test will not fail if the endpoint returns a non-200 status code. This is useful if you want to take snapshots of error pages, for example.
+- We now show the file size of the received image in the terminal.
+
 2.3.0
 - `npx visreg --scaffold` will create a scaffold for you to get started with.
 

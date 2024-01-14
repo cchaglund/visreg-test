@@ -602,6 +602,8 @@ You can configure certain settings with a `visreg.config.json` file placed in th
 | testDirectory | Path to directory of test suites. Default is the root of the project, where `package.json` is. | `string` |
 | ignoreDirectories | Paths which will not be included in the selection of test. `node_modules` dir is always ignored. | `string[]` |
 | maxViewport | Should have a higher value than the viewport you want to test. Default is `1920x1080` | `{ width?: number, height?: number }` |
+| imagePreviewProcess | This is for Linux users to specify the image preview program they are using and is used to automatically close the previewer at the end of diff assessment with a `pkill` command. By default visreg-test will attempt to close Gnome (i.e. 'pkill eog'). | `string` |
+| disableAutoPreviewClose | Prevent visreg-test from attempting to automatically close the image previewer at the end of diff assessment. Default is `false` | `boolean` |
 | screenshotOptions | Options to pass to Cypress when taking screenshots. | `CypressScreenshotOptions` |
 | comparisonOptions | Options to pass to the Jest comparison engine when comparing screenshots. | `JestMatchImageSnapshotOptions` |
 
@@ -626,6 +628,8 @@ Reference:
 | clip | Position and dimensions (in pixels) used to crop the final screenshot image. | `{ x: number; y: number; width: number; height: number;	}` |
 | padding | Padding used to alter the dimensions of a screenshot of an element. It can either be a number, or an array of up to four numbers using CSS shorthand notation. This property is only applied for element screenshots and is ignored for all other types. | `number \| [ number ] \| [ number, number ] \| [ number, number, number ] \| [ number, number, number, number ]` |
 | timeouts | Time to wait for .screenshot() to resolve before timing out. See [cypress timeouts options](https://docs.cypress.io/guides/references/configuration.html#Timeouts)  | `{ defaultCommandTimeout?: 4000, execTimeout?: 60000, taskTimeout?: 60000, pageLoadTimeout?: 60000, requestTimeout?: 5000, responseTimeout?: 30000;	}` |
+| devicePixelRatio | The pixel ratio to use when taking screenshots. Default is `1` | `number` |
+| failOnStatusCode | Whether Cypress should fail on a non-2xx response code from your server. Default is `true` | `boolean` |
 
 <br>
 <br>
@@ -655,7 +659,7 @@ Reference:
 # Notes
 - If you only have one test suite it will be selected automatically.
 - Green checks in the UI indicate that the test ran successfully, not that no diffs were detected. Diffs will be opened for preview at the end of the test run.
-- High-resolution, full-page, long pages take more time to process. Consider increasing the timeouts in the `visreg.config` file if you're timing out.
+- High-resolution, high pixel ratio, long pages take more time and resources to process. Consider lowering the viewport or devicePixelRatio, or increasing the timeouts in the `visreg.config` file if you're timing out.
 - SSIM comparison requires more memory than pixelmatch, so if you're running into memory issues, try using pixelmatch instead (which is the default).
 - Logging: use cy.log() to log to the console. This will be displayed in the terminal when running the tests. Typescript will complain if you're passing an object and not a string, but you can cast it to "any" to get around that.
 - Does not work on Windows (yet). Untested on Linux (currently)
@@ -664,7 +668,7 @@ Reference:
 - Blackout settings only affect the snapshot - you will not see the blacked out elements in the Cypress GUI when running in lab mode.
 - Errors:
   - `"The 'files' list in config file 'tsconfig.json' is empty"` means you're attempting to run tests written in typescript but haven't followed the instructions above to set up typescript support.
-  - `RangeError: The value of "targetStart" is out of range. It must be >= 0.` means you're attempting to diff very large images, e.g. very long, full page screenshots.
+  - `RangeError: The value of "targetStart" is out of range. It must be >= 0.` means you're attempting to diff very large images, e.g. very long, full page screenshots. Try the above suggestions for reducing the size of the screenshots.
 
 # Credits
 
