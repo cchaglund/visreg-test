@@ -21,6 +21,8 @@ declare global {
 			 * @param opts 
 			 */
 			setDevicePixelRatio(ratio: number): Chainable<JQuery<HTMLElement>>;
+
+			scrollToBottom(duration: number): Chainable<JQuery<HTMLElement>>;
 		}
 	}
 }

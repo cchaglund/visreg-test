@@ -1,3 +1,6 @@
+2.5.2
+- Made it more reliably take screenshots all the way to the bottom of the page, and fixed a bug
+
 2.5.0
 - Support for having multiple visreg config files, one per suite (as well as the global one in the project root)
   

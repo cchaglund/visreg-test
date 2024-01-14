@@ -38,6 +38,8 @@ const parsedViewport = (viewport?: string | number[]) => {
 	return stringedViewport.split(',').map((pixels: string) => parseInt(pixels))
 }
 
+const projectRoot = process.cwd();
+
 const createScaffold = () => {
 	const typescript = program.opts().scaffoldTs;
 	const scaffoldRoot = path.join(__dirname, 'scaffold');
@@ -152,7 +154,6 @@ const printColorText = (text: string, colorCode: string) => {
 };
 
 const programChoices: ProgramChoices = extractProgramChoices();
-const projectRoot = process.cwd();
 const configPath = path.join(projectRoot, 'visreg.config.json');
 const visregConfig: ConfigurationSettings = pathExists(configPath)
 	? JSON.parse(fs.readFileSync(configPath, 'utf-8') || '{}')
