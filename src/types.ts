@@ -153,6 +153,13 @@ export type VisregOptions = CypressScreenshotOptions & JestMatchImageSnapshotOpt
 
 export type CypressScreenshotOptions = {
 	/**
+	 * Whether to wait for network traffic before taking a screenshot.
+	 * Uses https://github.com/bahmutov/cypress-network-idle
+	 * @type {boolean}
+	 * @default true
+	 */
+	waitForNetworkIdle?: boolean;
+	/**
 	 * Change the pixel density of the screenshot. 
 	 * Mobile devices often have a pixel density of 2, and retina displays have a pixel density of 2 or 3.
 	 * With the default value of 1, the screenshot will be the same size as the viewport.
@@ -170,7 +177,7 @@ export type CypressScreenshotOptions = {
 	 * Amount of time, in milliseconds, to scroll the page prior to taking screenshots (1 second down, 1 second up)
 	 * When "capture" is set to "viewport", this time is halved.
 	 * @type {number}
-	 * @default 1000
+	 * @default 750
 	 */
 	scrollDuration?: number;
 
@@ -366,7 +373,7 @@ export type JestMatchImageSnapshotOptions = {
 	 * Sets the threshold that would trigger a test failure based on the failureThresholdType selected. This is different
 	 * to the customDiffConfig.threshold above - the customDiffConfig.threshold is the per pixel failure threshold, whereas
 	 * this is the failure threshold for the entire comparison.
-	 * @default 0.
+	 * @default 0.02
 	 */
 	failureThreshold?: number | undefined;
 

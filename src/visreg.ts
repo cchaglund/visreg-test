@@ -416,10 +416,11 @@ const prepareConfig = () => {
 		failureThresholdType: 'percent',
 		capture: 'fullPage',
 		disableTimersAndAnimations: false,
-		scrollDuration: 1000,
+		scrollDuration: 750,
 		devicePixelRatio: 1,
 		disableAutoPreviewClose: false,
 		imagePreviewProcess: 'eog',
+		waitForNetworkIdle: true,
 		...screenshotOptions,
 		...comparisonOptions,
 	}

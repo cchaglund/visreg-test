@@ -1,3 +1,6 @@
+2.5.4
+- Made it so that waitForNetworkIdle can be set to false by the user.
+
 2.5.3
 - More reliably await everything to load before taking a screenshot, fixing an issue where the page would not be fully loaded before the screenshot was taken, resulting in some snapshots being cut off at the bottom, or have other issues.
 

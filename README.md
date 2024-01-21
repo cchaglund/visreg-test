@@ -522,8 +522,8 @@ Want to contribute? Great! Here's how to get started:
 **Running dev mode**
 
 - From `visreg/repo` run `npm run dev` to start watching the files and compiling them to the `dist` directory, which will be mirrored to your testing directory if you followed the dev setup. Any changes you make will automatically be reflected in your testing directory visreg-test package, allowing you to test your changes to the package in real time without having to publish and reinstall it all of the time.
-- From your testing directory, run the tests. Normally you would use `npx visreg-test` to do so, but due to the symlinking npx doesn't work (you'll get a "permission denied"), so you need to explicityly run it like so, instead: `node ./node_modules/.bin/visreg-test`.
-- You may need to give the symlinked directory permissions to run, so run `chmod +x ./node_modules/.bin/visreg-test`.
+<!-- - From your testing directory, run the tests. Normally you would use `npx visreg-test` to do so, but due to the symlinking npx doesn't work (you'll get a "permission denied"), so you need to explicityly run it like so, instead: `node ./node_modules/.bin/visreg-test`. -->
+- Run `npx visreg-test` from your testing directory. Give the symlinked directory permissions to run, so run `chmod +x ./node_modules/.bin/visreg-test`.
 - You should now see the changes you made to the package reflected in the tests.
 
 
@@ -615,12 +615,14 @@ You can configure certain settings with a `visreg.config.json` file placed in th
 Reference:
 - https://docs.cypress.io/api/cypress-api/screenshot-api#Arguments
 - https://docs.cypress.io/api/commands/screenshot#Arguments
+- https://github.com/bahmutov/cypress-network-idle
   
   
 <br>
 
 | Property | Description | Type |
 | --- | --- | --- |
+| waitForNetworkIdle | Wait for network requests to stop before taking a screenshot. Default is `true` | `boolean` |
 | scrollDuration | Scroll speed prior to capture. If not using IntersectionObserver you can probably set this to 0. Default is `1000` milliseconds.  | `number` |
 | blackout | Array of string selectors used to match elements that should be blacked out when the screenshot is taken. Does not apply to element screenshot captures. | `string[]` |
 | capture | Valid values are viewport or fullPage. When fullPage, the application under test is captured in its entirety from top to bottom. This value is ignored for element screenshot captures. | `'fullPage' \| 'viewport'` |

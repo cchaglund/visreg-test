@@ -22,7 +22,9 @@ Cypress.Commands.add('prepareForCapture', (props: PrepareForCaptureSettings) => 
     if (fullPageCapture) {
         cy.scrollTo('bottom', scrollSettings);
         cy.scrollTo('top', scrollSettings);
-        cy.waitForNetworkIdle(2000, { log: false })
+        if (options.waitForNetworkIdle) {
+            cy.waitForNetworkIdle(2000, { log: false })
+        }
         return;
     }     
 
@@ -30,7 +32,9 @@ Cypress.Commands.add('prepareForCapture', (props: PrepareForCaptureSettings) => 
         // We scroll a little even if capture is set to viewport, to trigger any lazy loading/interscetion observer.
         cy.scrollTo(0, win.innerHeight, scrollSettings);
         cy.scrollTo('top', scrollSettings);
-        cy.waitForNetworkIdle(2000, { log: false })
+        if (options.waitForNetworkIdle) {
+            cy.waitForNetworkIdle(2000, { log: false })
+        }
     });
 });
 
