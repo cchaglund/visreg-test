@@ -22,7 +22,7 @@ declare global {
 			 */
 			setDevicePixelRatio(ratio: number): Chainable<JQuery<HTMLElement>>;
 
-			scrollToBottom(duration: number): Chainable<JQuery<HTMLElement>>;
+			waitForNetworkIdle(timeout: number): Chainable<JQuery<HTMLElement>>;
 		}
 	}
 }

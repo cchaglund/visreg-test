@@ -1,3 +1,6 @@
+2.5.3
+- More reliably await everything to load before taking a screenshot, fixing an issue where the page would not be fully loaded before the screenshot was taken, resulting in some snapshots being cut off at the bottom, or have other issues.
+
 2.5.2
 - Made it more reliably take screenshots all the way to the bottom of the page, and fixed a bug
 

@@ -160,7 +160,7 @@ const visregConfig: ConfigurationSettings = pathExists(configPath)
 	: {};
 
 if (pathExists(configPath)) {
-	printColorText(`\nLoaded config ${configPath}`, '2');
+	printColorText(`\nProject config: ${configPath}`, '2');
 }
 
 let approvedFiles: string[] = [];
@@ -198,8 +198,15 @@ const typesList: TestType[] = [
 	},
 ];
 
+const getVersion = () => {
+	// Read the "version" field from package.json and print it out:
+	const packageJsonPath = path.join(__dirname, '..', 'package.json');
+	const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8') || '{}');
+	return packageJson.version;
+}
+
 // Print header
-printColorText('\n _  _  __  ____  ____  ____  ___ \n/ )( \\(  )/ ___)(  _ \\(  __)/ __)\n\\ \\/ / )( \\___ \\ )   / ) _)( (_ \\ \n \\__/ (__)(____/(__\\_)(____)\\___/\n', '36;1');
+printColorText(`\n _  _  __  ____  ____  ____  ___ \n/ )( \\(  )/ ___)(  _ \\(  __)/ __)\n\\ \\/ / )( \\___ \\ )   / ) _)( (_ \\ \n \\__/ (__)(____/(__\\_)(____)\\___/ \x1b[2mv${getVersion()}\x1b[0m\n`, '36;1');
 
 const promptForEndpointTitle = async () => {
 	const rl = readline.createInterface({
@@ -394,6 +401,8 @@ const prepareConfig = () => {
 		? JSON.parse(fs.readFileSync(suiteConfigPath, 'utf-8') || '{}')
 		: {};
 
+	pathExists(suiteConfigPath) && printColorText(`\nSuite config: ${suiteConfigPath}`, '2');
+
 	Object.assign(visregConfig, suiteConfig);
 
 	const { 
@@ -471,9 +480,9 @@ const runCypressTest = async (diffList: string[] = []): Promise<void> => {
 
         const child = spawn(`DEBUG=cypress ${command}`, args, { shell: true, stdio: 'inherit' });
 
-        child.on('data', (data) => console.log(`${data}`));
+		child.on('data', (data) => console.log(`${data}`));
 		child.on('error', (error) => console.error(`exec error: ${error}`));
-        child.on('close', (code) => {
+		child.on('close', (code) => {
 			if (labModeOn) resolve();
 			
 			if (isSpecifiedTest() && code === 0) {
@@ -495,8 +504,14 @@ const runCypressTest = async (diffList: string[] = []): Promise<void> => {
 				console.log('------------------');
 				console.log('\n');
 				
-				printColorText('Cypress failed. See above for details.', '31');
-				restoreFromBackup();
+				printColorText('Cypress could not complete one or more tests (see above for details)', '33');
+
+				if (programChoices.testType === 'diffs-only') {
+					printColorText('\nDiffs-only testing requires all tests to be successes. Any failure results in the diffs being restored. Fix the issues or remove the offending diff files from the diff directory.', '33');
+					restoreFromBackup();
+					process.exit(1);
+				}
+
 				resolve()
             }
 
@@ -505,9 +520,30 @@ const runCypressTest = async (diffList: string[] = []): Promise<void> => {
 
 			duration = Math.round((Date.now() - start) / 1000);
 			resolve();
-        });
+		});
 	});
 };
+
+// const filterForErrors = (stdout: string) => {
+// 	const failingLine = stdout.indexOf('failing');
+// 	if (failingLine === -1) return;
+
+// 	const resultsLine = stdout.indexOf('(Results)');
+// 	const failingEndpoints = stdout.substring(failingLine, resultsLine);
+// 	const errorLines = failingEndpoints.split('\n');
+
+// 	const failingTests: string[] = []
+
+// 	errorLines.forEach((line, index) => {
+// 		if (line.includes('Error')) {
+// 			failingTests.push(errorLines[index - 1]);
+// 		}
+// 	})
+
+// 	failingTests.forEach((text) => {
+// 		printColorText(text, '31');
+// 	});
+// };
 
 const removeBackups = () => {
 	pathExists(BACKUP_DIFF_DIR()) && fs.rmSync(BACKUP_DIFF_DIR(), { recursive: true });
@@ -577,8 +613,14 @@ const exitIfNoDIffs = () => {
 }
 
 const fullRegressionTest = async () => {
-	remove_diffs();
-	remove_received();
+	if (pathExists(DIFF_DIR())) {
+		fs.rmSync(DIFF_DIR(), { recursive: true });
+	}
+	
+	if (pathExists(RECEIVED_DIR())) {
+		fs.rmSync(RECEIVED_DIR(), { recursive: true });
+	}
+
 	await runCypressTest();
 	assessExistingDiffImages();
 }
@@ -587,8 +629,8 @@ const diffsOnly = async () => {
 	exitIfNoDIffs();
 
     const diffList = createTemporaryDiffList();
-    remove_diffs();
-    remove_received();
+    backupDiffs();
+    backupReceived();
 	await runCypressTest(diffList);
     assessExistingDiffImages();
 }
@@ -598,7 +640,7 @@ const assessExistingDiffs = () => {
 }
 
 
-const remove_diffs = () => {
+const backupDiffs = () => {
 	const dir = DIFF_DIR();
 	const backupDir = BACKUP_DIFF_DIR();
 
@@ -614,7 +656,7 @@ const remove_diffs = () => {
     }
 }
 
-const remove_received = () => {
+const backupReceived = () => {
 	const dir = RECEIVED_DIR();
 	const backupDir = BACKUP_RECEIVED_DIR();
 
@@ -761,7 +803,7 @@ const assessExistingDiffImages = async () => {
 const summarizeResultsAndQuit = () => {
 	printColorText('\n\nSummary', '4');
 	failed &&
-		console.log(`\x1b[2mStatus: \x1b[0m\x1b[31mfailed\x1b[0m`)
+		console.log(`\x1b[2mStatus: \x1b[0m\x1b[33mpartial\x1b[0m`)
 
 	console.log(`\x1b[2mType: \x1b[0m\x1b[0m${programChoices.testType}\x1b[0m`)
 
@@ -824,9 +866,9 @@ const closeImagePreview = () => {
 }
 
 process.on('SIGINT', () => {
-	if (programChoices.testType === 'lab') {
+	if (programChoices.testType !== 'diffs-only') {
 		process.exit();
-	}
+	};
 
 	console.log('\n\nTerminated by user, restoring backups\n');
 	restoreFromBackup();
