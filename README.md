@@ -541,7 +541,7 @@ Default values are as follows:
 capture: 'fullPage',
 viewports: [ 'iphone-6', 'ipad-2', [ 1920, 1080 ] ],
 failureThresholdType: 'percent',
-failureThreshold: 0.02,
+failureThreshold: 0.0,
 disableTimersAndAnimations: false,
 scrollDuration: 1000,
 ```

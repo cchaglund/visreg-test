@@ -412,7 +412,7 @@ const prepareConfig = () => {
 	} = visregConfig;
 	
 	const snapshotSettings = {
-		failureThreshold: 0.02,
+		failureThreshold: 0,
 		failureThresholdType: 'percent',
 		capture: 'fullPage',
 		disableTimersAndAnimations: false,
