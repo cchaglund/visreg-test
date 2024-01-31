@@ -13,10 +13,30 @@ export default defineConfig({
 		// screenshotsFolder: path.join(process.env.PROJECT_DIR || '', programOptions.suite, 'orange'),
 		setupNodeEvents(on, config) {
 			on('before:browser:launch', (browser, launchOptions) => {
-				launchOptions.preferences.width = maxViewportWidth;
-				launchOptions.preferences.height = maxViewportHeight
-				return launchOptions;
-			});
+				const width = 1920;
+				const height = 1080;
+
+				if (browser.name === 'chrome' && browser.isHeadless) {
+					launchOptions.args.push(`--window-size=${width},${height}`);
+					launchOptions.args.push('--force-device-scale-factor=1'); // force screen to be non-retina and just use our given resolution
+					launchOptions.args.push('--disable-smooth-scrolling');
+					launchOptions.args.push('--disable-low-res-tiling');
+					launchOptions.args.push('--force-color-profile=srgb');
+				}
+
+				if (browser.name === 'electron' && browser.isHeadless) {
+					// might not work on CI for some reason
+					launchOptions.preferences.width = width;
+					launchOptions.preferences.height = height;
+				}
+
+				if (browser.name === 'firefox' && browser.isHeadless) {
+					launchOptions.args.push(`--width=${width}`);
+					launchOptions.args.push(`--height=${height}`);
+				}
+
+				return launchOptions
+			})
 
 			on('task', {
 				log(messages) {

@@ -1,3 +1,7 @@
+2.5.6
+- Fixed long-standing bug where the snapshot would be "stitched" together incorrectly, showing duplicate "rows" in the image, due to the default scroll-behaviour of Cypress being "smooth". This was especially noticeable on pages with a sticky header. Now we set the scroll-behaviour to "auto" before taking the snapshot.
+- Now using chrome for the headless test runner, instead of electron.
+
 2.5.4
 - Made it so that waitForNetworkIdle can be set to false by the user.
 

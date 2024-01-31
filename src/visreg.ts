@@ -472,7 +472,7 @@ const runCypressTest = async (diffList: string[] = []): Promise<void> => {
 		if (labModeOn && programChoices.gui) {
 			cypressCommand = 'npx cypress open';
 		} else {
-			cypressCommand = `npx cypress run --spec "${specPath}"`;
+			cypressCommand = `npx cypress run --spec "${specPath}" --browser chrome`;
 		}
 
 		const parts = cypressCommand.split(' ');
