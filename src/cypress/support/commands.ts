@@ -12,6 +12,12 @@ Cypress.Commands.add('prepareForCapture', (props: PrepareForCaptureSettings) => 
         failOnStatusCode: options.failOnStatusCode ?? true,
     });
 
+    cy.get("html, body").invoke( // potentially alleviates some issues with scroll behavior
+        "attr",
+        "style",
+        "height: auto; scroll-behavior: auto;"
+    );
+
     onPageVisitFunctions?.forEach((fn) => fn && fn(cy, Cypress));
     
     const scrollSettings = {

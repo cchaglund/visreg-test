@@ -18,10 +18,7 @@ export default defineConfig({
 
 				if (browser.name === 'chrome' && browser.isHeadless) {
 					launchOptions.args.push(`--window-size=${width},${height}`);
-					launchOptions.args.push('--force-device-scale-factor=1'); // force screen to be non-retina and just use our given resolution
-					launchOptions.args.push('--disable-smooth-scrolling');
-					launchOptions.args.push('--disable-low-res-tiling');
-					launchOptions.args.push('--force-color-profile=srgb');
+					launchOptions.args.push('--disable-smooth-scrolling'); // potentially alleviates some issues with scroll behavior
 				}
 
 				if (browser.name === 'electron' && browser.isHeadless) {

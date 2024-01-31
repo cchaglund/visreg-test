@@ -541,7 +541,7 @@ Default values are as follows:
 capture: 'fullPage',
 viewports: [ 'iphone-6', 'ipad-2', [ 1920, 1080 ] ],
 failureThresholdType: 'percent',
-failureThreshold: 0.0,
+failureThreshold: 0.001, // 0.1%
 disableTimersAndAnimations: false,
 scrollDuration: 1000,
 ```
@@ -585,7 +585,7 @@ scrollDuration: 1000,
 | onEndpointVisit | Place to manipulate the page specified in the endpoint before taking the snapshot.                      | `(cy: cy, cypress: Cypress) => { cy.get('.cookie-consent').click(); }`                                                    | `OnVisitFunction`, *optional* |
 | elementToMatch  | Capture a screenshot of a specific element on the page, rather than the whole page.                        | `'.my-element'`                                                                                  | `string`, *optional* |
 | screenshotOptions | The properties of CypressScreenshotOptions of the module configuration are all applicable here | `blackout: ['#sidebar', '.my-selector']`                                                            | `...CypressScreenshotOptions`, *optional* |
-| comparisonOptions | The properties of JestMatchImageSnapshotOptions of the module configuration are all applicable here | `customDiffConfig: { threshold: 0.1 }`                                                            | `...JestMatchImageSnapshotOptions`, *optional* |
+| comparisonOptions | The properties of JestMatchImageSnapshotOptions of the module configuration are all applicable here | `customDiffConfig: { threshold: 0.01 }`                                                            | `...JestMatchImageSnapshotOptions`, *optional* |
 
 <br>
 <br>
@@ -650,7 +650,7 @@ Reference:
 | comparisonMethod | The method by which images are compared. `pixelmatch` does a pixel by pixel comparison, whereas `ssim` does a structural similarity comparison. | `'pixelmatch' \| 'ssim'` |
 | diffDirection | Changes diff image layout direction. | `'horizontal' \| 'vertical'` |
 | noColors | Removes coloring from the console output, useful if storing the results to a file. | `boolean` |
-| failureThreshold | Sets the threshold that would trigger a test failure based on the failureThresholdType selected. This is different to the customDiffConfig.threshold above - the customDiffConfig.threshold is the per pixel failure threshold, whereas this is the failure threshold for the entire comparison. | `number` |
+| failureThreshold | Sets the threshold that would trigger a test failure based on the failureThresholdType selected. This is different to the customDiffConfig.threshold above - the customDiffConfig.threshold is the per pixel failure threshold, whereas this is the failure threshold for the entire comparison, i.e. the percentage of pixels which may be different to the baseline before the new snapshot is considered diffing. | `number` |
 | failureThresholdType | Sets the type of threshold that would trigger a failure. | `'pixel' \| 'percent'` |
 | blur | Applies Gaussian Blur on compared images, accepts radius in pixels as value. Useful when you have noise after scaling images per different resolutions on your target website, usually setting its value to 1-2 should be enough to solve that problem. | `number` |
 
@@ -667,7 +667,12 @@ Reference:
 - Does not work on Windows (yet). Untested on Linux (currently)
 - This module will create, move, and delete files and directories in your test suite directories. It will not touch any files outside of the test suite directories.
 - When taking snapshots in lab mode, if you have the dev tools panel open in the Cypress GUI, the snapshots will be cropped by that portion of the screen. Simply close the dev tools panel before taking a snapshot to avoid this.
-- Blackout settings only affect the snapshot - you will not see the blacked out elements in the Cypress GUI when running in lab mode.
+- Blackout settings only affect the resulting snapshot - you will not see the blacked out elements in the Cypress GUI when running in lab mode.
+- If your snapshots have repeated or omitted "lines", where the image has duplicated parts of it or it hasn't captured parts of the page, this could be due to a sticky element (typically a sticky header). Set its display to none before taking the snapshot, e.g. `cy.get('.sticky-element').invoke('css', 'display', 'none')` - making it transparent is not enough. You might also be able to set it to `position: fixed`. This is an issue [with Cypress](https://github.com/cypress-io/cypress/issues/2681).
+- Changes not being detected?
+  - If you're trying to detect subtle hue changes, e.g. a button changing from a light blue to a dark blue, you may need to decrease the `failureThreshold` to 0. The default is 0.001, meaning that <=0.1% out of the pixels may be different before a snapshot is considered diffing. If it's still not enough, set the `comparisonMethod.customDiffConfig.threshold` to 0, which means that any difference whatsoever between the pixels will register as a diff. The default is 0.01, meaning if there's a <=1% difference the pixel will not register as being different.
+  - If a snapshot's dimensions is very large, say a full-page capture of a long page, and you have a small but significant portion of it diffing, this might fail to register as a diff. This is because the `failureThreshold` is calculated as a **percentage of the total pixels**. For example: a `failureThreshold` of 0.1 (10%) will detect a diff of 10 (or more) pixels in a 10x10 grid of 100 pixels, but these same diffing pixels would not register as a diff in a 10x100 (1000) pixels grid, where they would only make up 1% of the total pixels - a 100 pixel diff would be needed. In this case you can either decrease the `failureThreshold` or increase the `comparisonMethod.customDiffConfig.threshold`.
+  - Or set the `failureThresholdType` to `pixel` instead of `percent`, which means that the `failureThreshold` will be calculated as a **number of pixels** instead of a percentage of the total pixels.
 - Errors:
   - `"The 'files' list in config file 'tsconfig.json' is empty"` means you're attempting to run tests written in typescript but haven't followed the instructions above to set up typescript support.
   - `RangeError: The value of "targetStart" is out of range. It must be >= 0.` means you're attempting to diff very large images, e.g. very long, full page screenshots. Try the above suggestions for reducing the size of the screenshots.

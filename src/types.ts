@@ -275,7 +275,7 @@ export type JestMatchImageSnapshotOptions = {
 	customDiffConfig?: {
 		/**
 		 * Matching threshold, ranges from 0 to 1. Smaller values make the comparison more sensitive.
-		 * @default 0.1
+		 * @default 0.01
 		 */
 		readonly threshold?: number | undefined;
 
@@ -373,7 +373,7 @@ export type JestMatchImageSnapshotOptions = {
 	 * Sets the threshold that would trigger a test failure based on the failureThresholdType selected. This is different
 	 * to the customDiffConfig.threshold above - the customDiffConfig.threshold is the per pixel failure threshold, whereas
 	 * this is the failure threshold for the entire comparison.
-	 * @default 0.02
+	 * @default 0.001
 	 */
 	failureThreshold?: number | undefined;
 
