@@ -52,9 +52,10 @@ const takeSnaps = (props: TestConfig, viewport: VisregViewport, endpoint: Endpoi
         path,
         title,
         elementToMatch,
+        excludeFromTest,
+        onBefore,
         onEndpointVisit,
         onCleanup,
-        onBefore,
         ...endpointOptions
     } = endpoint;
 
@@ -67,14 +68,27 @@ const takeSnaps = (props: TestConfig, viewport: VisregViewport, endpoint: Endpoi
     const snapName = `${title} @ ${viewport}`;
     const fullUrl = getFullUrl(props, path);
 
+    const context = {
+        endpoint,
+        viewport,
+        cypress: Cypress
+    }
+
     it(snapName, () => {
-        if (onBefore) onBefore(cy, Cypress);
+        if (excludeFromTest && excludeFromTest(cy, context)) {
+            return;
+        }
+
+        if (onBefore) {
+            onBefore(cy, context);
+        }
 
         cy.prepareForCapture({
             fullUrl,
             viewport,
             onPageVisitFunctions: [onPageVisit, onEndpointVisit],
             fullPageCapture: !(elementToMatch || options.capture === 'viewport'),
+            context,
             options,
         });
 
@@ -83,7 +97,9 @@ const takeSnaps = (props: TestConfig, viewport: VisregViewport, endpoint: Endpoi
             cyTarget.matchImageSnapshot(snapName, options);
         }        
 
-        if (onCleanup) onCleanup(cy, Cypress);
+        if (onCleanup) {
+            onCleanup(cy, context);
+        }
     });
 };
 

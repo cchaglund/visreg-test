@@ -4,7 +4,7 @@ import 'cypress-set-device-pixel-ratio';
 import 'cypress-network-idle';
 
 Cypress.Commands.add('prepareForCapture', (props: PrepareForCaptureSettings) => {
-    const { fullUrl, viewport, onPageVisitFunctions, fullPageCapture, options } = props;
+    const { fullUrl, viewport, onPageVisitFunctions, fullPageCapture, context, options } = props;
 
     cy.setDevicePixelRatio(options.devicePixelRatio || 1);
     cy.setResolution(viewport);
@@ -18,7 +18,7 @@ Cypress.Commands.add('prepareForCapture', (props: PrepareForCaptureSettings) => 
         "height: auto; scroll-behavior: auto;"
     );
 
-    onPageVisitFunctions?.forEach((fn) => fn && fn(cy, Cypress));
+    onPageVisitFunctions?.forEach((fn) => fn && fn(cy, context));
     
     const scrollSettings = {
         duration: options.scrollDuration || 750,

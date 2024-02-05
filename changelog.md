@@ -1,3 +1,7 @@
+2.7.0
+- The endpoint functions now recieve two arguments, the cy object (same as before) and instead of the cypress object as the second one, the second one is now a context object with some more attributes (including the cypress object).
+- Added an `excludeFromTest` option to the endpoint object, which can be used to exclude an endpoint from the test run. It receives the same arguments as the other endpoint functions, and should return a boolean. If it returns true, the endpoint will be excluded from the test run. This is useful if you want to exclude an endpoint based on some condition.
+
 2.6.0
 - Added `onBefore` and `onCleanup` functions to the Endpoint object, which can be used to run code before and after the endpoint is visited and snapshot is taken. This is useful for setting up the test environment (e.g. changing a setting in your CMS), or cleaning up after the test (e.g. resetting that change).
 

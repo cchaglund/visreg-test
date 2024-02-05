@@ -218,11 +218,11 @@ const endpoints = [
       title: 'Start',
       path: '/',
       blackout: [ '#sidebar', '.my-selector', 'footer' ], // Blackout elements from the snapshot
-      onEndpointVisit: (cy, cypress) => {
+      onEndpointVisit: (cy, context) => {
          // Place to manipulate the page specified in the endpoint before taking the snapshot.
          cy.get('button[id="expand-section"]').click();
 
-         const mobile = cypress.currentTest.title.includes('iphone-6');
+         const mobile = context.viewport === 'ipad-2';
          if (mobile) {
             cy.get('.mobile-button').click();
          }
@@ -240,7 +240,7 @@ const formatUrl = (path) => {
    return [ baseUrl, path, '?noexternal' ].join('');
 };
 
-const onPageVisit = (cy, cypress) => {
+const onPageVisit = (cy, context) => {
    // Code here will run when cypress has loaded the page but before it starts taking snapshots
    cy.get('header').invoke('css', 'opacity', 0);
    cy.get('body').invoke('css', 'height', 'auto');
@@ -280,11 +280,11 @@ const endpoints: Endpoint[] = [
       title: 'Start',
       path: '/',
       blackout: [ '#sidebar', '.my-selector', 'footer' ], // Blackout elements from the snapshot
-      onEndpointVisit: (cy: cy, cypress: Cypress) => {
+      onEndpointVisit: (cy: cy, context: TestContext) => {
          // Place to manipulate the page specified in the endpoint before taking the snapshot.
          cy.get('button[id="expand-section"]').click();
 
-         const mobile = cypress.currentTest.title.includes('iphone-6');
+         const mobile = context.viewport === 'ipad-2';
          if (mobile) {
             cy.get('.mobile-button').click();
          }
@@ -301,7 +301,7 @@ const formatUrl: FormatUrl = (path) => {
    return [ baseUrl, path, '?noexternal' ].join('');
 };
 
-const onPageVisit: OnPageVisit = (cy: cy, cypress: Cypress) => {
+const onPageVisit: OnPageVisit = (cy: cy, context: TestContext) => {
    // Code here will run when cypress has loaded the page but before it starts taking snapshots
    cy.get('header').invoke('css', 'opacity', 0);
    cy.get('body').invoke('css', 'height', 'auto');
@@ -560,12 +560,12 @@ scrollDuration: 1000,
 | viewports       | An array of viewports to test.                                                                               | `['iphone-6', [1920, 1080]]`                                                           | `VisregViewport[]`, *optional* |
 | suiteName       | The name of the test suite. This is only used when displaying the test results in the terminal.             | `'MDN'`                                                                                         | `string`, *optional* |
 | formatUrl       | Apply some formatting to the url before a snapshot is taken, e.g. to add query params to the url.           | `(path) => [baseUrl, path, '?noexternal'].join('')`                                         | `(path: string) => string`, *optional* |
-| onPageVisit     | Code here will run when cypress has loaded the page but before it starts taking snapshots. Useful to prepare the page, e.g. by clicking to bypass cookie banners or hiding certain elements. See https://docs.cypress.io/api/table-of-contents#Commands. | `() => { cy.get('button').click() }` | `CypressInjectedFunction`, *optional* |
+| onPageVisit     | Code here will run when cypress has loaded the page but before it starts taking snapshots. Useful to prepare the page, e.g. by clicking to bypass cookie banners or hiding certain elements. See https://docs.cypress.io/api/table-of-contents#Commands. | `() => { cy.get('button').click() }` | `EndpointHookFunction`, *optional* |
 
 <br>
 <br>
 
-**CypressInjectedFunction passed props**
+**EndpointHookFunction passed props**
 
 | Property        | Description                                                                                                 | Example                                                                                       | Type |
 |-----------------|-------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|---------|
@@ -582,10 +582,11 @@ scrollDuration: 1000,
 |-----------------|-------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|---------|
 | title           | The title of the endpoint.                                                                                  | `'Start'`                                                                                       | `string`, *required* |
 | path            | The path of the endpoint.                                                                                   | `'/start'`                                                                                      | `string`, *required*  |
-| onBefore | Fired before onEndpointVisit, useful if you e.g. need to configure something in the CMS before taking the snapshot. You could achieve the same thing with onEndpointVisit, but this becomes more partitioned and cleaner.                       | `(cy: cy, cypress: Cypress) => { // change settings in CMS }`                                                    | `CypressInjectedFunction`, *optional* |
-| onEndpointVisit | Place to manipulate the page specified in the endpoint before taking the snapshot.                      | `(cy: cy, cypress: Cypress) => { cy.get('.cookie-consent').click(); }`                                                    | `CypressInjectedFunction`, *optional* |
-| onCleanup | Fired last, after the snapshot has been taken, useful to e.g. revert changes done in onBefore function                      | `(cy: cy, cypress: Cypress) => { // reset settings in CMS }`                                                    | `CypressInjectedFunction`, *optional* |
+| onBefore | Fired before onEndpointVisit, useful if you e.g. need to configure something in the CMS before taking the snapshot. You could achieve the same thing with onEndpointVisit, but this becomes more partitioned and cleaner.                       | `(cy: cy, context: TestContext) => { // change settings in CMS }`                                                    | `EndpointHookFunction`, *optional* |
+| onEndpointVisit | Place to manipulate the page specified in the endpoint before taking the snapshot.                      | `(cy: cy, context: TestContext) => { cy.get('.cookie-consent').click(); }`                                                    | `EndpointHookFunction`, *optional* |
+| onCleanup | Fired last, after the snapshot has been taken, useful to e.g. revert changes done in onBefore function                      | `(cy: cy, context: TestContext) => { // reset settings in CMS }`                                                    | `EndpointHookFunction`, *optional* |
 | elementToMatch  | Capture a screenshot of a specific element on the page, rather than the whole page.                        | `'.my-element'`                                                                                  | `string`, *optional* |
+| excludeFromTest  | A function which returns a boolean. It gets passed the same arguments as the other endpoint functions                        | `(cy: cy, context: TestContext, context: TestContext ) => { return context.viewport === 'ipad-2' }`                                                    | `ExcludeFromTestFunction`, *optional* |
 | screenshotOptions | The properties of CypressScreenshotOptions of the module configuration are all applicable here | `blackout: ['#sidebar', '.my-selector']`                                                            | `...CypressScreenshotOptions`, *optional* |
 | comparisonOptions | The properties of JestMatchImageSnapshotOptions of the module configuration are all applicable here | `customDiffConfig: { threshold: 0.01 }`                                                            | `...JestMatchImageSnapshotOptions`, *optional* |
 
