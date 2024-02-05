@@ -37,7 +37,7 @@ export type SnapConfig = {
 	title: string;
 };
 
-export type OnVisitFunction = (cy: typeof CypressCy, cypress: Cypress.Cypress) => void;
+export type CypressInjectedFunction = (cy: typeof CypressCy, cypress: Cypress.Cypress) => void;
 
 export type Endpoint = CypressScreenshotOptions & JestMatchImageSnapshotOptions & {
 	title: string;
@@ -46,7 +46,9 @@ export type Endpoint = CypressScreenshotOptions & JestMatchImageSnapshotOptions 
 	elementToMatch?: string;
 	padding?: Cypress.Padding;
 	capture?: 'viewport' | 'fullPage';
-	onEndpointVisit?: OnVisitFunction;
+	onBefore?: CypressInjectedFunction;
+	onEndpointVisit?: CypressInjectedFunction;
+	onCleanup?: CypressInjectedFunction;
 };
 
 export type VisregViewport = Cypress.ViewportPreset | number[];
@@ -54,7 +56,7 @@ export type VisregViewport = Cypress.ViewportPreset | number[];
 export type PrepareForCaptureSettings = {
 	fullUrl: string;
 	viewport: VisregViewport;
-	onPageVisitFunctions?: ((OnVisitFunction) | undefined)[];
+	onPageVisitFunctions?: ((CypressInjectedFunction) | undefined)[];
 	fullPageCapture?: boolean;
 	options: CypressScreenshotOptions & JestMatchImageSnapshotOptions;
 };
@@ -65,7 +67,7 @@ export type TestConfig = {
 	endpoints: Endpoint[];
 	viewports?: VisregViewport[];
 	formatUrl?: (path: string) => string;
-	onPageVisit?: OnVisitFunction;
+	onPageVisit?: CypressInjectedFunction;
 };
 
 export type TestType = {

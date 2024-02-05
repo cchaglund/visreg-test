@@ -53,6 +53,8 @@ const takeSnaps = (props: TestConfig, viewport: VisregViewport, endpoint: Endpoi
         title,
         elementToMatch,
         onEndpointVisit,
+        onCleanup,
+        onBefore,
         ...endpointOptions
     } = endpoint;
 
@@ -66,6 +68,8 @@ const takeSnaps = (props: TestConfig, viewport: VisregViewport, endpoint: Endpoi
     const fullUrl = getFullUrl(props, path);
 
     it(snapName, () => {
+        if (onBefore) onBefore(cy, Cypress);
+
         cy.prepareForCapture({
             fullUrl,
             viewport,
@@ -74,10 +78,12 @@ const takeSnaps = (props: TestConfig, viewport: VisregViewport, endpoint: Endpoi
             options,
         });
 
-        if (noSnap) return;
+        if (!noSnap) {
+            const cyTarget = elementToMatch ? cy.get(elementToMatch) : cy;
+            cyTarget.matchImageSnapshot(snapName, options);
+        }        
 
-        const cyTarget = elementToMatch ? cy.get(elementToMatch) : cy;
-        cyTarget.matchImageSnapshot(snapName, options);
+        if (onCleanup) onCleanup(cy, Cypress);
     });
 };
 

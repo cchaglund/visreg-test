@@ -1,3 +1,6 @@
+2.6.0
+- Added `onBefore` and `onCleanup` functions to the Endpoint object, which can be used to run code before and after the endpoint is visited and snapshot is taken. This is useful for setting up the test environment (e.g. changing a setting in your CMS), or cleaning up after the test (e.g. resetting that change).
+
 2.5.6
 - Fixed long-standing bug where the snapshot would be "stitched" together incorrectly, showing duplicate "rows" in the image, due to the default scroll-behaviour of Cypress being "smooth". This was especially noticeable on pages with a sticky header. Now we set the scroll-behaviour to "auto" before taking the snapshot.
 - Now using chrome for the headless test runner, instead of electron.

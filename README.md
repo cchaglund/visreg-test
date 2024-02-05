@@ -560,12 +560,12 @@ scrollDuration: 1000,
 | viewports       | An array of viewports to test.                                                                               | `['iphone-6', [1920, 1080]]`                                                           | `VisregViewport[]`, *optional* |
 | suiteName       | The name of the test suite. This is only used when displaying the test results in the terminal.             | `'MDN'`                                                                                         | `string`, *optional* |
 | formatUrl       | Apply some formatting to the url before a snapshot is taken, e.g. to add query params to the url.           | `(path) => [baseUrl, path, '?noexternal'].join('')`                                         | `(path: string) => string`, *optional* |
-| onPageVisit     | Code here will run when cypress has loaded the page but before it starts taking snapshots. Useful to prepare the page, e.g. by clicking to bypass cookie banners or hiding certain elements. See https://docs.cypress.io/api/table-of-contents#Commands. | `() => { cy.get('button').click() }` | `OnVisitFunction`, *optional* |
+| onPageVisit     | Code here will run when cypress has loaded the page but before it starts taking snapshots. Useful to prepare the page, e.g. by clicking to bypass cookie banners or hiding certain elements. See https://docs.cypress.io/api/table-of-contents#Commands. | `() => { cy.get('button').click() }` | `CypressInjectedFunction`, *optional* |
 
 <br>
 <br>
 
-**OnVisitFunction passed props**
+**CypressInjectedFunction passed props**
 
 | Property        | Description                                                                                                 | Example                                                                                       | Type |
 |-----------------|-------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|---------|
@@ -582,7 +582,9 @@ scrollDuration: 1000,
 |-----------------|-------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|---------|
 | title           | The title of the endpoint.                                                                                  | `'Start'`                                                                                       | `string`, *required* |
 | path            | The path of the endpoint.                                                                                   | `'/start'`                                                                                      | `string`, *required*  |
-| onEndpointVisit | Place to manipulate the page specified in the endpoint before taking the snapshot.                      | `(cy: cy, cypress: Cypress) => { cy.get('.cookie-consent').click(); }`                                                    | `OnVisitFunction`, *optional* |
+| onBefore | Fired before onEndpointVisit, useful if you e.g. need to configure something in the CMS before taking the snapshot. You could achieve the same thing with onEndpointVisit, but this becomes more partitioned and cleaner.                       | `(cy: cy, cypress: Cypress) => { // change settings in CMS }`                                                    | `CypressInjectedFunction`, *optional* |
+| onEndpointVisit | Place to manipulate the page specified in the endpoint before taking the snapshot.                      | `(cy: cy, cypress: Cypress) => { cy.get('.cookie-consent').click(); }`                                                    | `CypressInjectedFunction`, *optional* |
+| onCleanup | Fired last, after the snapshot has been taken, useful to e.g. revert changes done in onBefore function                      | `(cy: cy, cypress: Cypress) => { // reset settings in CMS }`                                                    | `CypressInjectedFunction`, *optional* |
 | elementToMatch  | Capture a screenshot of a specific element on the page, rather than the whole page.                        | `'.my-element'`                                                                                  | `string`, *optional* |
 | screenshotOptions | The properties of CypressScreenshotOptions of the module configuration are all applicable here | `blackout: ['#sidebar', '.my-selector']`                                                            | `...CypressScreenshotOptions`, *optional* |
 | comparisonOptions | The properties of JestMatchImageSnapshotOptions of the module configuration are all applicable here | `customDiffConfig: { threshold: 0.01 }`                                                            | `...JestMatchImageSnapshotOptions`, *optional* |
@@ -664,7 +666,7 @@ Reference:
 - High-resolution, high pixel ratio, long pages take more time and resources to process. Consider lowering the viewport or devicePixelRatio, or increasing the timeouts in the `visreg.config` file if you're timing out.
 - SSIM comparison requires more memory than pixelmatch, so if you're running into memory issues, try using pixelmatch instead (which is the default).
 - Logging: use cy.log() to log to the console. This will be displayed in the terminal when running the tests. Typescript will complain if you're passing an object and not a string, but you can cast it to "any" to get around that.
-- Does not work on Windows (yet). Untested on Linux (currently)
+- Does not work on Windows (yet).
 - This module will create, move, and delete files and directories in your test suite directories. It will not touch any files outside of the test suite directories.
 - When taking snapshots in lab mode, if you have the dev tools panel open in the Cypress GUI, the snapshots will be cropped by that portion of the screen. Simply close the dev tools panel before taking a snapshot to avoid this.
 - Blackout settings only affect the resulting snapshot - you will not see the blacked out elements in the Cypress GUI when running in lab mode.
