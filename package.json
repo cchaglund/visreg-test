@@ -17,7 +17,7 @@
 		"minor": "npm run prep && npm version minor && npm publish",
 		"major": "npm run prep && npm version major && npm publish",
 		"prep": "npm run doc && npm install && npm run build",
-		"postinstall": "chmod +x ../.bin/visreg-test chmod +x ./dist/start-visreg-test.sh && chmod +x ./dist/container-config/run-visreg-test.sh && chmod +x ./dist/container-config/build-visreg-test.sh"
+		"postinstall": "chmod +x ./dist/start-visreg-test.sh && chmod +x ./dist/container-config/run-visreg-test.sh && chmod +x ./dist/container-config/build-visreg-test.sh"
 	},
 	"bin": {
 		"visreg-test": "dist/start-visreg-test.sh"
