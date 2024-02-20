@@ -1,4 +1,4 @@
-import { runVisreg, VisregViewport, Endpoint, TestConfig, OnVisitFunction } from 'visreg-test';
+import { runVisreg, VisregViewport, Endpoint, TestConfig, EndpointHookFunction } from 'visreg-test';
 
 const baseUrl = 'https://developer.mozilla.org';
 
@@ -26,7 +26,7 @@ const formatUrl = (path: string) => {
     return '';
 };
 
-const onPageVisit: OnVisitFunction = (cy, cypress) => {
+const onPageVisit: EndpointHookFunction = (cy, cypress) => {
     // Called between page load and snapshot, for all endpoints
 };
 

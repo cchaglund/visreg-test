@@ -15,4 +15,4 @@ const nonOverridableSettings: NonOverridableSettings = process.env.CYPRESS_NON_O
 export const maxViewportWidth = visregConfig?.maxViewport?.width || 1920;
 export const maxViewportHeight = visregConfig?.maxViewport?.height || 1080;
 export const timeouts = snapshotSettings?.timeouts || {};
-export const projectRoot = nonOverridableSettings?.projectRoot || '';
+export const suitesDirectory = nonOverridableSettings?.suitesDirectory || '';

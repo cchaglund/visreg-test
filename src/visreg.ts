@@ -4,163 +4,44 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { execSync, spawn } from 'child_process';
 import * as readline from 'readline';
-import { ConfigurationSettings, NonOverridableSettings, ProgramChoices, TestType } from './types';
-import { Command } from 'commander';
+import { ConfigurationSettings, NonOverridableSettings, TestType } from './types';
+import { programChoices } from './cli-program';
+import { getFileSizeInMegabytes, hasFiles, parsedViewport, pathExists, printColorText, projectRoot, removeDirIfEmpty, suitesDirectory } from './utils';
+// const express = require('express');
 
-const program = new Command();
+// const app = express();
+// // Serve static files from the "images" directory
+// app.use('/images', express.static('/app/local/snapshots/snaps/__diff_output__'));
 
-program
-	.option('-s, --suite <char>')
-	.option('-e, --endpoint-title <char>')
-	.option('-v, --viewport <char>')
-	.option('-f, --full-test [specs]')
-	.option('-d, --diffs-only [specs]')
-	.option('-a, --assess-existing-diffs [specs]')
-	.option('-lab, --lab-mode [specs]')
-	.option('-no-gui, --no-gui')
-	.option('-no-snap, --no-snap')
-	.option('-scaffold, --scaffold')
-	.option('-scaffold-ts, --scaffold-ts')
+// app.get('/', (req: any, res: any) => {
+// 	// send an image file called "test" that's in the /app/local/snapshots/snaps/__diff_output__ directory:
+// 	res.sendFile('/app/local/snapshots/snaps/__diff_output__/test.png');
+// });
 
-program.parse();
+// app.listen(3000, () => {
+// 	const dirPath = '/app/local/snapshots/snaps/__diff_output__';
 
+// 	if (fs.existsSync(dirPath)) {
+// 		fs.readdir(dirPath, (err, files) => {
+// 			if (err) {
+// 				console.error('Error reading directory:', err);
+// 			} else {
+// 				console.log('Directory contents:', files);
+// 			}
+// 		});
+// 	}
 
-const parsedViewport = (viewport?: string | number[]) => {	
-	if (!viewport) {
-		return;
-	}
+// 	// console.log('Server is running at http://localhost:3000');
+// });
 
-	const stringedViewport = viewport.toString();
-	if (!stringedViewport?.includes(',')) {
-		return viewport;
-	}
-
-	return stringedViewport.split(',').map((pixels: string) => parseInt(pixels))
-}
-
-const projectRoot = process.cwd();
-
-const createScaffold = () => {
-	const typescript = program.opts().scaffoldTs;
-	const scaffoldRoot = path.join(__dirname, 'scaffold');
-	const fileName = typescript ? 'snaps.ts' : 'snaps.js';
-	const source = path.join(scaffoldRoot, fileName);
-	const destination = path.join(projectRoot, 'test-suite');
-
-	if (!pathExists(destination)) {
-		fs.mkdirSync(destination);
-	}
-
-	fs.copyFileSync(source, path.join(destination, fileName));
-
-	if (typescript) {
-		fs.copyFileSync(path.join(scaffoldRoot, 'tsconfig-scaffold.json'), path.join(projectRoot, 'tsconfig.json'));
-	}
-}
-
-const extractProgramChoices = () => {	
-	const opts: ProgramChoices = program.opts();
-
-	if (opts.scaffold || opts.scaffoldTs) {
-		createScaffold();
-		process.exit();
-	}
-
-	let testType = '';
-	let specificationShorthand: string | boolean = '';
-
-	switch (true) {
-		case opts.assessExistingDiffs !== undefined:
-			testType = 'assess-existing-diffs';
-			specificationShorthand = opts.assessExistingDiffs;
-			break;
-		case opts.labMode !== undefined:
-			testType = 'lab';
-			specificationShorthand = opts.labMode;
-			break;
-		case opts.diffsOnly !== undefined:
-			testType = 'diffs-only';
-			specificationShorthand = opts.diffsOnly;
-			break;
-		case opts.fullTest !== undefined:
-			testType = 'full-test';
-			specificationShorthand = opts.fullTest;
-			break;
-	}
-	
-    const args: ProgramChoices = {
-		suite: opts?.suite,
-		endpointTitle: opts?.endpointTitle,
-        viewport: parsedViewport(opts?.viewport),
-		testType,
-		gui: opts?.gui,
-		snap: opts?.snap,
-    };
-
-    if (typeof specificationShorthand !== 'string') {
-		return args;
-	}
-
-	return extractSpecificationShorthand(args, specificationShorthand);
-}
-
-const extractSpecificationShorthand = (args: ProgramChoices, specificationShorthand: string) => {	
-	const shortSpec = specificationShorthand;
-    const colonPosition = shortSpec.indexOf(':');
-    const atPosition = shortSpec.indexOf('@') === -1 ? shortSpec.length : shortSpec.indexOf('@');	
-
-    let suite = '';
-    let endpointTitle = '';
-
-    if (colonPosition > 0) {
-        suite = shortSpec.substring(0, colonPosition);
-        endpointTitle = shortSpec.substring(colonPosition + 1, atPosition);
-    } else if (colonPosition === -1) {
-		suite = shortSpec.substring(0, atPosition);
-    } else {		
-        endpointTitle = shortSpec.substring(1, atPosition);
-    }
-
-    const viewport = parsedViewport(shortSpec.substring(atPosition + 1, shortSpec.length));
-
-    const updatedArgs = {
-		...args,
-		suite: args.suite || suite,
-        endpointTitle : args.endpointTitle || endpointTitle,
-        viewport : args.viewport || viewport,
-    }
-
-    return updatedArgs;
-}
-
-const pathExists = (dirPath: string) => fs.existsSync(dirPath);
-
-const hasFiles = (dirPath: string) => fs.readdirSync(dirPath).length > 0;
-
-const removeDirIfEmpty = (dirPath: string) => {
-    if (!pathExists(dirPath) || hasFiles(dirPath)) {
-		return;
-	}
-
-	try {
-		fs.rmSync(dirPath, { recursive: true })
-    } catch (err) {
-        console.error(err);
-    }
-}
-
-const printColorText = (text: string, colorCode: string) => {
-	console.log(`\x1b[${ colorCode }m${ text }\x1b[0m`);
-};
-
-const programChoices: ProgramChoices = extractProgramChoices();
 const configPath = path.join(projectRoot, 'visreg.config.json');
-const visregConfig: ConfigurationSettings = pathExists(configPath)
-	? JSON.parse(fs.readFileSync(configPath, 'utf-8') || '{}')
-	: {};
+let visregConfig: ConfigurationSettings = {};
 
 if (pathExists(configPath)) {
-	printColorText(`\nProject config: ${configPath}`, '2');
+	const fileContent = fs.readFileSync(configPath, 'utf-8');
+	try {
+		visregConfig = JSON.parse(fileContent);
+	} catch (e) {}
 }
 
 let approvedFiles: string[] = [];
@@ -169,7 +50,7 @@ let start: number;
 let duration: number;
 let failed = false;
 
-const SUITE_SNAPS_DIR = () => path.join(projectRoot, programChoices.suite || '', 'snapshots', 'snaps');
+const SUITE_SNAPS_DIR = () => path.join(suitesDirectory, programChoices.suite || '', 'snapshots', 'snaps');
 const DIFF_DIR = () => path.join(SUITE_SNAPS_DIR(), '__diff_output__');
 const BACKUP_DIFF_DIR = () => path.join(SUITE_SNAPS_DIR(), 'backup-diffs');
 const RECEIVED_DIR = () => path.join(SUITE_SNAPS_DIR(), '__received_output__');
@@ -203,6 +84,11 @@ const getVersion = () => {
 	const packageJsonPath = path.join(__dirname, '..', 'package.json');
 	const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8') || '{}');
 	return packageJson.version;
+}
+
+// Print config path
+if (pathExists(configPath)) {
+	printColorText(`\nProject config: ${configPath}`, '2');
 }
 
 // Print header
@@ -245,7 +131,6 @@ const promptForViewport = async () => {
 	rl.close();
 }
 
-// Main function
 const main = async (): Promise<void> => {
 	await selectSuite();
 	await selectType();
@@ -290,23 +175,19 @@ const getDirectories = (source: string): string[] =>
 
 
 const selectSuite = async () => {
-	let testDirectory = projectRoot;
-	let ignoreDirectories: string[] = [ 'node_modules' ];
+	let ignoreDirectories: string[] = [];
 	
-	if (visregConfig.testDirectory) {
-		testDirectory = path.isAbsolute(visregConfig.testDirectory) ? visregConfig.testDirectory : path.resolve(projectRoot, visregConfig.testDirectory);
-	}
 	if (visregConfig.ignoreDirectories) {
 		ignoreDirectories.push(...visregConfig.ignoreDirectories);
 	}
-
-	const suites: string[] = getDirectories(testDirectory)
+	
+	const suites: string[] = getDirectories(suitesDirectory)
 		.filter(dirName => !ignoreDirectories.includes(dirName))
 		.filter(dirName => {
 			const fileName = 'snaps';
 			return (
-				fs.existsSync(path.join(testDirectory, dirName, fileName + '.js')) ||
-				fs.existsSync(path.join(testDirectory, dirName, fileName + '.ts'))
+				fs.existsSync(path.join(suitesDirectory, dirName, fileName + '.js')) ||
+				fs.existsSync(path.join(suitesDirectory, dirName, fileName + '.ts'))
 			);
 		})
 
@@ -352,6 +233,10 @@ const selectType = async () => {
 	
 	console.log('\nSelect type of test:\n');
 	typesList.forEach((type, index) => {
+		if (programChoices.runInContainer) {
+			if (type.slug === 'lab' || type.slug === 'assess-existing-diffs') return;
+		}
+
 		printColorText(`${index + 1} ${type.name}\x1b[2m - ${type.description}\x1b[0m`, '0');
 	});
 
@@ -376,7 +261,7 @@ const getSpecPath = () => {
 		return;
 	}
 
-	const specDir = path.join(projectRoot, programChoices.suite);
+	const specDir = path.join(suitesDirectory, programChoices.suite);
 
 	if (fs.existsSync(specDir)) {
 		return specDir;
@@ -388,18 +273,24 @@ const getSpecPath = () => {
 		return path.join(specDir, snapsFile);
 	}
 	
-	printColorText('No test suites found - see README', '31');
+	printColorText('No snap.js/ts file found - see README', '31');
 	process.exit(1);
 };
 
 const isSpecifiedTest = () => !!(programChoices.viewport || programChoices.endpointTitle);
 
 const prepareConfig = () => {
-	const suiteRoot = path.join(projectRoot, programChoices.suite || '');
+	const suiteRoot = path.join(suitesDirectory, programChoices.suite || '');
 	const suiteConfigPath = path.join(suiteRoot, 'visreg.config.json');
-	const suiteConfig: ConfigurationSettings = pathExists(suiteConfigPath)
-		? JSON.parse(fs.readFileSync(suiteConfigPath, 'utf-8') || '{}')
-		: {};
+
+	let suiteConfig: ConfigurationSettings = {};
+
+	if (pathExists(suiteConfigPath)) {
+		const fileContent = fs.readFileSync(suiteConfigPath, 'utf-8');
+		try {
+			suiteConfig = JSON.parse(fileContent);
+		} catch (e) {}
+	}
 
 	pathExists(suiteConfigPath) && printColorText(`\nSuite config: ${suiteConfigPath}`, '2');
 
@@ -423,15 +314,19 @@ const prepareConfig = () => {
 		waitForNetworkIdle: true,
 		...screenshotOptions,
 		...comparisonOptions,
+		...conf,
 	}
 	
 	process.env.CYPRESS_VISREG_OPTIONS = JSON.stringify(conf)
 	process.env.CYPRESS_SNAPSHOT_SETTINGS = JSON.stringify(snapshotSettings);
 	process.env.PROGRAM_CHOICES = JSON.stringify(programChoices);
+
+	return snapshotSettings;
 }	
 
 const runCypressTest = async (diffList: string[] = []): Promise<void> => {
-	prepareConfig();
+	const conf = prepareConfig();
+
 	start = Date.now();
 	const labModeOn = programChoices.testType === 'lab';
 
@@ -439,7 +334,14 @@ const runCypressTest = async (diffList: string[] = []): Promise<void> => {
 	labModeText += programChoices?.gui ? ' (GUI)' : '';
 	labModeText += !programChoices?.snap ? ' (no snapshot)' : '';
 
-	printColorText(`\nStarting Cypress ${ labModeOn ? labModeText : '' }\n`, '2');
+	if (labModeOn) {
+		printColorText(`\nStarting Cypress ${ labModeText } \n`, '2');
+	} else {
+		// Only electron currently supported in docker
+		programChoices.runInContainer
+			? printColorText(`\nStarting Cypress (electron) \n`, '2')
+			: printColorText(`\nStarting Cypress (${ conf.browser || 'electron' }) \n`, '2')
+	}
 
     return new Promise((resolve, reject) => {
 		const specPath = getSpecPath();
@@ -454,7 +356,7 @@ const runCypressTest = async (diffList: string[] = []): Promise<void> => {
 		}
 
 		const nonOverridableSettings: NonOverridableSettings = {
-			projectRoot,
+			suitesDirectory,
 			useRelativeSnapshotsDir: true,
 			storeReceivedOnFailure: true,
 			snapFilenameExtension: labModeOn ? '.lab' : '.base',
@@ -472,7 +374,12 @@ const runCypressTest = async (diffList: string[] = []): Promise<void> => {
 		if (labModeOn && programChoices.gui) {
 			cypressCommand = 'npx cypress open';
 		} else {
-			cypressCommand = `npx cypress run --spec "${specPath}" --browser chrome`;
+			if (programChoices.runInContainer) {
+				// Only electron is currently supported in docker
+				cypressCommand = `npx cypress run --spec "${specPath}"`;
+			} else {
+				cypressCommand = `npx cypress run --spec "${specPath}" ${conf.browser ? `--browser ${conf.browser}` : ''}`;
+			}
 		}
 
 		const parts = cypressCommand.split(' ');
@@ -678,13 +585,6 @@ const createTemporaryDiffList = () => {
 	return fs.readdirSync(DIFF_DIR()).filter(file => file.endsWith('.diff.png'));
 }
 
-const getFileSizeInMegabytes = (filePath: string) => {
-    const stats = fs.statSync(filePath);
-	const fileSizeInBytes = stats.size;
-	const fileSizeInMegabytes = fileSizeInBytes / 1000000.0;
-	return fileSizeInMegabytes.toFixed(2) + 'MB';
-}
-
 const processImage = async (imageFile: string, index: number, total: number) => {
     const imageName = imageFile.replace('.diff.png', '');
 
@@ -775,6 +675,12 @@ const assessExistingDiffImages = async () => {
 
 	console.log('\n\n');
 
+	if (programChoices.runInContainer) {
+		printColorText(`🚨 Detected ${files.length} diffs`, '33');
+		printColorText('Assess the changes by running \x1b[1mnpx visreg-test -a\x1b[0m', '33');
+		process.exit();
+	}
+
 	printColorText(`🚨 Detected ${files.length} diffs, opening image preview \x1b[2m- takes a couple of seconds\x1b[0m\n\n`, '33');
 		
 	for (const [index, file] of files.entries()) {	
@@ -807,7 +713,6 @@ const summarizeResultsAndQuit = () => {
 		console.log(`\x1b[2mStatus: \x1b[0m\x1b[33mpartial\x1b[0m`)
 
 	console.log(`\x1b[2mType: \x1b[0m\x1b[0m${programChoices.testType}\x1b[0m`)
-
 	console.log(`\x1b[2mSuite: \x1b[0m\x1b[0m${programChoices.suite}\x1b[0m`)
 
 	programChoices.endpointTitle && 

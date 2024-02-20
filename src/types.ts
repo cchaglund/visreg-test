@@ -107,17 +107,12 @@ export type ProgramChoices = {
 	snap?: boolean,
 	scaffold?: boolean,
 	scaffoldTs?: boolean,
+	runInContainer?: boolean,
 }
 
 export type ConfigurationSettings = {
 	/**
-	 * Relative or absolute path to directory of test suites. Default is the root of the project,
-     * where package.json is.
-	 */
-	testDirectory?: string;
-
-	/**
-	* These will not be included in the selection of test suites. node_modules is always ignored
+	* These will not be included in the selection of test suites.
 	*/
 	ignoreDirectories?: string[];
 
@@ -138,21 +133,27 @@ export type ConfigurationSettings = {
 	 * @type {string}
 	 * @default 'eog'
 	 */	
-	imagePreviewProcess: string;
+	imagePreviewProcess?: string;
 
 	/**
 	 * Prevent visreg-test from attempting to automatically close the image previewer at the end of diff assessment. 
 	 * @type {boolean}
 	 * @default false
 	 */
-	disableAutoPreviewClose: boolean;
+	disableAutoPreviewClose?: boolean;
+
+	/**
+	 * Browser to use for the test run.
+	 * @type {string}
+	 */
+	browser?: 'chrome' | 'firefox' | 'edge' | 'electron';
 
 	screenshotOptions?: CypressScreenshotOptions; // https://docs.cypress.io/api/cypress-api/screenshot-api#Arguments
 	comparisonOptions?: JestMatchImageSnapshotOptions; // https://github.com/americanexpress/jest-image-snapshot#%EF%B8%8F-api
 };
 
 export type NonOverridableSettings = {
-	projectRoot: string;
+	suitesDirectory: string;
 	useRelativeSnapshotsDir: true,
 	storeReceivedOnFailure: true,
 	snapFilenameExtension: '.lab' | '.base',
@@ -170,6 +171,7 @@ export type CypressScreenshotOptions = {
 	 * @default true
 	 */
 	waitForNetworkIdle?: boolean;
+
 	/**
 	 * Change the pixel density of the screenshot. 
 	 * Mobile devices often have a pixel density of 2, and retina displays have a pixel density of 2 or 3.

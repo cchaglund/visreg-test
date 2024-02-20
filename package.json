@@ -5,20 +5,22 @@
 	"main": "dist/run-test.js",
 	"types": "dist/types.d.ts",
 	"scripts": {
-		"dev": "npm run watch",
-		"build": "npm run clear && tsc && cp -r src/scaffold dist/",
+		"dev": "NODE_ENV=development npm run watch",
+		"build": "npm run clear && tsc && cp -r src/scaffold dist/ && cp -r src/container-config dist/ && cp src/start-visreg-test.sh dist/",
+		"build-dev-container": "npm run build && chmod +x sandbox-project/node_modules/visreg-test/dist/visreg.js && sandbox-project/node_modules/visreg-test/dist/visreg.js --build-container --env=dev",
+		"scaffold-dev-container": "chmod +x src/scaffold-dev-container.sh && ./src/scaffold-dev-container.sh",
 		"clear": "rm -rf dist && mkdir dist",
 		"watch": "tsc --watch",
 		"create-symlink": "node -e \"require('fs').symlinkSync(path.join(process.cwd(), './dist'), process.argv[1] + '/node_modules/visreg-test/dist')\"",
-		"test-dev": "ts-node ./src/visreg.ts",
 		"doc": "doctoc README.md --github --notitle",
 		"patch": "npm run prep && npm version patch && npm publish",
 		"minor": "npm run prep && npm version minor && npm publish",
 		"major": "npm run prep && npm version major && npm publish",
-		"prep": "npm run doc && npm install && npm run build"
+		"prep": "npm run doc && npm install && npm run build",
+		"postinstall": "chmod +x ../.bin/visreg-test chmod +x ./dist/start-visreg-test.sh && chmod +x ./dist/container-config/run-visreg-test.sh && chmod +x ./dist/container-config/build-visreg-test.sh"
 	},
 	"bin": {
-		"visreg-test": "dist/visreg.js"
+		"visreg-test": "dist/start-visreg-test.sh"
 	},
 	"author": "Christofer Haglund <cchaglund@users.noreply.github.com>",
 	"license": "LGPL-3.0-only",
@@ -47,6 +49,7 @@
 		"cypress-image-snapshot-fork-2": "9.0.1-6",
 		"cypress-network-idle": "1.14.2",
 		"cypress-set-device-pixel-ratio": "1.0.4",
+		"express": "4.18.2",
 		"local-cypress": "1.2.6"
 	},
 	"devDependencies": {

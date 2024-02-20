@@ -1,3 +1,11 @@
+3.0.0
+- Added support for running the test runner in a containerized environment.
+- You can now choose between a number of browsers to run the tests in: Chrome, Firefox, Edge, and Electron (the default). Only Electron is currently supported in the containerized version.
+- Breaking changes:
+  - You will need to move all your suites into a directory called "suites" in the root of your project. This is to make it easier to find the tests when running the containerized version of the test runner.
+  - Flags have been slightly rewritten
+  - Removed support for testDirectory option in the config file
+
 2.7.0
 - The endpoint functions now recieve two arguments, the cy object (same as before) and instead of the cypress object as the second one, the second one is now a context object with some more attributes (including the cypress object).
 - Added an `excludeFromTest` option to the endpoint object, which can be used to exclude an endpoint from the test run. It receives the same arguments as the other endpoint functions, and should return a boolean. If it returns true, the endpoint will be excluded from the test run. This is useful if you want to exclude an endpoint based on some condition.

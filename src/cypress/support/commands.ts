@@ -6,7 +6,11 @@ import 'cypress-network-idle';
 Cypress.Commands.add('prepareForCapture', (props: PrepareForCaptureSettings) => {
     const { fullUrl, viewport, onPageVisitFunctions, fullPageCapture, context, options } = props;
 
-    cy.setDevicePixelRatio(options.devicePixelRatio || 1);
+    if (Cypress.browser.name !== 'firefox') {
+        // This is not supported in firefox (will always be 1)
+        cy.setDevicePixelRatio(options.devicePixelRatio || 1);
+    }
+
     cy.setResolution(viewport);
     cy.visit(fullUrl, {
         failOnStatusCode: options.failOnStatusCode ?? true,

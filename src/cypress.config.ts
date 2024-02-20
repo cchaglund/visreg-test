@@ -1,20 +1,19 @@
 import {defineConfig} from 'cypress'
 import {addMatchImageSnapshotPlugin} from 'cypress-image-snapshot-fork-2/plugin';
 import { inspect } from 'util';
-import { maxViewportHeight, maxViewportWidth, projectRoot, timeouts } from './shared';
+import { maxViewportHeight, maxViewportWidth, suitesDirectory, timeouts } from './shared';
 
 export default defineConfig({
 	e2e: {
-		specPattern: projectRoot + '/**/snaps.{js,ts}',
+		specPattern: suitesDirectory + '/**/snaps.{js,ts}',
 		supportFile: false,
 		responseTimeout: 60000,
 		screenshotOnRunFailure: false,
 		...timeouts,
-		// screenshotsFolder: path.join(process.env.PROJECT_DIR || '', programOptions.suite, 'orange'),
 		setupNodeEvents(on, config) {
 			on('before:browser:launch', (browser, launchOptions) => {
-				const width = 1920;
-				const height = 1080;
+				const width = maxViewportWidth;
+				const height = maxViewportHeight;
 
 				if (browser.name === 'chrome' && browser.isHeadless) {
 					launchOptions.args.push(`--window-size=${width},${height}`);

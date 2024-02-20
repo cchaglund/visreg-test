@@ -1,6 +1,20 @@
+# visreg-test
+
+[![npm version](https://badge.fury.io/js/visreg-test.svg)](https://badge.fury.io/js/visreg-test)
+
 `visreg-test` enhances visual regression testing with quick setup and user-friendly yet powerful test writing, simplifying snapshot management and comparison to ensure UI consistency with minimal effort.
 
-### Features
+## Release notes
+
+
+**Added [docker support](#docker) in v3.0.0!**
+
+>❗<u>Breaking change updating to 3.0.0</u>:
+> - Your suites directories will need to be moved into a [directory called "suites"](#folder-structure) in the root of your project (this is to make it easier to find the tests when running the containerized version of the test runner).
+> - [Flags](#flags) have been updated to be more consistent and user-friendly.
+
+
+## Features
 - Create baseline snapshots or compare to existing ones
 - Automated assessment flow:
 	- Diff is opened in an image previewer
@@ -10,6 +24,7 @@
 - Multiple [test modes](#running-tests)
 - ["Lab mode"](#lab-mode) - for visualising and developing your tests in the Cypress GUI
 - [Simple API](#writing-tests) - write your tests in a single file
+- Added [docker support](#docker) - run your tests in a consistent environment
 - [Customise](#optional-configuration) your tests, enabling you to do things like:
   - specify your viewports
   - capture the full page or just a portion of it
@@ -26,10 +41,17 @@
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
+- [visreg-test](#visreg-test)
+  - [Release notes](#release-notes)
+  - [Features](#features)
+- [Table of contents](#table-of-contents)
 - [About](#about)
 - [Setup](#setup)
+  - [Quick start](#quick-start)
+  - [Step by step](#step-by-step)
     - [Typescript](#typescript)
     - [Folder structure](#folder-structure)
+  - [Docker setup (optional)](#docker-setup-optional)
 - [Writing tests](#writing-tests)
     - [Minimal example](#minimal-example)
   - [Full example](#full-example)
@@ -37,7 +59,12 @@
   - [Updated folder structure](#updated-folder-structure)
   - [Flags](#flags)
   - [Lab mode](#lab-mode)
+- [Docker](#docker)
+  - [Pre-requisites](#pre-requisites)
+  - [Running the container](#running-the-container)
 - [Contribute](#contribute)
+  - [Developing with the container](#developing-with-the-container)
+  - [Testing the package before publishing](#testing-the-package-before-publishing)
 - [Optional Configuration](#optional-configuration)
 - [Notes](#notes)
 - [Credits](#credits)
@@ -64,17 +91,33 @@ Other solutions often stumble in a few important ways:
 
 Let's install the package and create our first test suite - a directory containing a test configuration file and any generated snapshots.
 
+## Quick start
+
+💡 You can follow the step-by-step directory/file creation below or simply run the commands below from your project directory to scaffold everything and get going right away.
+
+Assuming you want to use typescript and run the tests in a container, run the following commands:
+
+
+```bash
+npm install visreg-test
+npx visreg-test --scaffold-ts
+npm install --save-dev typescript
+npx visreg-test --run-container
+```
+
+## Step by step
+
+
 Navigate to your project directory (or create one), then install the package:
 
 ```bash
 npm install visreg-test
 ``` 
 
->💡 Follow the step-by-step directory/file creation below or simply run `npx visreg-test --scaffold`, alternatively `--scaffold-ts` for typescript, from your project directory. If choosing typescript you will still have to run `npm install --save-dev typescript` (a tsconfig will be created for you)
 
-Create a directory for your first test suite:
+Create a directory to host your suites, and create your first test suite directory in it:
 ```bash
-mkdir test-suite
+mkdir suites && cd suites && mkdir test-suite
 ```
 
 Create a file for your test configuration:
@@ -114,9 +157,21 @@ my-project
 ├── package.json
 ├── package-lock.json
 ├── tsconfig.json (if using typescript)
-└── test-suite
-   └── snaps.js (or snaps.ts)
+└── suites
+   └── test-suite
+      └── snaps.js (or snaps.ts)
 ```
+
+## Docker setup (optional)
+
+If you want to run the tests in a container (recommended), after following the steps above, run: 
+
+```bash
+npx visreg-test --run-container
+```
+
+[Read more](#docker)
+
 
 <br>
 
@@ -369,14 +424,15 @@ my-project
 ├── package.json
 ├── package-lock.json
 ├── tsconfig.json (if using typescript)
-└── test-suite
-   └── snaps.js (or snaps.ts)
-   └── snapshots
-      └── snaps  
-         ├── Guides @ iphone-x.base.png
-         ├── Guides @ 960,540.base.png
-         ├── Start @ iphone-x.base.png
-         └── Start @ 960,540.base.png
+└── suites
+   └── test-suite
+      └── snaps.js (or snaps.ts)
+      └── snapshots
+         └── snaps  
+            ├── Guides @ iphone-x.base.png
+            ├── Guides @ 960,540.base.png
+            ├── Start @ iphone-x.base.png
+            └── Start @ 960,540.base.png
 ```
 
 And after running the tests again, this time with diffs:
@@ -387,20 +443,21 @@ my-project
 ├── package.json
 ├── package-lock.json
 ├── tsconfig.json (if using typescript)
-└── test-suite
-   └── snaps.js (or snaps.ts)
-   └── snapshots
-      └── snaps  
-         ├── __diffs__
-         │  ├── Guides @ iphone-x.diff.png
-         │  └── Guides @ 960,540.diff.png
-         ├── __received__
-         │  ├── Guides @ iphone-x-received.png
-         │  └── Guides @ 960,540-received.png
-         ├── Guides @ iphone-x.base.png
-         ├── Guides @ 960,540.base.png
-         ├── Start @ iphone-x.base.png
-         └── Start @ 960,540.base.png
+└── suites
+   └── test-suite
+      └── snaps.js (or snaps.ts)
+      └── snapshots
+         └── snaps  
+            ├── __diffs__
+            │  ├── Guides @ iphone-x.diff.png
+            │  └── Guides @ 960,540.diff.png
+            ├── __received__
+            │  ├── Guides @ iphone-x-received.png
+            │  └── Guides @ 960,540-received.png
+            ├── Guides @ iphone-x.base.png
+            ├── Guides @ 960,540.base.png
+            ├── Start @ iphone-x.base.png
+            └── Start @ 960,540.base.png
 ```
 
 
@@ -412,27 +469,31 @@ Flags just allow you to skip the UI and run specific tests. The complete list is
 -f, --full-test <spec> 
 -d, --diffs-only <spec>
 -a, --assess-existing-diffs <spec>
--lab, --lab-mode <spec>
 # accepts an optional shorthand argument to specify what to test, e.g. "test-suite:Home-page@iphone-6"
+-l, --lab-mode <spec>
 
--no-gui, --no-gui
 # run lab mode without the Cypress GUI
+-ng, --no-gui
 
--no-snap, --no-snap
 # skip taking snapshots
+-ns, --no-snap
 
--s, --suite <suite name>
 # <suite name> is the directory name of the suite to run
+-s, --suite <suite name>
 
--e, --endpoint-title <endpoint title> 
 # <endpoint title> is the title, but where any spaces must be replaced by dashes, e.g. "Getting Started" becomes "Getting-Started" (or "getting-started" as it's case insensitive)
+-e, --endpoint-title <endpoint title> 
 
--v, --viewport <viewport>
 # <viewport> is a string, e.g. "iphone-6" or "1920,1080"
+-v, --viewport <viewport>
 
--scaffold, --scaffold
--scaffold-ts, --scaffold-ts
 # scaffolds a test suite for you to get started with
+-sc, --scaffold
+-sct, --scaffold-ts
+
+# run the containerized version of the test runner
+-r, --run-container
+-b, --build-container
 ```
  
 
@@ -448,26 +509,38 @@ npx visreg-test -d test-suite@samsung-s10
 
 **Shorthand spec**
 
-The shorthand specification format is `suite:endpoint-title@viewport`. If you only have one suite, you can omit the suite name. Endpoint is prefaced with `:`, viewport is prefaced with  `@`. All are optional.
+The shorthand specification format is:
+
+```bash
+suite:endpoint-title@viewport
+```
+
+If you only have one suite, you can omit the suite name. Endpoint is prefaced with `:`, viewport is prefaced with  `@`. All are optional.
 
 
 **Examples:**
 
 ```bash
 # run the diffs-only tests in the "test-suite" suite
+--diffs-only test-suite
 -d test-suite
 
+
 # only test the Home endpoint. 
+--full-test test-suite:Home
 -f test-suite:Home
 
 # test the Home endpoint in all viewports (If you only have one suite, you can omit the suite name)
+--full-test :Home
 -f :Home
 
 # assess only the Home endpoint with the samsung-s10 viewport
+--assess-existing-diffs :Home@samsung-s10
 -a :Home@samsung-s10
 
 # isolated test for "Getting started" endpoint with the samsung-s10 viewport
--lab :getting-started@samsung-s10
+--lab-mode :getting-started@samsung-s10
+-l :getting-started@samsung-s10
 ```
 
 
@@ -486,21 +559,78 @@ Once Cypress opens, click on `E2E Testing`, then select the Electron browser and
 There are two lab-only flags:
 
 ```bash
--no-gui
--no-snap
+--no-gui
+--no-snap
 ```
 
 By default lab mode is run within the Cypress GUI, but you can run it in the terminal (this will also disable hot reloading).
 
 ```bash
-npm visreg-test -lab test-suite:Start@iphone-6 -no-gui
+npm visreg-test --lab-mode test-suite:Start@iphone-6 --no-gui
 ```
 
 You can also skip taking snapshots altogether, which is especially useful if you're just using lab mode to develop your tests.
 
 ```bash
-npm visreg-test -lab test-suite:Start@iphone-6 -no-snap
+npm visreg-test --lab-mode test-suite:Start@iphone-6 --no-snap
 ```
+
+
+
+<br>
+
+# Docker
+
+Running visreg-test in a Docker container is a great way to ensure that your tests run in a consistent environment, and it's especially useful if you're running tests in a CI/CD pipeline.
+
+>🚧 The dockerized variant is still in development.
+
+- You will be able to run visreg-test in both the container and locally - one doesn't exclude the other
+- You can use the same flags as you would normally
+- You only need to write your tests once, and they will work in both environments
+- The package.json is used by both environments, but each will have its own node_modules directory
+- If you install/remove a package the container will detect this and update its node_modules directory accordingly
+
+*Currently only electron browser is supported in the container*
+
+For the time being you will still need to have the package installed locally, because currently the diffs cannot be assessed in the container, so you will need to run `npx visreg-test -a` manually after the container has exited. The reason for this is that the container cannot open the image preview app on the host machine (this will be handled by a web app in the future).
+
+There are two other benefits to having it installed locally, however - to run lab mode (in the Cypress GUI) and to get code completion and type checking in your IDE.
+
+## Pre-requisites
+
+You will need to have docker installed on your machine.
+
+The docker container is created by the npm package, so you don't need to worry about creating it yourself. The first time you run the container, it will be built automatically.
+
+If you have been using an older directory configuration you will need to place all of your test suite directories into a directory called `suites` in the root of your project.
+
+## Running the container
+
+To run the container, use the `--run-container` flag:
+
+```bash
+npx visreg-test --run-container # or -r
+```
+
+If the container doesn't exist, it will be built automatically. If you want to force-build the container, use the `--build-container` flag:
+
+```bash
+npx visreg-test --build-container # or -b
+```
+
+A container directory will be added to the root of your project, which contains things needed for the container (primarily mounted volumes, enabling you to persist data between runs).
+
+You can use the same flags as you would normally, e.g. to run a specific test:
+
+```bash
+npx visreg-test --run-container -f test-suite:Home
+```
+
+Assessment with image previews will not work in the container - this must be triggered locally with `npx visreg-test -a` manually after the container has exited. This is just temporary, as I'm working on a web app which will be served from the container in order to handle this.
+
+Lab mode (i.e. headed Cypress) will still run locally (not in the container). If you try to run it in the container (i.e. with the flags `--run-container --lab-mode`) it will exit with an error message.
+
 
 
 <br>
@@ -513,7 +643,7 @@ Want to contribute? Great! Here's how to get started:
 
 - Clone this repo and run `npm install` to install the dependencies, e.g. into a directory called `visreg/repo`.
 - Create a directory for testing the module elsewhere (e.g. `visreg/dev-testing-grounds`) and set up the tests according to the instructions above.
-- After installing the npm visreg-test package you should now have a `visreg/dev-testing-grounds/node_modules/visreg-test/dist` directory. Delete it.
+- After installing the npm visreg-test package you should now have a dist directory at `visreg/dev-testing-grounds/node_modules/visreg-test/dist` directory. Delete it.
 - From `visreg/repo` run `npm run create-symlink -- [Absolute path]` where the absolute path should be your newly created testing directory (i.e. using the examples above it should be something like `npm run create-symlink -- /Users/.../dev-testing-grounds`). Please note that the path should not end with a slash, because we append some stuff to it.
 - This will create a symlink between the `dist` directory in the repo and the `node_modules/visreg-test` directory in your testing directory.
 
@@ -526,7 +656,55 @@ Want to contribute? Great! Here's how to get started:
 - Run `npx visreg-test` from your testing directory. Give the symlinked directory permissions to run, so run `chmod +x ./node_modules/.bin/visreg-test`.
 - You should now see the changes you made to the package reflected in the tests.
 
+## Developing with the container
 
+```bash
+npm run scaffold-dev-container
+```
+
+This will create a `sandbox-project` directory in the repo root (gitignored by default) and scaffold the container directory structure, build the container, and run it. Now you can develop both the package and the container at the same time. The package will be automatically symlinked to the container, so any change are reflected in real-time.
+
+## Testing the package before publishing
+
+You can use `npm link` to test your package locally before publishing it. Here's how you can do it:
+
+1. Navigate to the directory of the package you want to test and run npm link. This will create a global symlink to this package.
+
+```bash
+cd /path/to/visual-regression # this repo
+npm link
+```
+
+1. Navigate to the project where you want to use the package and run `npm link visreg-test`. This will create a symlink in your project's node_modules directory to the global symlink.
+
+```bash
+cd /path/to/your/project
+npm link visreg-test
+```
+
+Now your project will use the local version of your package. Run:
+
+```bash
+chmod +x /path/to/your/project/node_modules/.bin/visreg-test
+npx visreg-test --scaffold-ts
+npx visreg-test --run-container
+```
+
+This is just intended for last-minute verification in a way which is as close to a published package as possible (without the extra symlinking and mounting which is done when you run `scaffold-dev-container` and work inside the `sandbox-project`). 
+
+<!-- TODO:  you will still need to manually run "npm run build" if you're working on the container scripts. When you run "npx visreg-test -run-container" (or "-build-container") you will be forced to give execute permissions to the ".bin/visreg-test" file again (every time). This is done in order to move the script files to the dist dir (will be fixed by using nodemon to watch non-typescript files). The container's files will NOT reflect the latest code of the package, only the code as it was when you built the image the first time (since they persist in the mounted volume). You'll need to manually copy/past the dist dir into the volume (/container/volumes/app/node_modules). Again, this is not intended for development -->
+
+Remember to unlink the package from your project and globally when you're done testing:
+
+```bash
+# In your project directory
+npm unlink visreg-test
+
+# In your package directory
+npm unlink
+```
+
+This will remove the symlinks and ensure that your project uses the published version of the package when you run npm install.
 
 
 <br>
@@ -602,8 +780,8 @@ You can configure certain settings with a `visreg.config.json` file placed in th
 
 | Property | Description | Type |
 |---|---|---|
-| testDirectory | Path to directory of test suites. Default is the root of the project, where `package.json` is. | `string` |
-| ignoreDirectories | Paths which will not be included in the selection of test. `node_modules` dir is always ignored. | `string[]` |
+| browser | Which browser to run in headless mode. Default is Electron (Electron also currently the only supported browser when running in the container). | `'electron' | 'chrome' | 'firefox' | 'edge'` |
+| ignoreDirectories | Paths which will not be included in the selection of test. | `string[]` |
 | maxViewport | Should have a higher value than the viewport you want to test. Default is `1920x1080` | `{ width?: number, height?: number }` |
 | imagePreviewProcess | This is for Linux users to specify the image preview program they are using and is used to automatically close the previewer at the end of diff assessment with a `pkill` command. By default visreg-test will attempt to close Gnome (i.e. 'pkill eog'). | `string` |
 | disableAutoPreviewClose | Prevent visreg-test from attempting to automatically close the image previewer at the end of diff assessment. Default is `false` | `boolean` |
