@@ -4,11 +4,22 @@ pretty_log() {
     echo -e "\x1b[2m$1\x1b[0m"
 }
 
+PROJECT_ROOT="$(pwd)"
+
 run_visreg_test() {
     exists=$(docker images -q visreg-test 2> /dev/null)
 
-    # Check if the visreg-test image exists, and if not, build it
-    if [ -z "$exists" ]; then
+    image_stale=false
+    PREV_PACKAGEJSON="$PROJECT_ROOT/prev-package.json"
+
+    # If package.json has changed, we will need to rebuild the image
+    if [[ ! -f $PREV_PACKAGEJSON ]] || [[ -f $PREV_PACKAGEJSON && ! -z "$(diff -q $PROJECT_ROOT/package.json $PREV_PACKAGEJSON)" ]]; then
+        echo "Package.json has changed - image might be outdated"
+        image_stale=true
+    fi
+
+    # If the visreg-test image doesn't exist, or if it's outdated, build it
+    if [ -z "$exists" || $image_stale == "true" ]; then
         pretty_log "Building the visreg-test image..."
         SCRIPT_DIR="$(dirname "$0")"
         "$SCRIPT_DIR/build-visreg-test.sh" "$@"
@@ -28,7 +39,6 @@ run_visreg_test() {
 
     local env=$1
     local ARGS=$2
-    local PROJECT_ROOT="$(pwd)"
 
     # "Mirror" the project's
     #     - suites directory
