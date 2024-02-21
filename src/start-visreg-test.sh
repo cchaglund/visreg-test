@@ -39,13 +39,13 @@ for arg in "$@"; do
 done
 
 # Exit if the user tries to run lab mode from within a container 
-if [[  is_lab_mode && is_containerized ]]; then
+if [[  $is_lab_mode == "true" && $is_containerized == "true" ]]; then
     echo "Lab mode is only supported when run locally (not in a container). Run the command again without the --run-container/--build-container argument."
     exit 0
 fi
 
 
-if [[ is_containerized ]]; then
+if [[ $is_containerized == "true" ]]; then
     # If the user wants to run the package from within a container, create the container dir
     create_container_dir
 else

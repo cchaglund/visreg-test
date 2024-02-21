@@ -693,11 +693,11 @@ This is just intended for last-minute verification in a way which is as close to
 Remember to unlink the package from your project and globally when you're done testing:
 
 ```bash
-# In your project directory
+cd /path/to/your/project
 npm unlink visreg-test
 
-# In your package directory
-npm unlink
+cd /path/to/visual-regression # this repo
+npm unlink -g
 ```
 
 This will remove the symlinks and ensure that your project uses the published version of the package when you run npm install.

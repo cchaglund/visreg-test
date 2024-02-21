@@ -16,7 +16,7 @@ program
 	.option('-ns, --no-snap')
 	.option('-sc, --scaffold')
 	.option('-sct, --scaffold-ts')
-	.option('-c, --run-in-container')
+	.option('-c, --containerized')
 
 program.parse();
 
@@ -57,7 +57,7 @@ const extractProgramChoices = () => {
 		testType,
 		gui: opts?.gui,
 		snap: opts?.snap,
-		runInContainer: opts?.runInContainer,
+		containerized: opts?.containerized,
     };
 
     if (typeof specificationShorthand !== 'string') {

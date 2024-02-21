@@ -47,5 +47,5 @@ fi
 pretty_log "Running visreg-test package..."
 
 chmod +x ./node_modules/.bin/visreg-test
-npx visreg-test "${parsedArgs[@]}" --run-in-container
+node ./node_modules/visreg-test/dist/visreg.js "${parsedArgs[@]}" --containerized
 

@@ -233,7 +233,7 @@ const selectType = async () => {
 	
 	console.log('\nSelect type of test:\n');
 	typesList.forEach((type, index) => {
-		if (programChoices.runInContainer) {
+		if (programChoices.containerized) {
 			if (type.slug === 'lab' || type.slug === 'assess-existing-diffs') return;
 		}
 
@@ -338,7 +338,7 @@ const runCypressTest = async (diffList: string[] = []): Promise<void> => {
 		printColorText(`\nStarting Cypress ${ labModeText } \n`, '2');
 	} else {
 		// Only electron currently supported in docker
-		programChoices.runInContainer
+		programChoices.containerized
 			? printColorText(`\nStarting Cypress (electron) \n`, '2')
 			: printColorText(`\nStarting Cypress (${ conf.browser || 'electron' }) \n`, '2')
 	}
@@ -374,7 +374,7 @@ const runCypressTest = async (diffList: string[] = []): Promise<void> => {
 		if (labModeOn && programChoices.gui) {
 			cypressCommand = 'npx cypress open';
 		} else {
-			if (programChoices.runInContainer) {
+			if (programChoices.containerized) {
 				// Only electron is currently supported in docker
 				cypressCommand = `npx cypress run --spec "${specPath}"`;
 			} else {
@@ -675,7 +675,7 @@ const assessExistingDiffImages = async () => {
 
 	console.log('\n\n');
 
-	if (programChoices.runInContainer) {
+	if (programChoices.containerized) {
 		printColorText(`🚨 Detected ${files.length} diffs`, '33');
 		printColorText('Assess the changes by running \x1b[1mnpx visreg-test -a\x1b[0m', '33');
 		process.exit();

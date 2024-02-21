@@ -107,7 +107,7 @@ export type ProgramChoices = {
 	snap?: boolean,
 	scaffold?: boolean,
 	scaffoldTs?: boolean,
-	runInContainer?: boolean,
+	containerized?: boolean,
 }
 
 export type ConfigurationSettings = {
