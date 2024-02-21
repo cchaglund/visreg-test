@@ -581,25 +581,28 @@ Running visreg-test in a Docker container is a great way to ensure that your tes
 
 >🚧 The dockerized variant is still in development.
 
-- You will be able to run visreg-test in both the container and locally - one doesn't exclude the other
-- You can use the same flags as you would normally
-- You only need to write your tests once, and they will work in both environments
-- The package.json is used by both environments, but each will have its own node_modules directory
-- If you install/remove a package the container will detect this and update its node_modules directory accordingly
+Features:
 
-*Currently only electron browser is supported in the container*
+- You will be able to run visreg-test in both the container and locally - one doesn't exclude the other.
+- You can use the same flags as you would normally.
+- You only need to write your tests once, and they will work in both environments.
+- The package.json is used by both environments, but each will have its own node_modules directory.
+- If you install/remove a package the container will detect this and update its node_modules directory accordingly.
 
-For the time being you will still need to have the package installed locally, because currently the diffs cannot be assessed in the container, so you will need to run `npx visreg-test -a` manually after the container has exited. The reason for this is that the container cannot open the image preview app on the host machine (this will be handled by a web app in the future).
+Limitations:
 
-There are two other benefits to having it installed locally, however - to run lab mode (in the Cypress GUI) and to get code completion and type checking in your IDE.
+- Only Electron browser is (currently) supported in the container.
+- Assessment with image previews will (currently) not work in the container - this must be triggered locally with `npx visreg-test -a` manually after the container has exited (web app coming soon).
+- Cannot run lab mode in the container.
+- Currently you have to install the container via the npm package, so you need to have it installed. In the future, potentially the container could be hosted on Docker Hub, and you could run it with a single command, e.g. `docker run visreg-test`. However, there are benefits to having a local install of the package, such as lab mode and typescript support in your IDE.
+
 
 ## Pre-requisites
 
-You will need to have docker installed on your machine.
-
-The docker container is created by the npm package, so you don't need to worry about creating it yourself. The first time you run the container, it will be built automatically.
-
-If you have been using an older directory configuration you will need to place all of your test suite directories into a directory called `suites` in the root of your project.
+- Docker installed on your machine.
+- If you are coming from < v3.0.0 you will need to place all of your test suite directories into a [directory called "suites"](#folder-structure) in the root of your project.
+  
+>The first time you run the container the image will be built automatically.
 
 ## Running the container
 
@@ -622,8 +625,6 @@ You can use the same flags as you would normally, e.g. to run a specific test:
 ```bash
 npx visreg-test --run-container -f test-suite:Home
 ```
-
-Assessment with image previews will not work in the container - this must be triggered locally with `npx visreg-test -a` manually after the container has exited. This is just temporary, as I'm working on a web app which will be served from the container in order to handle this.
 
 Lab mode (i.e. headed Cypress) will still run locally (not in the container). If you try to run it in the container (i.e. with the flags `--run-container --lab-mode`) it will exit with an error message.
 
