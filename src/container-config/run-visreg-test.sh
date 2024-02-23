@@ -10,10 +10,10 @@ run_visreg_test() {
     exists=$(docker images -q visreg-test 2> /dev/null)
 
     image_stale=false
-    PREV_PACKAGEJSON="$PROJECT_ROOT/prev-package.json"
+    PREV_PACKAGEJSON="$PROJECT_ROOT/container/volumes/app/prev-package.json"
 
     # If package.json has changed, we will need to rebuild the image
-    if [[ ! -f $PREV_PACKAGEJSON ]] || [[ -f $PREV_PACKAGEJSON && ! -z "$(diff -q $PROJECT_ROOT/package.json $PREV_PACKAGEJSON)" ]]; then
+    if [[ ! -f $PREV_PACKAGEJSON ]] || [[ -f $PREV_PACKAGEJSON && ! -z "$(diff -q $PROJECT_ROOT/package.json $PREV_PACKAGEJSON 2>/dev/null)" ]]; then
         pretty_log "Package.json has changed - image might be outdated"
         image_stale=true
     fi
@@ -73,7 +73,7 @@ run_visreg_test() {
         -v "$PROJECT_ROOT"/visreg.config.json:/app/visreg.config.json \
         -v "$PROJECT_ROOT"/container/volumes/app:/app \
         -v "$PROJECT_ROOT"/container/volumes/cypress-cache:/root/.cache/Cypress \
-        -v "$PROJECT_ROOT"/../repo/visual-regression/dist:/temp \
+        -v "$PROJECT_ROOT"/../dist:/temp \
         -p 3000:3000 \
         visreg-test
     else
@@ -110,8 +110,8 @@ done
 
 
 # Join all container-args with a comma
-ARGS=$(printf ",%s" "${container_args[@]}")
+RUNARGS=$(printf ",%s" "${container_args[@]}")
 
-run_visreg_test $env $ARGS
+run_visreg_test $env $RUNARGS
 
 

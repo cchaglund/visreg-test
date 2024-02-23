@@ -22,6 +22,8 @@ ln -s "$REPO_ROOT"/package.json node_modules/visreg-test
 chmod +x "$DIST"/start-visreg-test.sh
 "$DIST"/start-visreg-test.sh --scaffold-ts
 
+npm install --save-dev typescript
+
 # Build the container
 "$DIST"/start-visreg-test.sh --build-container --env=dev
 

@@ -4,6 +4,7 @@ pretty_log() {
     echo -e "\x1b[2m$1\x1b[0m"
 }
 
+
 # Get the directory from where the script was called - this is the directory of the user's project,
 # where they've installed the visreg-test npm package
 PROJECT_ROOT="$(pwd)"
@@ -22,6 +23,7 @@ create_container_dir() {
     fi
 }
 
+
 is_lab_mode=false
 for arg in "$@"; do
     if [[ $arg == "-l" || $arg == "--lab-mode" ]]; then
@@ -30,6 +32,7 @@ for arg in "$@"; do
     fi
 done
 
+
 is_containerized=false
 for arg in "$@"; do
     if [[ $arg == "-r" || $arg == "--run-container" || $arg == "-b" || $arg == "--build-container" ]]; then
@@ -37,6 +40,7 @@ for arg in "$@"; do
         break
     fi
 done
+
 
 # Exit if the user tries to run lab mode from within a container 
 if [[  $is_lab_mode == "true" && $is_containerized == "true" ]]; then

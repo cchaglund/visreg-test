@@ -9,10 +9,6 @@ args=$ARGS
 
 IFS=',' read -r -a parsedArgs <<< "$ARGS"
 
-if [ -n "$ARGS" ]; then
-    pretty_log "From container: Arguments are: ${parsedArgs[@]}"
-fi
-
 # If the mounted package.json has changed update dependencies
 if [[ ! -f prev-package.json ]] || [[ -f prev-package.json && ! -z "$(diff -q package.json prev-package.json)" ]]; then
     pretty_log "Running npm install..."
@@ -46,6 +42,10 @@ fi
 # Run visreg-test
 pretty_log "Running visreg-test package..."
 
-chmod +x ./node_modules/.bin/visreg-test
+#  echo out the parsedArgs array:
+pretty_log "Arguments:"
+echo "${parsedArgs[@]}"
+
+chmod +x ./node_modules/visreg-test/dist/visreg.js
 node ./node_modules/visreg-test/dist/visreg.js "${parsedArgs[@]}" --containerized
 
