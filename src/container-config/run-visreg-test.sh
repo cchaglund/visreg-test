@@ -95,14 +95,19 @@ run_visreg_test() {
 
 # Parse the arguments
 container_args=()
+env="prod"
 
 for arg in "$@"
 do
-    key=$(echo $arg | cut -f1 -d=)
-    value=$(echo $arg | cut -f2 -d=)
+    if [[ $arg == *"="* ]]; then
+        key=$(echo $arg | cut -f1 -d=)
+        value=$(echo $arg | cut -f2 -d=)
 
-    if [ "$key" = "--env" ]; then
-        env=$value
+        if [ "$key" = "--env" ]; then
+            env=$value
+        else
+            container_args+=("$arg")
+        fi
     else
         container_args+=("$arg")
     fi
