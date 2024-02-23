@@ -14,12 +14,12 @@ run_visreg_test() {
 
     # If package.json has changed, we will need to rebuild the image
     if [[ ! -f $PREV_PACKAGEJSON ]] || [[ -f $PREV_PACKAGEJSON && ! -z "$(diff -q $PROJECT_ROOT/package.json $PREV_PACKAGEJSON)" ]]; then
-        echo "Package.json has changed - image might be outdated"
+        pretty_log "Package.json has changed - image might be outdated"
         image_stale=true
     fi
 
     # If the visreg-test image doesn't exist, or if it's outdated, build it
-    if [ -z "$exists" || $image_stale == "true" ]; then
+    if [ -z "$exists" ] || [ "$image_stale" == "true" ]; then
         pretty_log "Building the visreg-test image..."
         SCRIPT_DIR="$(dirname "$0")"
         "$SCRIPT_DIR/build-visreg-test.sh" "$@"
