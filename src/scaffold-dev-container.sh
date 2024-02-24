@@ -19,11 +19,11 @@ rm node_modules/visreg-test/package.json
 ln -s "$REPO_ROOT"/package.json node_modules/visreg-test
 
 # Scaffold the test suite
-chmod +x "$DIST"/start-visreg-test.sh
-"$DIST"/start-visreg-test.sh --scaffold-ts
+chmod +x "$DIST"/entry.sh
+"$DIST"/entry.sh --scaffold-ts
 
 npm install --save-dev typescript
 
 # Build the container
-"$DIST"/start-visreg-test.sh --build-container --env=dev
+"$DIST"/entry.sh --build-container --env=dev
 

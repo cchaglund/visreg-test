@@ -1,3 +1,6 @@
+3.0.7
+- Various bug fixes and improvements
+
 3.0.0
 - Added support for running the test runner in a containerized environment.
 - You can now choose between a number of browsers to run the tests in: Chrome, Firefox, Edge, and Electron (the default). Only Electron is currently supported in the containerized version.

@@ -24,7 +24,7 @@
 - Multiple [test modes](#running-tests)
 - ["Lab mode"](#lab-mode) - for visualising and developing your tests in the Cypress GUI
 - [Simple API](#writing-tests) - write your tests in a single file
-- Added [docker support](#docker) - run your tests in a consistent environment
+- [Docker support](#docker) - run your tests in a consistent environment
 - [Customise](#optional-configuration) your tests, enabling you to do things like:
   - specify your viewports
   - capture the full page or just a portion of it
@@ -511,7 +511,7 @@ The shorthand specification format is:
 suite:endpoint-title@viewport
 ```
 
-If you only have one suite, you can omit the suite name. Endpoint is prefaced with `:`, viewport is prefaced with  `@`. All are optional.
+If you only have one suite, you can omit the suite name. Endpoint is prefaced with `:`, viewport is prefaced with  `@`. All are optional. Non-string viewport values should be separated by a comma, e.g. `360,1400`.
 
 
 **Examples:**

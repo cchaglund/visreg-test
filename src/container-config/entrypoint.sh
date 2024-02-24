@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo ""
+
 pretty_log() {
     echo -e "\x1b[2m$1\x1b[0m"
 }
@@ -7,11 +9,13 @@ pretty_log() {
 env=$ENV
 args=$ARGS
 
-IFS=',' read -r -a parsedArgs <<< "$ARGS"
+# Split the args string into an array
+IFS='+' read -r -a parsedArgs <<< "$ARGS"
 
 # If the mounted package.json has changed update dependencies
 if [[ ! -f prev-package.json ]] || [[ -f prev-package.json && ! -z "$(diff -q package.json prev-package.json)" ]]; then
     pretty_log "Running npm install..."
+    rm -rf node_modules
     npm install
 fi
 

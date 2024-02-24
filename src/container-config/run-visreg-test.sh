@@ -114,8 +114,8 @@ do
 done
 
 
-# Join all container-args with a comma
-RUNARGS=$(printf ",%s" "${container_args[@]}")
+# Join all container-args with a + (plus sign)
+RUNARGS=$(printf "+%s" "${container_args[@]}")
 
 run_visreg_test $env $RUNARGS
 
