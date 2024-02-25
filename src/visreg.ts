@@ -68,6 +68,11 @@ const typesList: TestType[] = [
 		description: 'Run only the tests which failed in the last run'
 	},
 	{
+		name: 'Targetted',
+		slug: 'targetted',
+		description: 'Run a test for a specific endpoint and/or viewport'
+	},
+	{
 		name: 'Assess diffs',
 		slug: 'assess-existing-diffs',
 		description: 'Assess the existing diffs (no tests are run)'
@@ -136,34 +141,41 @@ const main = async (): Promise<void> => {
 	await selectType();
 
 	const { testType } = programChoices;
-
-	if (testType === 'lab') {
-		if (!programChoices.viewport || !programChoices.endpointTitle) {
-			printColorText('Lab mode requires both endpoint title and viewport to be specified\n', '2');
-
-			await promptForEndpointTitle();
-			await promptForViewport();
-
-			if (!programChoices.viewport || !programChoices.endpointTitle) {
-				printColorText('Lab mode requires both endpoint title and viewport to be specified', '31');
-				return;
-			}
-		}
-
-		runCypressTest();
-	}
 	
 	if (testType === 'full-test') {
 		fullRegressionTest();
+		return;
 	}
 
 	if (testType === 'diffs-only') {
 		diffsOnly();
+		return;
 	}
 
 	if (testType === 'assess-existing-diffs') {
 		assessExistingDiffs();
+		return;
 	}
+
+	if (!programChoices.viewport || !programChoices.endpointTitle) {	
+		const testName = testType === 'lab' ? 'Lab' : 'Targetted';
+		printColorText(`${testName} mode requires both endpoint title and viewport to be specified\n`, '2');
+
+		await promptForEndpointTitle();
+		await promptForViewport();
+
+		if (!programChoices.viewport || !programChoices.endpointTitle) {
+			printColorText(`${testName} mode requires both endpoint title and viewport to be specified\n`, '31');
+			return;
+		}
+	}
+
+	if (testType === 'lab') {
+		runCypressTest();
+		return
+	} 
+
+	targettedTest();
 };
 
 // Function to get directories in the suites directory
@@ -412,7 +424,7 @@ const runCypressTest = async (diffList: string[] = []): Promise<void> => {
 				console.log('------------------');
 				console.log('\n');
 				
-				printColorText('Cypress could not complete one or more tests (see above for details)', '33');
+				printColorText('Cypress could not complete one or more tests (see above for details) - run targetted tests on these', '33');
 
 				if (programChoices.testType === 'diffs-only') {
 					printColorText('\nDiffs-only testing requires all tests to be successes. Any failure results in the diffs being restored. Fix the issues or remove the offending diff files from the diff directory.', '33');
@@ -547,6 +559,13 @@ const assessExistingDiffs = () => {
     assessExistingDiffImages();
 }
 
+const targettedTest = async () => {
+	const diffList = createTemporaryDiffList();
+	backupDiffs();
+	backupReceived();
+	await runCypressTest(diffList);
+    assessExistingDiffImages();
+}
 
 const backupDiffs = () => {
 	const dir = DIFF_DIR();
@@ -675,13 +694,18 @@ const assessExistingDiffImages = async () => {
 
 	console.log('\n\n');
 
+	const targetText = programChoices.viewport || programChoices.endpointTitle
+		? ` (scoped to ${programChoices.endpointTitle ? `"${programChoices.endpointTitle}"` : ''}${programChoices.viewport ? `@${programChoices.viewport}` : ''})`
+		: '';
+
 	if (programChoices.containerized) {
-		printColorText(`🚨 Detected ${files.length} diffs`, '33');
-		printColorText('Assess the changes by running \x1b[1mnpx visreg-test -a\x1b[0m', '33');
+		printColorText(`🚨 Detected ${files.length} diffs${targetText}`, '33');
+		console.log('\n');
+		printColorText(`Assess the changes by running: \x1b[4mnpx visreg-test -a ${programChoices.suite}\x1b[0m`, '33');
 		process.exit();
 	}
 
-	printColorText(`🚨 Detected ${files.length} diffs, opening image preview \x1b[2m- takes a couple of seconds\x1b[0m\n\n`, '33');
+	printColorText(`🚨 Detected ${files.length} diffs${targetText}, opening image preview \x1b[2m- takes a couple of seconds\x1b[0m\n\n`, '33');
 		
 	for (const [index, file] of files.entries()) {	
 		await processImage(file, index, files.length);

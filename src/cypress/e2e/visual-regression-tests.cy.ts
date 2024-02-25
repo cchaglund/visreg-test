@@ -213,6 +213,16 @@ export const runTest = (props: TestConfig): void => {
                 });
             });
         }
+
+        if (testType === 'targetted') {
+            describe('Targetted test' + limitText, () => {
+                viewportsToTest.forEach((vp) => {
+                    endpointsToTest.forEach((ep) => {
+                        takeSnaps(props, vp, ep, noSnap)
+                    });
+                });
+            });
+        }
         
         if (testType === 'diffs-only') {
             describe('Retesting diffing snapshots only' + limitText, () => {

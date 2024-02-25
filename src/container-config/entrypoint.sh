@@ -1,7 +1,5 @@
 #!/bin/bash
 
-echo ""
-
 pretty_log() {
     echo -e "\x1b[2m$1\x1b[0m"
 }
@@ -15,8 +13,10 @@ IFS='+' read -r -a parsedArgs <<< "$ARGS"
 # If the mounted package.json has changed update dependencies
 if [[ ! -f prev-package.json ]] || [[ -f prev-package.json && ! -z "$(diff -q package.json prev-package.json)" ]]; then
     pretty_log "Running npm install..."
+    echo ""
     rm -rf node_modules
     npm install
+    echo ""
 fi
 
 # If the node_modules folder doesn't exist, run npm install
@@ -46,9 +46,10 @@ fi
 # Run visreg-test
 pretty_log "Running visreg-test package..."
 
-#  echo out the parsedArgs array:
-pretty_log "Arguments:"
-echo "${parsedArgs[@]}"
+
+if [[ ${#parsedArgs[@]} -gt 0 ]]; then
+    pretty_log "Arguments: ${parsedArgs[*]}"
+fi
 
 chmod +x ./node_modules/visreg-test/dist/visreg.js
 node ./node_modules/visreg-test/dist/visreg.js "${parsedArgs[@]}" --containerized

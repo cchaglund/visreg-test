@@ -86,7 +86,7 @@ export type TestType = {
 };
 
 export type EnvsPassedViaCypress = {
-    testType: 'full-test' | 'diffs-only' | 'lab';
+    testType: 'full-test' | 'diffs-only' | 'targetted' | 'lab';
     diffList: string[];
     suite?: string;
 	endpointTitle?: string;
@@ -101,6 +101,7 @@ export type ProgramChoices = {
 	fullTest?: boolean | string,
 	diffsOnly?: boolean | string,
 	assessExistingDiffs?: boolean | string,
+	targetted?: boolean | string,
 	labMode?: boolean,
 	testType?: string,
 	gui?: boolean,

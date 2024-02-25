@@ -13,6 +13,9 @@ docker rm visreg-test >/dev/null 2>&1 || true # Remove the previous container
 docker rmi visreg-test >/dev/null 2>&1 || true # Remove the old image
 
 pretty_log "Building the new image..."
+echo ""
 docker build -t visreg-test "$SCRIPT_DIR"
+echo ""
+
 
 

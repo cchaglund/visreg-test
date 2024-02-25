@@ -463,6 +463,7 @@ Flags just allow you to skip the UI and run specific tests. The complete list is
 
 ```bash
 -f, --full-test <spec> 
+-t, --targetted <spec>
 -d, --diffs-only <spec>
 -a, --assess-existing-diffs <spec>
 # accepts an optional shorthand argument to specify what to test, e.g. "test-suite:Home-page@iphone-6"
@@ -521,7 +522,6 @@ If you only have one suite, you can omit the suite name. Endpoint is prefaced wi
 --diffs-only test-suite
 -d test-suite
 
-
 # only test the Home endpoint. 
 --full-test test-suite:Home
 -f test-suite:Home
@@ -529,6 +529,10 @@ If you only have one suite, you can omit the suite name. Endpoint is prefaced wi
 # test the Home endpoint in all viewports (If you only have one suite, you can omit the suite name)
 --full-test :Home
 -f :Home
+
+# this acts like the full-test, but crucially it doesn't delete the previous diffs
+--targetted test-suite:Home
+-t test-suite:Home
 
 # assess only the Home endpoint with the samsung-s10 viewport
 --assess-existing-diffs :Home@samsung-s10

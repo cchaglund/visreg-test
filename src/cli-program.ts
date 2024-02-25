@@ -12,11 +12,12 @@ program
 	.option('-d, --diffs-only [specs]')
 	.option('-a, --assess-existing-diffs [specs]')
 	.option('-l, --lab-mode [specs]')
+	.option('-t, --targetted [specs]')
 	.option('-ng, --no-gui')
 	.option('-ns, --no-snap')
 	.option('-sc, --scaffold')
 	.option('-sct, --scaffold-ts')
-	.option('-c, --containerized')
+	.option('-c, --containerized') // This one is used internally, not exposed to the user
 
 program.parse();
 
@@ -47,6 +48,10 @@ const extractProgramChoices = () => {
 		case opts.fullTest !== undefined:
 			testType = 'full-test';
 			specificationShorthand = opts.fullTest;
+			break;
+		case opts.targetted !== undefined:
+			testType = 'targetted';
+			specificationShorthand = opts.targetted;
 			break;
 	}
 	
