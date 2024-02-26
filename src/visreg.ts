@@ -7,32 +7,7 @@ import * as readline from 'readline';
 import { ConfigurationSettings, NonOverridableSettings, TestType } from './types';
 import { programChoices } from './cli-program';
 import { getFileSizeInMegabytes, hasFiles, parsedViewport, pathExists, printColorText, projectRoot, removeDirIfEmpty, suitesDirectory } from './utils';
-// const express = require('express');
-
-// const app = express();
-// // Serve static files from the "images" directory
-// app.use('/images', express.static('/app/local/snapshots/snaps/__diff_output__'));
-
-// app.get('/', (req: any, res: any) => {
-// 	// send an image file called "test" that's in the /app/local/snapshots/snaps/__diff_output__ directory:
-// 	res.sendFile('/app/local/snapshots/snaps/__diff_output__/test.png');
-// });
-
-// app.listen(3000, () => {
-// 	const dirPath = '/app/local/snapshots/snaps/__diff_output__';
-
-// 	if (fs.existsSync(dirPath)) {
-// 		fs.readdir(dirPath, (err, files) => {
-// 			if (err) {
-// 				console.error('Error reading directory:', err);
-// 			} else {
-// 				console.log('Directory contents:', files);
-// 			}
-// 		});
-// 	}
-
-// 	// console.log('Server is running at http://localhost:3000');
-// });
+import startServer from './server';
 
 const configPath = path.join(projectRoot, 'visreg.config.json');
 let visregConfig: ConfigurationSettings = {};
@@ -805,6 +780,10 @@ process.on('SIGINT', () => {
 	process.exit();
 });
 
-main();
-
+// Only start the server if the user has specified the --server-start flag (this is just as I'm working on it)
+if (programChoices.serverStart) {
+	startServer(programChoices);
+} else {
+	main();
+}
 

@@ -47,7 +47,7 @@ fi
 pretty_log "Running visreg-test package..."
 
 
-if [[ ${#parsedArgs[@]} -gt 0 ]]; then
+if [[ ! -z "$ARGS" && "$ARGS" != "+" ]]; then
     pretty_log "Arguments: ${parsedArgs[*]}"
 fi
 

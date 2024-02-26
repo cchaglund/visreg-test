@@ -17,6 +17,7 @@ program
 	.option('-ns, --no-snap')
 	.option('-sc, --scaffold')
 	.option('-sct, --scaffold-ts')
+	.option('-ss, --server-start')
 	.option('-c, --containerized') // This one is used internally, not exposed to the user
 
 program.parse();
@@ -63,6 +64,7 @@ const extractProgramChoices = () => {
 		gui: opts?.gui,
 		snap: opts?.snap,
 		containerized: opts?.containerized,
+		serverStart: opts?.serverStart,
     };
 
     if (typeof specificationShorthand !== 'string') {
