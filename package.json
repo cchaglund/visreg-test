@@ -5,8 +5,8 @@
 	"main": "dist/run-test.js",
 	"types": "dist/types.d.ts",
 	"scripts": {
-		"dev": "NODE_ENV=development VISREG_WEB_PORT=5173 npm run watch",
-		"build-web-interface": "VISREG_WEB_PORT=3000 cd web && npm run build && cd .. && cp -r web/dist dist/server/app",
+		"dev": "NODE_ENV=development npm run watch",
+		"build-web-interface": "cd web && npm run build && cd .. && cp -r web/dist dist/server/app",
 		"build": "NODE_ENV=production npm run clear && tsc && npm run copy-files && npm run build-web-interface",
 		"build-dev-container": "npm run build && chmod +x sandbox-project/node_modules/visreg-test/dist/visreg.js && chmod +x sandbox-project/node_modules/visreg-test/dist/entry.sh && cd sandbox-project && node_modules/visreg-test/dist/entry.sh --build-container --env=dev",
 		"copy-files": "cp -r src/scaffold dist/ && cp -r src/container-config dist/ && cp src/entry.sh dist/",
