@@ -1,46 +1,35 @@
-import * as React from 'react';
-import { useState } from 'react';
-// import reactLogo from './assets/react.svg';
-// import viteLogo from '/vite.svg';
-import './App.css';
-import Button from '@mui/material/Button';
+import './styles/app.css';
+import Header from './components/navigation/header';
+import stylex from '@stylexjs/stylex';
+import { Outlet } from 'react-router-dom';
+import { Box } from '@mui/material';
 
+
+const wrapper = stylex.create({
+	assessmentPage: {
+		width: '100%',
+	},
+	box: {
+		display: 'flex',
+		flexDirection: 'column',
+		alignItems: 'center',
+		justifyContent: 'space-between',
+		width: '100%',
+		'@media (max-width: 1000px)': {
+			justifyContent: 'flex-start',
+		},
+	}
+});
 
 
 const App = () => {
-	const [ count, setCount ] = useState(0);
-
-	const handleClick = (action: string) => {
-		fetch('http://127.0.0.1:3000/' + action)
-			.then(response => response.text())
-			.then(data => console.log(data));
-	}
-
 	return (
-		<React.Fragment>
-			<Button variant="contained" onClick={() => handleClick('approve')}>Approve</Button>
-			{/* <div>
-				<a href="https://vitejs.dev" target="_blank">
-					<img src={viteLogo} className="logo" alt="Vite logo" />
-				</a>
-				<a href="https://react.dev" target="_blank">
-					<img src={reactLogo} className="logo react" alt="React logo" />
-				</a>
-			</div> */}
-			<h1>Vite + React</h1>
-			<div className="card">
-				<button onClick={() => setCount((count) => count + 1)}>
-					count is {count}
-				</button>
-				<p>
-					Edit <code>src/App.tsx</code> and save to test HMR
-				</p>
-			</div>
-			<p className="read-the-docs">
-				Click on the Vite and React logos to learn more
-			</p>
-		</React.Fragment>
+		<Box id="app" {...stylex.props(wrapper.box)} bgcolor={'background.default'}>
+			<Header />
+			<Outlet />
+			<div/>
+		</Box>
 	);
-}
+};
 
 export default App;

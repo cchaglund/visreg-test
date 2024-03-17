@@ -2,6 +2,8 @@ import { Command } from 'commander';
 import { ProgramChoices } from './types';
 import { createScaffold, parsedViewport } from './utils';
 
+export const initialCwd = process.cwd();
+
 export const program = new Command();
 
 program

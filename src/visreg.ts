@@ -2,12 +2,16 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { execSync, spawn } from 'child_process';
+import { spawn } from 'child_process';
 import * as readline from 'readline';
 import { ConfigurationSettings, NonOverridableSettings, TestType } from './types';
-import { programChoices } from './cli-program';
-import { getFileSizeInMegabytes, hasFiles, parsedViewport, pathExists, printColorText, projectRoot, removeDirIfEmpty, suitesDirectory } from './utils';
+import { programChoices } from './cli';
 import startServer from './server';
+import { assessInWeb } from './diff-assessment-web';
+import { BACKUP_DIFF_DIR, BACKUP_RECEIVED_DIR, DIFF_DIR, RECEIVED_DIR, cleanUp, getDiffingFiles, getSuiteDirOrFail, getSuites, hasFiles, includedInSpecification, isSpecifiedTest, parsedViewport, pathExists, printColorText, projectRoot, removeBackups, suitesDirectory } from './utils';
+import { assessInCLI } from './diff-assessment-terminal';
+import { summarizeResultsAndQuit } from './summarize';
+import { devPort, serverPort } from './server/config';
 
 const configPath = path.join(projectRoot, 'visreg.config.json');
 let visregConfig: ConfigurationSettings = {};
@@ -19,17 +23,9 @@ if (pathExists(configPath)) {
 	} catch (e) {}
 }
 
-let approvedFiles: string[] = [];
-let rejectedFiles: string[] = [];
 let start: number;
 let duration: number;
 let failed = false;
-
-const SUITE_SNAPS_DIR = () => path.join(suitesDirectory, programChoices.suite || '', 'snapshots', 'snaps');
-const DIFF_DIR = () => path.join(SUITE_SNAPS_DIR(), '__diff_output__');
-const BACKUP_DIFF_DIR = () => path.join(SUITE_SNAPS_DIR(), 'backup-diffs');
-const RECEIVED_DIR = () => path.join(SUITE_SNAPS_DIR(), '__received_output__');
-const BACKUP_RECEIVED_DIR = () => path.join(SUITE_SNAPS_DIR(), 'backup-received');
 
 const typesList: TestType[] = [
 	{
@@ -153,30 +149,9 @@ const main = async (): Promise<void> => {
 	targettedTest();
 };
 
-// Function to get directories in the suites directory
-const getDirectories = (source: string): string[] =>
-	fs.readdirSync(source, { withFileTypes: true })
-		.filter(dirent => dirent.isDirectory())
-		.map(dirent => dirent.name);
 
-
-
-const selectSuite = async () => {
-	let ignoreDirectories: string[] = [];
-	
-	if (visregConfig.ignoreDirectories) {
-		ignoreDirectories.push(...visregConfig.ignoreDirectories);
-	}
-	
-	const suites: string[] = getDirectories(suitesDirectory)
-		.filter(dirName => !ignoreDirectories.includes(dirName))
-		.filter(dirName => {
-			const fileName = 'snaps';
-			return (
-				fs.existsSync(path.join(suitesDirectory, dirName, fileName + '.js')) ||
-				fs.existsSync(path.join(suitesDirectory, dirName, fileName + '.ts'))
-			);
-		})
+const selectSuite = async () => {	
+	const suites: string[] = getSuites();
 
 	if (suites.length === 0) {
 		printColorText('No test suites found - see README', '31');
@@ -243,29 +218,6 @@ const selectType = async () => {
 	rl.close();
 };
 
-const getSpecPath = () => {
-	if (!programChoices.suite) {
-		return;
-	}
-
-	const specDir = path.join(suitesDirectory, programChoices.suite);
-
-	if (fs.existsSync(specDir)) {
-		return specDir;
-	}
-
-	const files = fs.readdirSync(specDir);
-	const snapsFile = files.find(file => file.startsWith('snaps'));
-	if (snapsFile) {
-		return path.join(specDir, snapsFile);
-	}
-	
-	printColorText('No snap.js/ts file found - see README', '31');
-	process.exit(1);
-};
-
-const isSpecifiedTest = () => !!(programChoices.viewport || programChoices.endpointTitle);
-
 const prepareConfig = () => {
 	const suiteRoot = path.join(suitesDirectory, programChoices.suite || '');
 	const suiteConfigPath = path.join(suiteRoot, 'visreg.config.json');
@@ -307,9 +259,10 @@ const prepareConfig = () => {
 	process.env.CYPRESS_VISREG_OPTIONS = JSON.stringify(conf)
 	process.env.CYPRESS_SNAPSHOT_SETTINGS = JSON.stringify(snapshotSettings);
 	process.env.PROGRAM_CHOICES = JSON.stringify(programChoices);
+	process.env.SEND_SUITE_CONF = 'false';
 
 	return snapshotSettings;
-}	
+}
 
 const runCypressTest = async (diffList: string[] = []): Promise<void> => {
 	const conf = prepareConfig();
@@ -331,7 +284,7 @@ const runCypressTest = async (diffList: string[] = []): Promise<void> => {
 	}
 
     return new Promise((resolve, reject) => {
-		const specPath = getSpecPath();
+		const specPath = getSuiteDirOrFail(programChoices.suite);
 		
 		const testSettings = {
 			testType: programChoices.testType,
@@ -440,38 +393,6 @@ const runCypressTest = async (diffList: string[] = []): Promise<void> => {
 // 	});
 // };
 
-const removeBackups = () => {
-	pathExists(BACKUP_DIFF_DIR()) && fs.rmSync(BACKUP_DIFF_DIR(), { recursive: true });
-	pathExists(BACKUP_RECEIVED_DIR()) && fs.rmSync(BACKUP_RECEIVED_DIR(), { recursive: true });
-}
-
-const cleanUp = () => {
-	removeBackups();
-	removeDirIfEmpty(DIFF_DIR());
-	removeDirIfEmpty(RECEIVED_DIR());
-}
-
-const includedInSpecification = (fileName: string) => {
-	if (!programChoices.viewport && !programChoices.endpointTitle) {
-		return true;
-	}
-
-	let viewportScreeningPassed = true
-	let endpointScreeningPassed = true
-
-	if (programChoices.viewport) {
-		const viewportString = programChoices.viewport?.toString();
-		viewportScreeningPassed = fileName.includes(viewportString);
-	}
-
-	if (programChoices.endpointTitle) {
-		const endpointLower = programChoices.endpointTitle.toLowerCase();
-		const fileNameLowerAndReplacedSpaces = fileName.toLowerCase().replace(/ /g, '-');
-		endpointScreeningPassed = fileNameLowerAndReplacedSpaces.includes(endpointLower);
-	}	
-	
-	return viewportScreeningPassed && endpointScreeningPassed;
-}
 
 const restoreFromBackup = (restoreCondition: (fileName: string) => boolean = () => true) => {
 	const backupDiffDir = BACKUP_DIFF_DIR();
@@ -502,7 +423,7 @@ const exitIfNoDIffs = () => {
 	}
 	
 	if (!pathExists(DIFF_DIR()) || !hasFiles(DIFF_DIR())) {
-		summarizeResultsAndQuit();
+		summarizeResultsAndQuit([], [], failed, duration);
 		process.exit();
 	}
 }
@@ -579,92 +500,13 @@ const createTemporaryDiffList = () => {
 	return fs.readdirSync(DIFF_DIR()).filter(file => file.endsWith('.diff.png'));
 }
 
-const processImage = async (imageFile: string, index: number, total: number) => {
-    const imageName = imageFile.replace('.diff.png', '');
-
-	const pathToRecievedFile = path.join(RECEIVED_DIR(), imageName + '-received.png');
-	const recievedSize = getFileSizeInMegabytes(pathToRecievedFile);
-
-	printColorText(`${imageName}\x1b[2m - ${recievedSize} - ${index + 1}/${total}\x1b[0m`, '4');
-
-    openImage(imageFile);
-
-    const rl = readline.createInterface({
-        input: process.stdin,
-    });
-
-    while (true) {
-        const answer = await new Promise(resolve => {
-			// Enable raw mode to get individual keypresses
-			readline.emitKeypressEvents(process.stdin);
-			if (process.stdin.isTTY) process.stdin.setRawMode(true);
-
-			// Listen for keypress event
-			process.stdin.on('keypress', (str, key) => {
-			if (key.ctrl && key.name === 'c') {
-				closeImagePreview();
-				process.exit();
-			} else if (key.name === 'r') {
-				resolve('reopen');
-				process.stdin.removeAllListeners('keypress');
-			} else if (key.name === 'space') {
-				resolve('reject');
-				process.stdin.removeAllListeners('keypress');
-			} else if (key.name === 'return') {
-				resolve('approve');
-				process.stdin.removeAllListeners('keypress');
-			}
-			});
-
-			printColorText('ENTER to approve, SPACEBAR to reject, R to reopen image', '2');
-        });
-
-        if (answer === 'approve') {
-            approvedFiles.push(imageName);
-			console.log('✅');
-
-            const baselineName = `${imageName}.base.png`;
-            const receivedName = `${imageName}-received.png`;
-
-            fs.unlinkSync(path.join(SUITE_SNAPS_DIR(), baselineName));
-            fs.renameSync(path.join(RECEIVED_DIR(), receivedName), path.join(SUITE_SNAPS_DIR(), baselineName));
-            fs.unlinkSync(path.join(DIFF_DIR(), imageFile));
-
-            break;
-        } else if (answer === 'reopen') {
-            openImage(imageFile);
-        } else if (answer === 'reject') {
-            rejectedFiles.push(imageName);
-			console.log('❌');
-			
-            break;
-        }
-    }
-
-    rl.close();
-    console.log('\n');
-}
-
-const getDiffingFiles = () => {
-	if (!pathExists(DIFF_DIR())) return [];
-	
-	return fs.readdirSync(DIFF_DIR())
-		.filter(file => {
-			if (isSpecifiedTest()) {
-				return includedInSpecification(file)
-			}
-
-			return true;
-		})
-		.filter(file => file.endsWith('.diff.png'));
-}
 
 const assessExistingDiffImages = async () => {
 	exitIfNoDIffs();
 	let files = getDiffingFiles();
 
 	if (files.length === 0) {
-		summarizeResultsAndQuit();
+		summarizeResultsAndQuit([], [], failed, duration);
 	}
 
 	console.log('\n\n');
@@ -673,102 +515,61 @@ const assessExistingDiffImages = async () => {
 		? ` (scoped to ${programChoices.endpointTitle ? `"${programChoices.endpointTitle}"` : ''}${programChoices.viewport ? `@${programChoices.viewport}` : ''})`
 		: '';
 
+	printColorText(`🚨 Detected ${files.length} diffs${targetText}\n`, '33');
+
+	const webInterfacePort = process.env.NODE_ENV === 'development' ? devPort : serverPort;
+	
+	console.log(`Press SPACE to assess diffs in the browser (http://localhost:${webInterfacePort})`);
+	console.log('...or ENTER to continue in the terminal\n');
+
+    const rl = readline.createInterface({
+        input: process.stdin,
+    });
+
+	let answer;
+
+	while (true) {
+        answer = await new Promise(resolve => {
+			// Enable raw mode to get individual keypresses
+			readline.emitKeypressEvents(process.stdin);
+			if (process.stdin.isTTY) process.stdin.setRawMode(true);
+
+			process.stdin.on('keypress', (str, key) => {
+				if (key.name === 'space') {
+					resolve('web');
+				}
+
+				if (key.name === 'return') {
+					resolve('cli');
+				}
+
+				if (key.ctrl && key.name === 'c') {
+					process.exit();
+				}
+			});
+		});
+		
+		if (answer === 'web' || answer === 'cli') {
+			break;
+		}
+	}
+
+	if (process.stdin.isTTY) process.stdin.setRawMode(false);
+	rl.close();
+
+	if (answer === 'web') {
+		assessInWeb({files, duration, failed});
+		return;
+	}
+
 	if (programChoices.containerized) {
-		printColorText(`🚨 Detected ${files.length} diffs${targetText}`, '33');
-		console.log('\n');
-		printColorText(`Assess the changes by running: \x1b[4mnpx visreg-test -a ${programChoices.suite}\x1b[0m`, '33');
-		process.exit();
+		printColorText(`Assess the changes by running: \x1b[4mnpx visreg-test -a ${programChoices.suite}\x1b (i.e. not from the container)[0m`, '33');
+		return;
 	}
 
-	printColorText(`🚨 Detected ${files.length} diffs${targetText}, opening image preview \x1b[2m- takes a couple of seconds\x1b[0m\n\n`, '33');
-		
-	for (const [index, file] of files.entries()) {	
-		await processImage(file, index, files.length);
-	}
-
-	closeImagePreview();
-	printColorText('Done!\n', '1');
-
-    if (approvedFiles.length > 0) {
-		printColorText('\nApproved:', '2');
-        for (const file of approvedFiles) {
-			printColorText(file, '32')
-        }
-    }
-
-    if (rejectedFiles.length > 0) {
-		printColorText('\nRejected:', '2');
-        for (const file of rejectedFiles) {
-			printColorText(file, '31')
-        }
-    }
-
-	summarizeResultsAndQuit();
+	assessInCLI({files, targetText, duration, failed, visregConfig});
 }
 
-const summarizeResultsAndQuit = () => {
-	printColorText('\n\nSummary', '4');
-	failed &&
-		console.log(`\x1b[2mStatus: \x1b[0m\x1b[33mpartial\x1b[0m`)
-
-	console.log(`\x1b[2mType: \x1b[0m\x1b[0m${programChoices.testType}\x1b[0m`)
-	console.log(`\x1b[2mSuite: \x1b[0m\x1b[0m${programChoices.suite}\x1b[0m`)
-
-	programChoices.endpointTitle && 
-		console.log(`\x1b[2mEndpoint: \x1b[0m\x1b[0m${programChoices.endpointTitle}\x1b[0m`)
-
-	programChoices.viewport &&
-		console.log(`\x1b[2mViewport: \x1b[0m\x1b[0m${programChoices.viewport}\x1b[0m`)
-
-	start &&
-		console.log(`\x1b[2mDuration: \x1b[0m\x1b[0m${duration}s\x1b[0m`)
-
-	let files = getDiffingFiles();
-
-	if (!files) {
-		printColorText('🎉  Visual regression passed! (No diffs found)', '32');
-		process.exit();
-	}
-		
-	printColorText(`Total diffs: ${approvedFiles.length + rejectedFiles.length}`, '2');
-
-	if (approvedFiles.length > 0) {
-		console.log(`\x1b[2mApproved: \x1b[0m\x1b[32m${approvedFiles.length}\x1b[0m`)
-	}
-
-	if (rejectedFiles.length > 0) {
-		console.log(`\x1b[2mRejected: \x1b[0m\x1b[31m${rejectedFiles.length}\x1b[0m`)
-	}
-
-	cleanUp();
-	process.exit();
-}
-
-const openImage = (imageFile: string) => {
-    if (process.platform === 'darwin') {
-        execSync(`open -g "${path.join(DIFF_DIR(), imageFile)}"`);
-    } else {
-        execSync(`xdg-open "${path.join(DIFF_DIR(), imageFile)}"`);
-    }
-}
-
-const closeImagePreview = () => {
-	if (process.platform === 'win32') return;
-	if (visregConfig.disableAutoPreviewClose) return;
-
-    try {
-		const darwin = `osascript -e 'quit app "Preview"'`;
-		const linux = `pkill ${visregConfig.imagePreviewProcess}`;
-		execSync(process.platform === 'darwin' ? darwin : linux);
-    } catch (error) {
-        console.error('Failed to close image preview:', error);
-		console.log('------------------')
-		console.log('Linux users, you have some options:');
-		console.log('- Specify the process name of your image previewer in visreg.config.json (imagePreviewProcess) so that it can be closed automatically');
-		console.log('- Set disableAutoPreviewClose to true in visreg.config.json to prevent the warning message (you will have to close the image previewer manually');
-		console.log('- Install Gnome Image Viewer (eog) and set it as your default image previewer');	
-    }
-}
 
 process.on('SIGINT', () => {
 	if (programChoices.testType !== 'diffs-only') {

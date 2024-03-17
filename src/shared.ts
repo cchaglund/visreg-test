@@ -1,4 +1,4 @@
-import { ConfigurationSettings, EnvsPassedViaCypress, NonOverridableSettings, VisregOptions } from './types';
+import { ConfigurationSettings, NonOverridableSettings, VisregOptions } from './types';
 
 const visregConfig: ConfigurationSettings = process.env.CYPRESS_VISREG_OPTIONS
 	? JSON.parse(process.env.CYPRESS_VISREG_OPTIONS)
