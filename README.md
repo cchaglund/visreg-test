@@ -7,7 +7,7 @@
 ## Release notes
 
 
-**Added a [web interface](#docker) in v4.0.0!**
+**Added a [web interface](#web-interface) in v4.0.0!**
 
 **Added [docker support](#docker) in v3.0.0!**
 
@@ -18,15 +18,13 @@
 
 ## Features
 - Create baseline snapshots or compare to existing ones
-- Automated assessment flow:
-	- Diff is opened in an image previewer
-	- Accept/reject the changes from the CLI
-	- The next differing snapshot is opened, and so on
+- Automated assessment flow, in the CLI or in a [web interface](#web-interface):
 - Minimal setup - [get started](#setup) in minutes
 - Multiple [test modes](#running-tests)
 - ["Lab mode"](#lab-mode) - for visualising and developing your tests in the Cypress GUI
 - [Simple API](#writing-tests) - write your tests in a single file
 - [Docker support](#docker) - run your tests in a consistent environment
+- [Web interface](#web-interface) - view your snapshots, see the details of your configuration, assess diffs, and more
 - [Customise](#optional-configuration) your tests, enabling you to do things like:
   - specify your viewports
   - capture the full page or just a portion of it
@@ -696,7 +694,7 @@ This will create a `sandbox-project` directory in the repo root (gitignored by d
 
 You can use `npm link` to test your package locally before publishing it. Here's how you can do it:
 
-1. Navigate to the directory of the package you want to test and run npm link. This will create a global symlink to this package.
+1. Navigate to this repo and run run npm link. This will create a global symlink to this package.
 
 ```bash
 cd /path/to/visual-regression # this repo
