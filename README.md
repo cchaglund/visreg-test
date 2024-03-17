@@ -7,6 +7,8 @@
 ## Release notes
 
 
+**Added a [web interface](#docker) in v4.0.0!**
+
 **Added [docker support](#docker) in v3.0.0!**
 
 >❗<u>Breaking change updating to 3.0.0</u>:
@@ -41,6 +43,10 @@
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
+- [visreg-test](#visreg-test)
+  - [Release notes](#release-notes)
+  - [Features](#features)
+- [Table of contents](#table-of-contents)
 - [About](#about)
 - [Setup](#setup)
   - [Quick start](#quick-start)
@@ -55,12 +61,15 @@
   - [Updated folder structure](#updated-folder-structure)
   - [Flags](#flags)
   - [Lab mode](#lab-mode)
+- [Web interface](#web-interface)
 - [Docker](#docker)
   - [Pre-requisites](#pre-requisites)
   - [Running the container](#running-the-container)
 - [Contribute](#contribute)
+  - [Local development (outside of the container)](#local-development-outside-of-the-container)
   - [Developing with the container](#developing-with-the-container)
   - [Testing the package before publishing](#testing-the-package-before-publishing)
+  - [Web interface](#web-interface-1)
 - [Optional Configuration](#optional-configuration)
 - [Notes](#notes)
 - [Credits](#credits)
@@ -491,6 +500,9 @@ Flags just allow you to skip the UI and run specific tests. The complete list is
 # run the containerized version of the test runner
 -r, --run-container
 -b, --build-container
+
+# start the web interface
+-ss, --server-start
 ```
  
 
@@ -575,9 +587,25 @@ You can also skip taking snapshots altogether, which is especially useful if you
 npm visreg-test --lab-mode test-suite:Start@iphone-6 --no-snap
 ```
 
+# Web interface
+
+New in v4.0.0, `visreg-test` now has a web interface for assessing diffs and viewing snapshots.
+
+This is especially useful if you're running tests in a CI/CD pipeline, as it allows you to view the snapshots and diffs by visiting a URL.
+
+To start the web interface, run:
+
+```bash
+npx visreg-test --server-start # or -ss
+```
+
+The interface will be available at `localhost:3000`.
+
+When running the tests, at the start of assessment you will get the choice to continue in the terminal or open the web interface. If you choose the latter, the interface will open in your default browser.
+
+Coming soon: the ability to run tests from the web interface.
 
 
-<br>
 
 # Docker
 
@@ -599,6 +627,7 @@ Limitations:
 - Assessment with image previews will (currently) not work in the container - this must be triggered locally with `npx visreg-test -a` manually after the container has exited (web app coming soon).
 - Cannot run lab mode in the container.
 - Currently you have to install the container via the npm package, so you need to have it installed. In the future, potentially the container could be hosted on Docker Hub, and you could run it with a single command, e.g. `docker run visreg-test`. However, there are benefits to having a local install of the package, such as lab mode and typescript support in your IDE.
+- You may need to pull the cypress image manually before running the container, e.g. `docker pull cypress/browsers:latest`. Unsure if this is necessary (might just be on Windows), but you'll know to try it if you get an error like `ERROR [internal] load metadata for docker.io/cypress/browsers:latest`.
 
 
 ## Pre-requisites
@@ -638,7 +667,9 @@ Lab mode (i.e. headed Cypress) will still run locally (not in the container). If
 
 # Contribute
 
-Want to contribute? Great! Here's how to get started:
+Want to contribute? Great! Here's how to get started
+
+## Local development (outside of the container)
 
 **Setup dev environment**
 
@@ -707,6 +738,33 @@ npm unlink -g
 
 This will remove the symlinks and ensure that your project uses the published version of the package when you run npm install.
 
+## Web interface
+
+This package uses React for the web interface. When running in production React's files are served by the server, but when developing you need to run the server and the React dev server separately.
+
+To run the React dev server on port 5173:
+
+```bash
+cd web
+npm run dev
+```
+
+Now, from a separate terminal, navigate to a project directory on your machine and run:
+
+```bash
+NODE_ENV=development npx visreg-test --server-start # or -ss
+```
+
+This will start a server on `localhost:3000` and serve all the suites' various images.
+The web interface is now available at `localhost:5173`.
+
+The environment variable ensures that the React dev server is used instead of the production server, allowing you to see your changes in real-time. Without it, the server will serve the production build of the web interface (i.e. whatever is in the `dist/server/app` directory).
+
+>The project directory you start the server from can be a symlinked one (e.g. `sandbox-project` if you've previously run `scaffold-dev-container`) or not - we just need to start the server from within a project in order to have any snapshots to interact with (the React dev server will attempt to make a connection to localhost:3000 and you'll be able to interact with the snapshots from there).
+
+Note that using a **non-symlinked** project directory will **not** allow you to develop anything other than the web interface. If you want to develop the package (e.g. the server code or the test logic) and the web interface at the same time, you need to use a symlinked project.
+
+*Hot reloading of the server is not yet implemented, so you will need to restart the server manually if you make changes to the server code.*
 
 <br>
 

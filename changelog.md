@@ -1,3 +1,6 @@
+4.0.0
+- Added a web interface for assessing diffs and viewing snapshots
+
 3.1.0
 - Added a "--targetted" test mode, which allows you to specify your tests - like you can with the other modes - but it will not remove the previous diffs (which a full-test does)
 

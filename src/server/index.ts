@@ -5,8 +5,54 @@ import { ProgramChoices } from '../types';
 import { DiffObject } from '../diff-assessment-web';
 import routes from './routes';
 import { devPort, serverPort } from './config';
+import * as readline from 'readline';
 
 const express = require('express');
+
+const enableSpaceToOpen = async () => {
+    const webInterfacePort = process.env.NODE_ENV === 'development' ? devPort : serverPort;
+	
+	console.log(`Press SPACE to open`);
+
+    const rl = readline.createInterface({
+        input: process.stdin,
+    });
+
+	let answer;
+
+	while (true) {
+        answer = await new Promise(resolve => {
+			// Enable raw mode to get individual keypresses
+			readline.emitKeypressEvents(process.stdin);
+			if (process.stdin.isTTY) process.stdin.setRawMode(true);
+
+			process.stdin.on('keypress', (str, key) => {
+				if (key.name === 'space') {
+					resolve('web');
+				}
+
+				if (key.ctrl && key.name === 'c') {
+					process.exit();
+				}
+			});
+		});
+		
+		if (answer === 'web') {
+			break;
+		}
+	}
+
+	if (process.stdin.isTTY) process.stdin.setRawMode(false);
+	rl.close();
+
+	if (answer === 'web') {
+        import('open').then((module) => {
+            const port = process.env.NODE_ENV === 'development' ? devPort : serverPort;
+            module(`http://localhost:${port}`);
+        });
+		return;
+	}
+}
 
 const startServer = (programChoices: ProgramChoices, diffFiles?: DiffObject[]) => {
 
@@ -59,6 +105,8 @@ const startServer = (programChoices: ProgramChoices, diffFiles?: DiffObject[]) =
         const webInterfacePort = process.env.NODE_ENV === 'development' ? devPort : serverPort;
         // execSync('ls -la', { stdio: 'inherit' });
         console.log(`Web interface is running at http://localhost:${webInterfacePort}`);
+
+        enableSpaceToOpen();
     });
 }
 
