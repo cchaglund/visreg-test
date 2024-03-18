@@ -800,8 +800,20 @@ scrollDuration: 1000,
 
 | Property        | Description                                                                                                 | Example                                                                                       | Type |
 |-----------------|-------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|---------|
-| cy              | The chainable cypress cy object to manipulate the page. See [Cypress API](https://docs.cypress.io/api/table-of-contents#Cypress-API)                                                                 | `cy.get('button').click()`                                                                     | `cy`, *required* |
-| cypress         | Holds bundled Cypress utilities and constants. See [Cypress API](https://docs.cypress.io/api/table-of-contents#Cypress-API)                                                                                         | `cypress.currentTest.title.includes('iphone-6')`                                                | `Cypress`, *required* |
+| cy              | The chainable cypress cy object to manipulate the page. See [Cypress API](https://docs.cypress.io/api/table-of-contents#Cypress-API)                                                                 | `cy.get('button').click()`                                                                     | `cy` |
+| context         | Contains information about the viewport, endpoint, as well as Cypress utilities and constants                                                                                         | -                                                | `TestContext` |
+
+
+<br>
+<br>
+
+**TestContext**
+
+| Property        | Description                                                                                                 | Example                                                                                       | Type |
+|-----------------|-------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|---------|
+| viewport        | Viewport string currently being tested | `context.viewport === 'samsung-s10'`                                                                     | `VisregViewport` |
+| endpoint        | Endpoint object currently being tested | `context.endpoint.path.includes('.com')'`                                                                     | `Endpoint` |
+| context         | Holds bundled Cypress utilities and constants. See [Cypress API](https://docs.cypress.io/api/table-of-contents#Cypress-API)                                                                                         | `cypress.currentTest.title.includes('iphone-6')`                                                | `Cypress` |
 
 
 <br>
@@ -818,8 +830,9 @@ scrollDuration: 1000,
 | onCleanup | Fired last, after the snapshot has been taken, useful to e.g. revert changes done in onBefore function                      | `(cy: cy, context: TestContext) => { // reset settings in CMS }`                                                    | `EndpointHookFunction`, *optional* |
 | elementToMatch  | Capture a screenshot of a specific element on the page, rather than the whole page.                        | `'.my-element'`                                                                                  | `string`, *optional* |
 | excludeFromTest  | A function which returns a boolean. It gets passed the same arguments as the other endpoint functions                        | `(cy: cy, context: TestContext, context: TestContext ) => { return context.viewport === 'ipad-2' }`                                                    | `ExcludeFromTestFunction`, *optional* |
-| screenshotOptions | The properties of CypressScreenshotOptions of the module configuration are all applicable here | `blackout: ['#sidebar', '.my-selector']`                                                            | `...CypressScreenshotOptions`, *optional* |
-| comparisonOptions | The properties of JestMatchImageSnapshotOptions of the module configuration are all applicable here | `customDiffConfig: { threshold: 0.01 }`                                                            | `...JestMatchImageSnapshotOptions`, *optional* |
+| data  | Custom data of any type                          | -                                                    | `any`, *optional* |
+| {...screenshotOptions} | The properties of CypressScreenshotOptions of the module configuration are all applicable here | E.g. `blackout: ['#sidebar', '.my-selector']`                                                            | `...CypressScreenshotOptions`, *optional* |
+| {...comparisonOptions} | The properties of JestMatchImageSnapshotOptions of the module configuration are all applicable here | E.g. `customDiffConfig: { threshold: 0.01 }`                                                            | `...JestMatchImageSnapshotOptions`, *optional* |
 
 <br>
 <br>
@@ -833,7 +846,7 @@ You can configure certain settings with a `visreg.config.json` file placed in th
 
 | Property | Description | Type |
 |---|---|---|
-| browser | Which browser to run in headless mode. Default is Electron (Electron also currently the only supported browser when running in the container). | `'electron' | 'chrome' | 'firefox' | 'edge'` |
+| browser | Which browser to run in headless mode. Default is Electron (Electron also currently the only supported browser when running in the container). | `'electron'` | 'chrome' | 'firefox' | 'edge'` |
 | ignoreDirectories | Paths which will not be included in the selection of test. | `string[]` |
 | maxViewport | Should have a higher value than the viewport you want to test. Default is `1920x1080` | `{ width?: number, height?: number }` |
 | imagePreviewProcess | This is for Linux users to specify the image preview program they are using and is used to automatically close the previewer at the end of diff assessment with a `pkill` command. By default visreg-test will attempt to close Gnome (i.e. 'pkill eog'). | `string` |

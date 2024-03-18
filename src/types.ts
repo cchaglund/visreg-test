@@ -57,6 +57,7 @@ export type Endpoint = CypressScreenshotOptions & JestMatchImageSnapshotOptions 
 	onBefore?: EndpointHookFunction;
 	onEndpointVisit?: EndpointHookFunction;
 	onCleanup?: EndpointHookFunction;
+	data?: any;
 };
 
 export type VisregViewport = Cypress.ViewportPreset | number[];
