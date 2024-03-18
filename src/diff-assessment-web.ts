@@ -60,6 +60,9 @@ export const assessInWeb = (args: WebAssessmentArgs) => {
 
 	startServer(programChoices, diffFiles);
 
+	// We can't open the browser from inside a container
+	if (programChoices?.containerized) return;
+
 	import('open').then((module) => {
 		const port = process.env.NODE_ENV === 'development' ? devPort : serverPort;
 		module(`http://localhost:${port}/assessment`);

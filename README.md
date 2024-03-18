@@ -701,7 +701,7 @@ cd /path/to/visual-regression # this repo
 npm link
 ```
 
-1. Navigate to the project where you want to use the package and run `npm link visreg-test`. This will create a symlink in your project's node_modules directory to the global symlink.
+2. Navigate to the project where you want to use the package and run `npm link visreg-test`. This will create a symlink in your project's node_modules directory to the global symlink.
 
 ```bash
 cd /path/to/your/project

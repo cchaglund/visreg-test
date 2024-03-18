@@ -516,10 +516,8 @@ const assessExistingDiffImages = async () => {
 		: '';
 
 	printColorText(`🚨 Detected ${files.length} diffs${targetText}\n`, '33');
-
-	const webInterfacePort = process.env.NODE_ENV === 'development' ? devPort : serverPort;
 	
-	console.log(`Press SPACE to assess diffs in the browser (http://localhost:${webInterfacePort})`);
+	console.log(`Press SPACE to assess diffs in the browser`);
 	console.log('...or ENTER to continue in the terminal\n');
 
     const rl = readline.createInterface({
@@ -563,7 +561,7 @@ const assessExistingDiffImages = async () => {
 	}
 
 	if (programChoices.containerized) {
-		printColorText(`Assess the changes by running: \x1b[4mnpx visreg-test -a ${programChoices.suite}\x1b (i.e. not from the container)[0m`, '33');
+		printColorText(`Assess the changes by running: \x1b[4mnpx visreg-test -a ${programChoices.suite}\x1b[0m (i.e. not from the container)`, '33');
 		return;
 	}
 

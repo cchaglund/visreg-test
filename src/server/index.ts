@@ -9,9 +9,7 @@ import * as readline from 'readline';
 
 const express = require('express');
 
-const enableSpaceToOpen = async () => {
-    const webInterfacePort = process.env.NODE_ENV === 'development' ? devPort : serverPort;
-	
+const enableSpaceToOpen = async (port: number) => {
 	console.log(`Press SPACE to open`);
 
     const rl = readline.createInterface({
@@ -47,7 +45,6 @@ const enableSpaceToOpen = async () => {
 
 	if (answer === 'web') {
         import('open').then((module) => {
-            const port = process.env.NODE_ENV === 'development' ? devPort : serverPort;
             module(`http://localhost:${port}`);
         });
 		return;
@@ -58,7 +55,6 @@ const startServer = (programChoices: ProgramChoices, diffFiles?: DiffObject[]) =
 
     const app = express();
 
-    // Middleware to pass programChoices and diffFiles to all routes
     app.use((req: any, res: any, next: any) => {
         req.programChoices = programChoices;
         req.diffFiles = diffFiles;
@@ -72,9 +68,9 @@ const startServer = (programChoices: ProgramChoices, diffFiles?: DiffObject[]) =
     app.use(express.json());
 
     if (process.env.NODE_ENV === 'development') {
+        // This is used when developing (when React is being served by its dev server as opposed to being built and served by the express server)
         app.use(cors({
-            // This is used when developing (when React is being served by its dev server as opposed to being built and served by the express server)
-            origin: 'http://localhost:' + devPort // React dev server port
+            origin: 'http://localhost:' + devPort
         }));
 
         console.log('Development mode', process.env.NODE_ENV);
@@ -83,15 +79,12 @@ const startServer = (programChoices: ProgramChoices, diffFiles?: DiffObject[]) =
         app.use(express.static(path.join(__dirname, 'app')));
     }
 
-    // Setup Routes
     app.use('/', routes);
 
-    // Always return the main index.html, so react-router render the route in the client
     app.get('*', (req: any, res: any) => {
         res.sendFile(path.resolve(__dirname, 'app', 'index.html'));
     });
 
-    // Error Handler
     app.use(function (err: any, req: any, res: any, next: any) {
         res.send({
             error: true,
@@ -103,10 +96,17 @@ const startServer = (programChoices: ProgramChoices, diffFiles?: DiffObject[]) =
     
     app.listen(serverPort, () => {
         const webInterfacePort = process.env.NODE_ENV === 'development' ? devPort : serverPort;
-        // execSync('ls -la', { stdio: 'inherit' });
-        console.log(`Web interface is running at http://localhost:${webInterfacePort}`);
 
-        enableSpaceToOpen();
+        if (diffFiles) {
+            console.log(`Assessment is running at http://localhost:${webInterfacePort}/assessment`);
+        } else {
+            console.log(`Web interface is running at http://localhost:${webInterfacePort}`);
+        }
+
+        // We can't open the browser from inside a container
+        if (programChoices?.containerized) return;
+        
+        enableSpaceToOpen(webInterfacePort);
     });
 }
 
