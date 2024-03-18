@@ -165,7 +165,7 @@ export const getSuites = () => {
 	return suites;
 }
 
-export const getCleanName = (fileName: string) => {
+export const getFileNameWithoutExtension = (fileName: string) => {
 	const cleanName = fileName.replace(/(-received|.diff|.base)?\.png$/, '');
 	return cleanName;
 }

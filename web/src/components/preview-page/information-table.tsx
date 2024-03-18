@@ -106,7 +106,7 @@ const InformationTable = ({ file }: InformationTableProps) => {
                         }}
                     >
                         <ContentCopyIcon sx={{ mr: 1 }} />
-                        Copy path
+                        Copy disk path
                     </Button>
                 </div>
             </div>

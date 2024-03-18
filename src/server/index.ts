@@ -10,7 +10,7 @@ import * as readline from 'readline';
 const express = require('express');
 
 const enableSpaceToOpen = async (port: number) => {
-	console.log(`Press SPACE to open`);
+	console.log('\nPress SPACE to open');
 
     const rl = readline.createInterface({
         input: process.stdin,

@@ -1,4 +1,4 @@
-import { Chip, Typography } from '@mui/material';
+import { Chip, Link, Typography } from '@mui/material';
 import stylex from '@stylexjs/stylex';
 import { File } from './types.d';
 
@@ -45,8 +45,13 @@ const PreviewHeader = (props: { file: File}) => {
 
     return (
         <div {...stylex.props(s.flex)}>
-            <Typography color='text.primary' variant='h4' sx={{ textAlign: 'center', mb: 0, width: '100%' }}>
+            <Typography color='text.primary' variant='h4' sx={{ textAlign: 'center', mb: 1, width: '100%' }}>
                 {file.fileName}
+            </Typography>
+            <Typography color='text.secondary' variant='h6' sx={{ textAlign: 'center', mb: 1, width: '100%' }}>
+                <Link href={file.fullUrl} target='_blank' rel='noreferrer'>
+                    {file.fullUrl}
+                </Link>
             </Typography>
             <div {...stylex.props(s.chipContainer)}>
                 <Chip 

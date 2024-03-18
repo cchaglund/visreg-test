@@ -13,8 +13,7 @@ const AssessmentPage = () => {
 	const [ currentDiff, setCurrentDiff ] = useState<DiffObject>();
 	const navigate = useNavigate();
 	const { serverBaseUrl, setSuiteName, setCurrentDiffIndex, currentDiffIndex } = useContext(AppContext);
-	const { assessmentData } = useLoaderData() as AssessmentData;
-
+	const { assessmentData } = useLoaderData() as { assessmentData: AssessmentData; };
 
 	useEffect(() => {
 		// TODO: This is way too reactive
@@ -60,7 +59,6 @@ const AssessmentPage = () => {
 	}, [assessmentData?.programChoices?.suite, setSuiteName]);
 
 
-
 	// const handleKeyPress = (event: React.KeyboardEvent) => {
 	// 	if (event.key === ' ') {
 	// 		doAssessAction('reject');
@@ -74,7 +72,7 @@ const AssessmentPage = () => {
 	const doAssessAction = async (action: string) => {
 		if (!assessmentData) return;
 
-		fetch(serverBaseUrl + '/assessment/' + action, {
+		await fetch(serverBaseUrl + '/assessment/' + action, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ index: currentDiffIndex }),

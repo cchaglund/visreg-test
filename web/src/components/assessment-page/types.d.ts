@@ -1,13 +1,11 @@
 export type DiffFilesType = DiffObject[] | [];
 
 export type AssessmentData = {
-	assessmentData: {
-		programChoices: {
-			suite: string;
-		};
-		diffFiles: DiffFilesType;
-		suites: string[];
-	}
+	programChoices: {
+		suite: string;
+	};
+	diffFiles: DiffFilesType;
+	suites: string[];
 };
 
 export type DiffObject = {

@@ -1,6 +1,8 @@
+import { AssessmentData } from './components/assessment-page/types';
+import { TestConfig } from './components/suite-page/suite-page';
 import { serverBaseUrl } from './shared';
 
-export const getAssessmentData = async () => {
+export const getAssessmentData = async (): Promise<AssessmentData> => {
     const response = await fetch(serverBaseUrl + '/assessment/data');
     const data = await response.json();
     return data;
@@ -18,7 +20,7 @@ export const getProjectInformation = async () => {
     return projectInformation;
 };
 
-export const getSuiteConfig = async (suiteSlug?: string) => {
+export const getSuiteConfig = async (suiteSlug?: string): Promise<TestConfig> => {
     const response = await fetch(serverBaseUrl + '/suite/get-suite-config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -67,10 +69,20 @@ export type GetFileDetailsParams = {
 }
 
 export const getFileDetails = async (args: GetFileDetailsParams) => {
+    // return { error: 'Not implemented'}
     const { suiteSlug, fileName } = args;
     const url = `${serverBaseUrl}/files/file/${suiteSlug}/${fileName}`;
     const response = await fetch(url);
     const file = await response.json();
+
+    // const snapshotName = fileName.slice(0, fileName.indexOf(' @')); // Without the viewport    
+
+    // const suiteConfig = await getSuiteConfig(suiteSlug);
+    // const endpoint = suiteConfig.endpoints.find(endpoint => endpoint.title === snapshotName);
+
+    // if (endpoint) {
+    //     file.endpoint = endpoint;
+    // }
     
     return file;
 }

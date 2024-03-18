@@ -1,15 +1,27 @@
 import { serverPort } from '../../../server/config';
-import { getCleanName, getFileInfo, getFileType, getHumanReadableFileSize, pathExists } from '../../../utils';
+import { getFileNameWithoutExtension, getFileInfo, getFileType, getHumanReadableFileSize, pathExists } from '../../../utils';
 import * as path from 'path';
+import { Endpoint } from '../../../types';
+import { fetchSuiteConfig } from '../../services/fetch-suite-config';
 
 const express = require('express');
+const crypto = require('crypto');
 const router = express.Router();
 
-router.get('/file/:suiteSlug/:fileName', (req: any, res: any) => {
+const fileCache = new Map<string, any>();
+
+router.get('/file/:suiteSlug/:fileName', async (req: any, res: any) => {
     const { suiteSlug, fileName } = req.params;
+
+    const hash = crypto.createHash('md5').update(suiteSlug + fileName).digest('hex');
+    if (fileCache.has(hash)) {
+        res.send(fileCache.get(hash));
+        return;
+    }
+
     const suiteImagesDir = path.join(req.allSuitesDir, suiteSlug, 'snapshots/snaps');
 
-    const cleanName = getCleanName(fileName);
+    const cleanName = getFileNameWithoutExtension(fileName);
 
     const baselinePath = path.join(suiteImagesDir, cleanName + '.base.png');
     const receivedPath = path.join(suiteImagesDir, '__received_output__', cleanName + '-received.png');
@@ -51,6 +63,13 @@ router.get('/file/:suiteSlug/:fileName', (req: any, res: any) => {
         });
     }
 
+    const suiteConfig = await fetchSuiteConfig(suiteSlug);
+    const endpoint = suiteConfig?.endpoints.find((endpoint: Endpoint) => {
+        return endpoint.title === cleanName.slice(0, cleanName.indexOf(' @'));
+    });
+
+    const fullUrl = (suiteConfig?.baseUrl || '') + (endpoint?.path || '');
+
     const file = {
         suiteName: suiteSlug,
         name: cleanName,
@@ -62,7 +81,12 @@ router.get('/file/:suiteSlug/:fileName', (req: any, res: any) => {
         fileUrl: `http://localhost:${serverPort}/files/${suiteSlug}/${type}/${fileName}`,
         path: filePath,
         siblingPaths,
+        endpoint,
+        baseUrl: suiteConfig?.baseUrl,
+        fullUrl,
     }
+
+    fileCache.set(hash, file);
 
     res.send(file);
 });

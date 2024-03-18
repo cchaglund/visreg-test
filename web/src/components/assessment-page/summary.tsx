@@ -1,11 +1,12 @@
 import Button from '@mui/material/Button';
-import { Typography, List, ListItem, Divider, CircularProgress, Box } from '@mui/material';
+import { Typography, List, ListItem, Divider, /* CircularProgress, */ Box } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
-import React from 'react';
+import React, { useContext, useEffect } from 'react';
 import {
     useLoaderData,
     useNavigate,
 } from 'react-router-dom';
+import { AppContext } from '../../contexts/app-context';
 
 export type SummaryType = {
     approvedFiles: string[];
@@ -21,6 +22,7 @@ const listStyle = {
 };
 
 const summaryStyle = {
+    height: '100%',
     maxWidth: '1280px',
     margin: '0 auto',
     padding: '2rem',
@@ -31,10 +33,14 @@ type SummaryData = {
     summary: SummaryType;
 };
 
-
 const Summary = () => {
+    const { setCurrentDiffIndex } = useContext(AppContext);
     const { summary } = useLoaderData() as SummaryData;
     const navigate = useNavigate();
+
+    useEffect(() => {
+        setCurrentDiffIndex(null);
+    }, [setCurrentDiffIndex]);
 
     const FilesList = ({ files, title }: { files: string[]; title: string; }) => (
         <div>
@@ -62,7 +68,7 @@ const Summary = () => {
     return (
         <Box id="summary-container" bgcolor={'background.default'} sx={summaryStyle}>
 
-            {!summary && <CircularProgress />}
+            {/* {!summary && <CircularProgress />} */}
 
             {summary && (
                 <Grid container>
@@ -72,16 +78,12 @@ const Summary = () => {
                         </Typography>
                     </Grid>
                     <Grid xs={6}>
-                        {summary.approvedFiles.length > 0 && (
-                            <FilesList title={'Approved'} files={summary.approvedFiles} />
-                        )}
+                        <FilesList title={'Approved'} files={summary.approvedFiles} />
                     </Grid>
                     <Grid xs={6}>
-                        {summary.rejectedFiles.length > 0 && (
-                            <FilesList title={'Rejected'} files={summary.rejectedFiles} />
-                        )}
+                        <FilesList title={'Rejected'} files={summary.rejectedFiles} />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid xs={12} sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}>
                         <Button
                             variant='contained'
                             color='primary'

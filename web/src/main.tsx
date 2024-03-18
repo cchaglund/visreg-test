@@ -25,7 +25,7 @@ const router = createBrowserRouter([
 		element: <App />,
 		errorElement: <div>404 Not Found</div>,
 		loader: async () => {
-			const projectInformation = await getProjectInformation();			
+			const projectInformation = await getProjectInformation();
 			return { projectInformation };
 		},
 		children: [
@@ -34,7 +34,7 @@ const router = createBrowserRouter([
 				element: <Home />,
 				index: true,
 				loader: async () => {
-					const projectInformation = await getProjectInformation();			
+					const projectInformation = await getProjectInformation();
 					return { projectInformation };
 				},
 				handle: {

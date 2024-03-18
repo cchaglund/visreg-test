@@ -48,7 +48,7 @@ const PreviewComponent = (props: { file: File; children?: React.ReactNode; }) =>
         if (event.key === 'Escape') {
 			setZoomedIn(false);
 		}
-	};	
+	};
 
 	const toggleZoom = () => setZoomedIn(!zoomedIn);
 

@@ -1,3 +1,7 @@
+4.0.3
+- Fixed a bug with assessment of diffs in the web interface.
+- Added the endpoint data to the image previewer in the web interface.
+
 4.0.0
 - Added a web interface for assessing diffs and viewing snapshots
 

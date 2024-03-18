@@ -9,6 +9,9 @@ export type File = {
     url: string;
     siblingPaths: SiblingPath[];
     fileUrl: string;
+    baseUrl?: string;
+    endpoint?: Endpoint;
+    fullUrl?: string;
 };
 
 export type SiblingPath = {
