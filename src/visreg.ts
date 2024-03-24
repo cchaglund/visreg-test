@@ -11,7 +11,6 @@ import { assessInWeb } from './diff-assessment-web';
 import { BACKUP_DIFF_DIR, BACKUP_RECEIVED_DIR, DIFF_DIR, RECEIVED_DIR, cleanUp, getDiffingFiles, getSuiteDirOrFail, getSuites, hasFiles, includedInSpecification, isSpecifiedTest, parsedViewport, pathExists, printColorText, projectRoot, removeBackups, suitesDirectory } from './utils';
 import { assessInCLI } from './diff-assessment-terminal';
 import { summarizeResultsAndQuit } from './summarize';
-import { devPort, serverPort } from './server/config';
 
 const configPath = path.join(projectRoot, 'visreg.config.json');
 let visregConfig: ConfigurationSettings = {};

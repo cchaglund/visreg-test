@@ -19,15 +19,20 @@ const runSuiteConfig = async (suiteName: string): Promise<void> => {
         const suiteConfigDir = getSuiteDirOrFail(suiteName)
 		const isTypescript = fs.existsSync(path.join(suiteConfigDir, 'snaps.ts'));
 		let child;
+		
+		// I think I can use this for both prod and dev, but pathToCypressContextWrapperSafe I definitely can
+		// const pathToCypressContextWrapperSafe = './node_modules/visreg-test/dist/server/services/run-snaps-in-cypress-context.js';
+		const pathToCypressContextWrapper = path.join(__dirname, 'run-snaps-in-cypress-context.js');
 
-		if (isTypescript) {
-			child = spawn(`cd ${suiteConfigDir} && npx tsx snaps.ts`, { shell: true, stdio: 'inherit' });
-		} else {
-			const snapsPath = path.join(suiteConfigDir, 'snaps.js');
-			const mjsPath = path.join(suiteConfigDir, 'snaps.mjs');
-			fs.copyFileSync(snapsPath, mjsPath);
-			child = spawn(`cd ${suiteConfigDir} && node snaps.mjs`, { shell: true, stdio: 'inherit' });
-		}
+		child = spawn(`npx tsx ${pathToCypressContextWrapper}`, {
+			shell: true,
+			stdio: 'inherit',
+			env: {
+				...process.env,
+				SUITE_CONFIG_DIR: suiteConfigDir,
+				FILE_TYPE: isTypescript ? 'ts' : 'js',
+			}
+		});
 
 		child.on('data', (data) => console.log(`${data}`));
 		child.on('error', (error) => {
@@ -39,10 +44,7 @@ const runSuiteConfig = async (suiteName: string): Promise<void> => {
 			if (code !== 0) {
 				printColorText('Error getting suite test configuration', '33');
 				reject();
-			}
-
-			if (!isTypescript) {
-				fs.unlinkSync(path.join(suiteConfigDir, 'snaps.mjs'));
+				return;
 			}
 
 			resolve();
