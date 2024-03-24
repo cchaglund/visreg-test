@@ -5,7 +5,7 @@ export const runVisreg: RunTest = async (props: TestConfig) => {
     if (process.env.SEND_SUITE_CONF) {
         sendSuiteConf(props);
     } else {
-        const { runTest } = await import('./cypress/e2e/visual-regression-tests.cy');
+        const { runTest } = await import('./cypress/e2e/visual-regression-tests.cy.js');
         runTest(props);
     }
 };

@@ -9,7 +9,7 @@ import * as readline from 'readline';
 
 const express = require('express');
 
-const enableSpaceToOpen = async (port: number) => {
+const enableSpaceToOpen = async (url: string) => {
 	console.log('\nPress SPACE to open');
 
     const rl = readline.createInterface({
@@ -43,12 +43,12 @@ const enableSpaceToOpen = async (port: number) => {
 	if (process.stdin.isTTY) process.stdin.setRawMode(false);
 	rl.close();
 
-	if (answer === 'web') {
+    if (answer === 'web') {
         import('open').then((module) => {
-            module(`http://localhost:${port}`);
+            module(url);
         });
-		return;
-	}
+        return;
+    }    
 }
 
 const startServer = (programChoices: ProgramChoices, diffFiles?: DiffObject[]) => {
@@ -97,16 +97,19 @@ const startServer = (programChoices: ProgramChoices, diffFiles?: DiffObject[]) =
     app.listen(serverPort, () => {
         const webInterfacePort = process.env.NODE_ENV === 'development' ? devPort : serverPort;
 
+        const baseUrl = `http://localhost:${webInterfacePort}`;
+        const url = diffFiles ? `${baseUrl}/assessment` : baseUrl;
+
         if (diffFiles) {
-            console.log(`Assessment is running at http://localhost:${webInterfacePort}/assessment`);
+            console.log(`Assessment is running at ${url}`);
         } else {
-            console.log(`Web interface is running at http://localhost:${webInterfacePort}`);
+            console.log(`Web interface is running at ${url}`);
         }
 
         // We can't open the browser from inside a container
         if (programChoices?.containerized) return;
         
-        enableSpaceToOpen(webInterfacePort);
+        enableSpaceToOpen(url);
     });
 }
 

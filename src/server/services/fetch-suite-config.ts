@@ -21,7 +21,7 @@ const runSuiteConfig = async (suiteName: string): Promise<void> => {
 		let child;
 
 		if (isTypescript) {
-			child = spawn(`cd ${suiteConfigDir} && npx ts-node --transpile-only snaps.ts`, { shell: true, stdio: 'inherit' });
+			child = spawn(`cd ${suiteConfigDir} && npx tsx snaps.ts`, { shell: true, stdio: 'inherit' });
 		} else {
 			const snapsPath = path.join(suiteConfigDir, 'snaps.js');
 			const mjsPath = path.join(suiteConfigDir, 'snaps.mjs');
