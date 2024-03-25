@@ -12,6 +12,7 @@ export type File = {
     baseUrl?: string;
     endpoint?: Endpoint;
     fullUrl?: string;
+    path: string;
 };
 
 export type SiblingPath = {

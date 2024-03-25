@@ -18,6 +18,7 @@ import PreviewPage from './components/preview-page/preview-page.tsx';
 import FileLists from './components/suite-page/file-lists.tsx';
 import SuiteHome from './components/suite-page/suite-home.tsx';
 import FilesOverview from './components/suite-page/files-overview.tsx';
+import { AssessmentData } from './components/assessment-page/types';
 
 const router = createBrowserRouter([
 	{
@@ -76,11 +77,15 @@ const router = createBrowserRouter([
 					return { assessmentData };
 				},
 				handle: {
-					crumb: () => {
+					crumb: ({ assessmentData }: { assessmentData: AssessmentData }) => {
 						return [
 							{
 								path: '/',
 								slug: 'Home',
+							},
+							{
+								path: `/suite/${assessmentData?.programChoices?.suite}`,
+								slug: assessmentData?.programChoices?.suite,
 							},
 							{
 								path: '/assessment',

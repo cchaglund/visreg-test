@@ -31,6 +31,8 @@ export type TestConfig = {
     baseUrl: string;
     endpoints: Endpoint[];
     viewports?: string[] | number[][];
+    snapsFilePath: string;
+    snapsFileUrl: string;
 };
 
 type FilesLists = {

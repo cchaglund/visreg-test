@@ -5,7 +5,7 @@ const router = express.Router();
 
 router.post('/deliver-suite-config', (req: any, res: any) => {
     const { testConfig, suiteName } = req.body as { testConfig: TestConfig, suiteName: string };
-	setSuiteConfigCache(suiteName, testConfig);
+	setSuiteConfigCache(testConfig);
     res.send('ok');
 });
 

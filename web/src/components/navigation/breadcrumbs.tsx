@@ -32,13 +32,15 @@ const BreadcrumbsComponent = () => {
     
     const crumbs = matches
         .filter((match: MatchType) => Boolean(match?.handle?.crumb))
-        .map((match: MatchType) => {            
-            return match.handle?.crumb(match.data)
-        })
+        .map((match: MatchType) => match.handle?.crumb(match.data))
         .flat();
     
     return (
-        <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} aria-label="breadcrumb" {...stylex.props(s.breadcrumbs)}>
+        <Breadcrumbs
+            separator={<NavigateNextIcon fontSize="small" />}
+            aria-label="breadcrumb"
+            {...stylex.props(s.breadcrumbs)}
+        >
             {crumbs.map((crumb, index) => {
                 if (index !== crumbs.length - 1) {
                     return (

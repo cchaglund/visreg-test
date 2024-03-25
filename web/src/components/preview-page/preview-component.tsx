@@ -4,6 +4,9 @@ import InformationTable from './information-table';
 import stylex from '@stylexjs/stylex';
 import PreviewHeader from './preview-header';
 import { File } from './types.d';
+import { Accordion, AccordionDetails, AccordionSummary } from '@mui/material';
+import { ExpandMore } from '@mui/icons-material';
+import EndpointsList from '../suite-page/endpoint-list';
 
 const s = stylex.create({
 	wrapper: {
@@ -38,6 +41,12 @@ const s = stylex.create({
 		width: 'auto',
         minWidth: '375px',
 	},
+	accordion: {
+		'::before': {
+			display: 'none'
+		},
+		borderTop: '1px solid rgba(0,0,0,0.1)',
+	}
 });
 
 const PreviewComponent = (props: { file: File; children?: React.ReactNode; }) => {
@@ -69,6 +78,18 @@ const PreviewComponent = (props: { file: File; children?: React.ReactNode; }) =>
 				<div {...stylex.props(s.column, s.column2)}>
                     <PreviewHeader file={file} />
 					<InformationTable file={file} />
+					<Accordion sx={{borderRadius: '12px'}} {...stylex.props(s.accordion)}>
+						<AccordionSummary
+							expandIcon={<ExpandMore />}
+							aria-controls="panel1-content"
+							id="panel1-header"
+						>
+							Endpoint configuration
+						</AccordionSummary>
+						<AccordionDetails>
+							<EndpointsList endpoints={[file.endpoint]} />
+						</AccordionDetails>
+					</Accordion>
                     { props?.children }
 				</div>
 			</div>

@@ -69,20 +69,10 @@ export type GetFileDetailsParams = {
 }
 
 export const getFileDetails = async (args: GetFileDetailsParams) => {
-    // return { error: 'Not implemented'}
     const { suiteSlug, fileName } = args;
     const url = `${serverBaseUrl}/files/file/${suiteSlug}/${fileName}`;
     const response = await fetch(url);
     const file = await response.json();
-
-    // const snapshotName = fileName.slice(0, fileName.indexOf(' @')); // Without the viewport    
-
-    // const suiteConfig = await getSuiteConfig(suiteSlug);
-    // const endpoint = suiteConfig.endpoints.find(endpoint => endpoint.title === snapshotName);
-
-    // if (endpoint) {
-    //     file.endpoint = endpoint;
-    // }
     
     return file;
 }

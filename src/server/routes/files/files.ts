@@ -36,6 +36,16 @@ suites.forEach((suiteDir: string) => {
         const files = getFilesInDir(receivedDir);
         res.send(files);
     });
+
+    router.get(`/${suiteDir}/snapsfile/:fileName`, (req: any, res: any) => {
+        res.set({
+            'Content-Type': 'text/plain',
+            'Content-Disposition': 'inline'
+        });
+
+        const file = path.join( req.allSuitesDir, suiteDir, req.params.fileName );
+        res.sendFile(file);
+    });
 });
 
 export default router;

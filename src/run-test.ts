@@ -16,7 +16,7 @@ const sendSuiteConf = (props: TestConfig) => {
     fetch(baseUrl + '/suite/deliver-suite-config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ testConfig: props, suiteName: process.env.SUITE_NAME }),
+        body: JSON.stringify({ testConfig: props }),
     })
     .then(response => {        
         if (!response.ok) {

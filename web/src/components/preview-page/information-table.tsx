@@ -1,10 +1,9 @@
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import { Divider, Button, Link } from '@mui/material';
+import { Divider, Link, Typography } from '@mui/material';
 import stylex from '@stylexjs/stylex';
-import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { File } from './types.d';
 import { useNavigate } from 'react-router-dom';
 import { Check, Close, CallReceived, } from '@mui/icons-material';
+import RawFilePanel from './raw-file';
 
 const s = stylex.create({
     imageButtonsStyle: {
@@ -13,6 +12,9 @@ const s = stylex.create({
         justifyContent: 'center',
         marginBlock: '0.4rem',
         textTransform: 'capitalize'
+    },
+    sansMarginBlock: {
+        marginBlock: '0',
     },
     imageButtonsContainer: {
         width: '100%',
@@ -26,11 +28,6 @@ const s = stylex.create({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-    },
-    copyIconStyle: {
-        display: 'flex',
-        textOverflow: 'ellipsis',
-        overflow: 'hidden',
     },
     informationTable: {
         width: '100%',
@@ -70,7 +67,7 @@ const InformationTable = ({ file }: InformationTableProps) => {
 
         return (
             <Link
-                {...stylex.props(s.imageButtonsStyle)}
+                {...stylex.props(s.imageButtonsStyle, s.sansMarginBlock)}
                 onClick={() => navigate(props.path)}
                 component={'button'}
             >
@@ -85,32 +82,16 @@ const InformationTable = ({ file }: InformationTableProps) => {
 
             <div {...stylex.props(s.imageButtonsContainer)}>
                 <div {...stylex.props(s.imageButtonsStyle)}>
-                    <a
-                        href={`${file.fileUrl}`}
-                        target='_blank'
-                        rel='noreferrer'
-                    >
-                        <Button variant='outlined' color="primary" size='small' sx={{ marginRight: '0.5rem' }}>
-                            <OpenInNewIcon sx={{ mr: 1 }} />
-                            Open file
-                        </Button>
-                    </a>
-
-                    <Button
-                        variant='outlined' color="primary"
-                        size='small'
-                        onClick={() => {
-                            if (file.fileUrl) {
-                                navigator.clipboard.writeText(file.fileUrl);
-                            }
-                        }}
-                    >
-                        <ContentCopyIcon sx={{ mr: 1 }} />
-                        Copy disk path
-                    </Button>
+                    <RawFilePanel url={file.fileUrl} path={file.path} />
                 </div>
             </div>
+
             <div {...stylex.props(s.imageButtonsContainer)}>
+                {file?.siblingPaths?.filter(sibling => sibling.type !== file.type).length > 0 && (
+                    <Typography variant='body2' sx={{ marginRight: '1rem', alignItems: 'center' }}>
+                        Related images:
+                    </Typography>
+                )}
                 {file.siblingPaths
                     .filter(sibling => sibling.type !== file.type)
                     .map((sibling, index) => {

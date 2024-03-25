@@ -4,6 +4,7 @@ import { useContext } from 'react';
 import { Card, CardActionArea, CardContent, Chip, Typography } from '@mui/material';
 import EndpointsList from './endpoint-list';
 import stylex from '@stylexjs/stylex';
+import RawFilePanel from '../preview-page/raw-file';
 
 const s = stylex.create({
     header: {
@@ -23,7 +24,7 @@ const s = stylex.create({
     viewportSection: {
         marginBottom: '2rem',
     },
-    viewportsContainer: {
+    chipsContainer: {
         display: 'flex',
         columnGap: '0.5rem',
     },
@@ -60,12 +61,6 @@ const SuiteHome = () => {
                 <Typography variant="h4" mb={0} sx={{ textTransform: 'capitalize'}}>
                     {suiteSlug}
                 </Typography>
-                <div>
-                    <Typography variant='body2' component={'span'} mr={0.5}>
-                        Baseurl: 
-                    </Typography>
-                    <Chip label={suiteConfig?.baseUrl}></Chip>
-                </div>
             </div>
 
             <div {...stylex.props(s.actions)}>
@@ -95,15 +90,34 @@ const SuiteHome = () => {
 
             <div {...stylex.props(s.viewportSection)}>
                 <Typography variant="h6" mb={1}>
+                    Base url
+                </Typography>
+                <div {...stylex.props(s.chipsContainer)}>
+                    <Chip label={suiteConfig?.baseUrl}></Chip>
+                </div>
+            </div>
+
+            <div {...stylex.props(s.viewportSection)}>
+                <Typography variant="h6" mb={1}>
                     Viewports
                 </Typography>
-                <div {...stylex.props(s.viewportsContainer)}>
+                <div {...stylex.props(s.chipsContainer)}>
                     {parsedViewports?.map((viewport, index) => (
                         <Chip key={index} label={viewport}></Chip>
                     ))}
                 </div>
             </div>
 
+            <div {...stylex.props(s.viewportSection)}>
+                <Typography variant="h6" mb={1}>
+                    Snaps file 
+                </Typography>
+                <div {...stylex.props(s.chipsContainer)}>
+                    <RawFilePanel path={suiteConfig?.snapsFilePath} url={suiteConfig?.snapsFileUrl} />
+                </div>
+            </div>
+
+            <Typography variant="h6" mb={3}>Endpoints</Typography>
             <EndpointsList endpoints={suiteConfig?.endpoints} />
         </div>
     );

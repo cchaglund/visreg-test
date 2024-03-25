@@ -60,7 +60,7 @@ const PrevNextControls = () => {
         const prevFileIndex = indexOfCurrentFile - 1 < 0 ? list.length - 1 : indexOfCurrentFile - 1;
 
         setNextImageName(list[nextFileIndex]);
-        setPreviousImageName(list[prevFileIndex]);
+        setPreviousImageName(list[prevFileIndex]);        
     }, [file, filesList]);
 
     const ControlsContainer = (props: { children: React.ReactNode; }) => (
@@ -72,6 +72,8 @@ const PrevNextControls = () => {
     const PrevNextBlock = (props: { direction: string; }) => {
         const name = props.direction === 'prev' ? previousImageName : nextImageName;
         const icon = props.direction === 'prev' ? <ArrowBackIcon /> : <ArrowForwardIcon />;
+
+        if (name && name.includes(file.name)) return null; // if there's no next or previous file, don't render the block
 
         return (
             <Link

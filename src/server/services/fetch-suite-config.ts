@@ -3,21 +3,28 @@ import * as path from 'path';
 import { spawn } from 'child_process';
 import { getSuiteDirOrFail, printColorText } from '../../utils';
 import { TestConfig } from '../../types';
+import { serverPort } from '../config';
+
+let suiteName = '';
+let snapsFilePath = '';
+let fileName = '';
 
 const suiteConfigCache = new Map<string, TestConfig>();
 
-const runSuiteConfig = async (suiteName: string): Promise<void> => {	
+const runSuiteConfig = async (): Promise<void> => {	
     if (!suiteName) {
         printColorText('runSuiteConfig: No suite path - see README', '31');
         return;
     }
 
 	process.env.SEND_SUITE_CONF = 'true';
-	process.env.SUITE_NAME = suiteName;
-	
+
+	const suiteConfigDir = getSuiteDirOrFail(suiteName);
+	const isTypescript = fs.existsSync(path.join(suiteConfigDir, 'snaps.ts'));
+	fileName = isTypescript ? 'snaps.ts' : 'snaps.js';
+	snapsFilePath = path.join(suiteConfigDir, fileName);
+
 	return new Promise((resolve, reject) => {
-        const suiteConfigDir = getSuiteDirOrFail(suiteName)
-		const isTypescript = fs.existsSync(path.join(suiteConfigDir, 'snaps.ts'));
 		let child;
 		
 		// I think I can use this for both prod and dev, but pathToCypressContextWrapperSafe I definitely can
@@ -29,8 +36,7 @@ const runSuiteConfig = async (suiteName: string): Promise<void> => {
 			stdio: 'inherit',
 			env: {
 				...process.env,
-				SUITE_CONFIG_DIR: suiteConfigDir,
-				FILE_TYPE: isTypescript ? 'ts' : 'js',
+				FILE_PATH: snapsFilePath,
 			}
 		});
 
@@ -52,15 +58,24 @@ const runSuiteConfig = async (suiteName: string): Promise<void> => {
 	});
 }
 
-export const setSuiteConfigCache = (suiteName: string, testConfig: TestConfig) => {
-	suiteConfigCache.set(suiteName, testConfig);
+export const setSuiteConfigCache = (testConfig: TestConfig) => {
+	const parsedTestConfig = {
+		...testConfig,
+		suiteName,
+		snapsFilePath,
+		snapsFileUrl: `http://localhost:${serverPort}/files/${suiteName}/snapsfile/${fileName}`,
+	}
+	
+	suiteConfigCache.set(suiteName, parsedTestConfig);
 }
 
-export const fetchSuiteConfig = async (suiteName: string) => {
-	if (suiteConfigCache.has(suiteName)) {
-        return suiteConfigCache.get(suiteName);
+export const fetchSuiteConfig = async (incomingSuiteName: string) => {
+	if (suiteConfigCache.has(incomingSuiteName)) {
+        return suiteConfigCache.get(incomingSuiteName);
     }
 
-    await runSuiteConfig(suiteName);
+	suiteName = incomingSuiteName;
+
+    await runSuiteConfig();
 	return suiteConfigCache.get(suiteName);
 }
