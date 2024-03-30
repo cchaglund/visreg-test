@@ -52,7 +52,7 @@
 		"cypress-image-snapshot-fork-2": "9.0.1-6",
 		"cypress-network-idle": "1.14.2",
 		"cypress-set-device-pixel-ratio": "1.0.4",
-		"express": "4.18.2",
+		"express": "^4.19.2",
 		"local-cypress": "1.2.6",
 		"open": "6.4.0",
 		"tsx": "4.7.1"
