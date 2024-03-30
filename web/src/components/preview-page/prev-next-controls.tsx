@@ -73,7 +73,7 @@ const PrevNextControls = () => {
         const name = props.direction === 'prev' ? previousImageName : nextImageName;
         const icon = props.direction === 'prev' ? <ArrowBackIcon /> : <ArrowForwardIcon />;
 
-        if (name && name.includes(image.name)) return null; // if there's no next or previous image, don't render the block
+        if (name && name.includes(image.name)) return null;
 
         return (
             <Link
@@ -88,7 +88,6 @@ const PrevNextControls = () => {
                     <Typography
                         {...x.props(s.text)}
                         variant="body1"
-                        color={'text.primary'}
                     >
                         {name}
                     </Typography>
