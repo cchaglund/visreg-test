@@ -1,33 +1,33 @@
 import { Chip, Link, Typography } from '@mui/material';
 import stylex from '@stylexjs/stylex';
-import { File } from './types.d';
+import { Image } from './types.d';
 
 const s = stylex.create({
     chipContainer: {
         width: '100%',
         display: 'flex',
         alignItems: 'center',
-		marginInline: '2rem',
+        marginInline: '2rem',
         marginBlock: '0.5rem',
         gap: '0.5rem',
         justifyContent: 'center',
         flexWrap: 'wrap',
     },
-	flex: {
-		display: 'flex',
+    flex: {
+        display: 'flex',
         flexWrap: 'wrap',
-		justifyContent: 'center',
-		alignItems: 'center',
-		width: 'fit-content',
-		margin: '0 auto',
-	},
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: 'fit-content',
+        margin: '0 auto',
+    },
 });
 
-const PreviewHeader = (props: { file: File}) => {
-    const { file } = props;
+const PreviewHeader = (props: { image: Image; }) => {
+    const { image } = props;
 
     const typeColor = () => {
-        switch (file.type) {
+        switch (image.type) {
             case 'baseline':
                 return 'success';
             case 'diff':
@@ -37,39 +37,39 @@ const PreviewHeader = (props: { file: File}) => {
             default:
                 return 'default';
         }
-    }
+    };
 
-    if (!file) {
+    if (!image) {
         return null;
     }
 
     return (
         <div {...stylex.props(s.flex)}>
             <Typography color='text.primary' variant='h4' sx={{ textAlign: 'center', mb: 1, width: '100%' }}>
-                {file.fileName}
+                {image.fileName}
             </Typography>
             <Typography color='text.secondary' variant='h6' sx={{ textAlign: 'center', mb: 1, width: '100%' }}>
-                <Link href={file.fullUrl} target='_blank' rel='noreferrer'>
-                    {file.fullUrl}
+                <Link href={image.fullUrl} target='_blank' rel='noreferrer'>
+                    {image.fullUrl}
                 </Link>
             </Typography>
             <div {...stylex.props(s.chipContainer)}>
-                <Chip 
-                    label={file.type}
+                <Chip
+                    label={image.type}
                     variant="filled"
                     color={typeColor()}
                     sx={{ textTransform: 'capitalize' }}
                 />
-                <Chip 
-                    label={file.sizeString}
+                <Chip
+                    label={image.sizeString}
                     variant="filled"
                 />
-                <Chip 
-                    label={`Created: ${new Date(file.createdAt).toLocaleDateString()}`}
+                <Chip
+                    label={`Created: ${new Date(image.createdAt).toLocaleDateString()}`}
                     variant="filled"
                 />
-                <Chip 
-                    label={`Modified: ${new Date(file.modifiedAt).toLocaleDateString()}`}
+                <Chip
+                    label={`Modified: ${new Date(image.modifiedAt).toLocaleDateString()}`}
                     variant="filled"
                 />
             </div>

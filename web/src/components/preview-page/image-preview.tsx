@@ -1,7 +1,7 @@
 import { Paper } from '@mui/material';
 import * as stylex from '@stylexjs/stylex';
 import { useState } from 'react';
-import { File } from './types';
+import { Image } from './types';
 
 const imageStyles = stylex.create({
     shared: {
@@ -51,10 +51,10 @@ const paperStyles = stylex.create({
 type ImagePreviewProps = {
     toggleZoom: () => void;
     zoomedIn: boolean;
-    file: File;
+    image: Image;
 };
 
-const ImagePreview = ({ toggleZoom, zoomedIn, file }: ImagePreviewProps) => {
+const ImagePreview = ({ toggleZoom, zoomedIn, image }: ImagePreviewProps) => {
     const [ imgElevation, setImgElevation ] = useState(4);
 
     return (
@@ -75,7 +75,7 @@ const ImagePreview = ({ toggleZoom, zoomedIn, file }: ImagePreviewProps) => {
                     imageStyles.regular,
                     zoomedIn && imageStyles.zoomedIn,
                 )}
-                src={`${file.fileUrl}`}
+                src={`${image.fileUrl}`}
                 alt='Image'
                 loading='lazy'
             />

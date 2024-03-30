@@ -30,7 +30,7 @@ const Header = () => {
     const theme = useTheme();
     const colorMode = React.useContext(ColorModeContext);
     const { currentDiffIndex } = React.useContext(AppContext);
-    const location = useLocation();    
+    const location = useLocation();
 
     return (
         <AppBar position="static" color='transparent' sx={{ p: 1, width: '100%', zIndex: 2 }}>
@@ -39,9 +39,8 @@ const Header = () => {
                     <Menu />
                 </div>
                 <div {...stylex.props(s.nameContainer)}>
-                    <BreadcrumbsComponent />                
+                    <BreadcrumbsComponent />
                 </div>
-
 
                 {location.pathname !== '/assessment' && currentDiffIndex !== null && (
                     <Link to='/assessment' {...stylex.props(s.backToAssessment)}>

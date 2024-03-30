@@ -1,16 +1,8 @@
 import * as React from 'react';
 import { useLoaderData, useLocation, useNavigate } from 'react-router-dom';
-import {
-    Check as CheckmarkIcon,
-    Close as CloseIcon,
-    CallReceived as CallReceivedIcon,
-    Menu as MenuIcon,
-    Home as HomeIcon,
-    ExpandLess as ExpandLessIcon,
-    ExpandMore as ExpandMoreIcon,
-} from '@mui/icons-material';
+import { Check, Close, CallReceived, Menu as MenuIcon, Home, ExpandLess, ExpandMore } from '@mui/icons-material';
 import stylex from '@stylexjs/stylex';
-import { 
+import {
     AppBar,
     Box,
     Button,
@@ -43,8 +35,8 @@ const drawer = stylex.create({
 export type ProjectInformationData = {
     projectInformation: {
         suites: string[];
-    }
-}
+    };
+};
 
 export default function Menu() {
     const [ open, setOpen ] = React.useState(false);
@@ -69,14 +61,14 @@ export default function Menu() {
     const navigateTo = (path: string) => {
         setOpen(false);
         navigate(path);
-    }
+    };
 
     const DrawerList = (
         <Box sx={{ width: 250 }} role="presentation" component={'nav'}>
             <Button {...stylex.props(drawer.closeDrawerContainer)} onClick={toggleDrawer(false)}>
                 <AppBar position="static" color='transparent' sx={{ p: 1, width: '100%', zIndex: 2 }}>
                     <Toolbar>
-                            <CloseIcon fontSize='large' {...stylex.props(drawer.closeIcon)} />
+                        <Close fontSize='large' {...stylex.props(drawer.closeIcon)} />
                     </Toolbar>
                 </AppBar>
             </Button>
@@ -87,10 +79,10 @@ export default function Menu() {
                         onClick={() => navigateTo('/')}
                         selected={location.pathname === '/'}
                     >
-                        <ListItemIcon>
-                            <HomeIcon />
-                        </ListItemIcon>
-                        <ListItemText primary={'Home'} />
+                        <ListItemText
+                            primary={'Home'}
+                            primaryTypographyProps={{ color: 'text.primary' }}
+                        />
                     </ListItemButton>
                 </ListItem>
             </List>
@@ -99,8 +91,11 @@ export default function Menu() {
                 {projectInformation?.suites?.map((suite, index) => (
                     <div key={index}>
                         <ListItemButton onClick={() => expandNested(suite)} key={suite}>
-                            <ListItemText primary={suite} />
-                            {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                            <ListItemText
+                                primary={suite}
+                                primaryTypographyProps={{ color: 'text.primary' }}
+                            />
+                            {expanded ? <ExpandLess color='primary' /> : <ExpandMore color='primary' />}
                         </ListItemButton>
                         <Collapse in={expanded === suite} timeout="auto" unmountOnExit>
                             <List component="div" disablePadding>
@@ -111,44 +106,58 @@ export default function Menu() {
                                     selected={location.pathname === `/suite/${suite}`}
                                 >
                                     <ListItemIcon>
-                                        <HomeIcon />
+                                        <Home />
                                     </ListItemIcon>
-                                    <ListItemText primary="Suite" />
+                                    <ListItemText
+                                        primary="Suite"
+                                        primaryTypographyProps={{ color: 'text.primary' }}
+                                    />
                                 </ListItemButton>
 
                                 <ListItemButton
                                     sx={{ pl: 4 }}
-                                    onClick={() => navigateTo(`/suite/${suite}/files/baseline`)}
-                                    selected={location.pathname === `/suite/${suite}/files/baseline`}
+                                    onClick={() => navigateTo(`/suite/${suite}/images/baseline`)}
+                                    selected={location.pathname === `/suite/${suite}/images/baseline`}
+
                                 >
                                     <ListItemIcon>
-                                        <CheckmarkIcon color='success' />
+                                        <Check color='success' />
+                                        {/* <CheckCircleRoundedIcon color='success' /> */}
                                     </ListItemIcon>
-                                    <ListItemText primary="Baselines" />
+                                    <ListItemText
+                                        primary="Baselines"
+                                        primaryTypographyProps={{ color: 'text.primary' }}
+                                    />
                                 </ListItemButton>
 
                                 <ListItemButton
                                     sx={{ pl: 4 }}
-                                    onClick={() => navigateTo(`/suite/${suite}/files/diff`)}
-                                    selected={location.pathname === `/suite/${suite}/files/diff`}
+                                    onClick={() => navigateTo(`/suite/${suite}/images/diff`)}
+                                    selected={location.pathname === `/suite/${suite}/images/diff`}
                                 >
                                     <ListItemIcon>
-                                        <CloseIcon color='error' />
+                                        <Close color='error' />
                                     </ListItemIcon>
-                                    <ListItemText primary="Diffs" />
+                                    <ListItemText
+                                        primary="Diffs"
+                                        primaryTypographyProps={{ color: 'text.primary' }}
+                                    />
                                 </ListItemButton>
 
                                 <ListItemButton
                                     sx={{ pl: 4 }}
-                                    onClick={() => navigateTo(`/suite/${suite}/files/received`)}
-                                    selected={location.pathname === `/suite/${suite}/files/received`}
+                                    onClick={() => navigateTo(`/suite/${suite}/images/received`)}
+                                    selected={location.pathname === `/suite/${suite}/images/received`}
                                 >
                                     <ListItemIcon>
-                                        <CallReceivedIcon color='warning' />
+                                        <CallReceived color='warning' />
                                     </ListItemIcon>
-                                    <ListItemText primary="Received" />
+                                    <ListItemText
+                                        primary="Received"
+                                        primaryTypographyProps={{ color: 'text.primary' }}
+                                    />
                                 </ListItemButton>
-                                
+
                             </List>
                         </Collapse>
                     </div>
@@ -162,7 +171,10 @@ export default function Menu() {
             <Button onClick={toggleDrawer(true)} {...stylex.props(drawer.openDrawerContainer)}>
                 <MenuIcon fontSize='large' />
             </Button>
-            <Drawer open={open} onClose={toggleDrawer(false)}>
+            <Drawer
+                open={open}
+                onClose={toggleDrawer(false)}
+            >
                 {DrawerList}
             </Drawer>
         </React.Fragment>

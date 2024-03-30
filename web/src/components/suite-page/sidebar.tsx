@@ -1,6 +1,6 @@
 import { useLoaderData, useLocation } from 'react-router-dom';
 import stylex from '@stylexjs/stylex';
-import { Chip, Paper, Typography } from '@mui/material';
+import { Chip, Typography } from '@mui/material';
 import { SuitePageData } from './suite-page';
 
 const s = stylex.create({
@@ -70,42 +70,42 @@ const Sidebar = (props: SidebarProps) => {
 
     return (
         <Sidebar>
-            <Typography variant="h6" mb={4}>
+            <Typography variant="h6" mb={4} color='text.primary'>
                 Filter
             </Typography>
             <Section>
-                <Typography variant="body1" mb={1}>
+                <Typography variant="body1" mb={1} color='text.primary'>
                     Title
                 </Typography>
                 <ChipContainer>
-                    {suiteConfig?.endpoints.map((endpoint, index) => (
+                    {suiteConfig?.endpoints?.map((endpoint, index) => (
                         <Chip
-                            component={Paper}
-                            elevation={location.pathname === `/suite/${suiteSlug}` || selectedName === endpoint.title ? 0 : 2}
                             key={index}
                             label={endpoint.title}
                             onClick={() => changeName(endpoint.title)}
                             disabled={location.pathname === `/suite/${suiteSlug}`}
                             variant={selectedName === endpoint.title ? 'filled' : 'outlined'}
+                            clickable
+                            color='primary'
                         />
                     ))}
                 </ChipContainer>
             </Section>
             <Section>
-                <Typography variant="body1" mb={1}>
+                <Typography variant="body1" mb={1} color='text.primary'>
                     Viewport
                 </Typography>
 
                 <ChipContainer>
                     {parsedViewports?.map((viewport, index) => (
                         <Chip
-                            component={Paper}
-                            elevation={location.pathname === `/suite/${suiteSlug}` || selectedViewport === viewport ? 0 : 2}
                             key={index}
                             label={viewport}
                             onClick={() => changeViewport(viewport)}
                             disabled={location.pathname === `/suite/${suiteSlug}`}
                             variant={selectedViewport === viewport ? 'filled' : 'outlined'}
+                            clickable
+                            color='primary'
                         />
                     ))}
                 </ChipContainer>
@@ -115,6 +115,7 @@ const Sidebar = (props: SidebarProps) => {
                     variant="body2"
                     mb={1}
                     sx={{ cursor: 'pointer', textDecoration: 'underline' }}
+                    color='text.primary'
                     onClick={() => {
                         setSelectedName('');
                         setSelectedViewport('');

@@ -1,8 +1,8 @@
-import { Divider, Link, Typography } from '@mui/material';
+import { Button, ButtonGroup } from '@mui/material';
 import stylex from '@stylexjs/stylex';
-import { File } from './types.d';
+import { Image } from './types.d';
 import { useNavigate } from 'react-router-dom';
-import { Check, Close, CallReceived, } from '@mui/icons-material';
+import ImageTwoToneIcon from '@mui/icons-material/ImageTwoTone';
 import RawFilePanel from './raw-file';
 
 const s = stylex.create({
@@ -22,7 +22,7 @@ const s = stylex.create({
         alignItems: 'center',
         justifyContent: 'center',
         flexWrap: 'wrap',
-        marginBlock: '0.4rem',
+        marginBlock: '0.2rem',
     },
     imageButtons: {
         display: 'flex',
@@ -39,73 +39,38 @@ const s = stylex.create({
 });
 
 type InformationTableProps = {
-    file: File;
+    image: Image;
 };
 
-const InformationTable = ({ file }: InformationTableProps) => {
+const InformationTable = ({ image }: InformationTableProps) => {
     const navigate = useNavigate();
-
-    const ImageButtons = (props: { path: string, type: string; }) => {
-        const baselineIcon = <Check sx={{ mr: 1 }} color="success" />;
-        const diffIcon = <Close sx={{ mr: 1 }} color="error" />
-        const receivedIcon = <CallReceived sx={{ mr: 1 }} color="warning" />
-
-        let icon = null;
-        switch (props.type) {
-            case 'baseline':
-                icon = baselineIcon;
-                break;
-            case 'diff':
-                icon = diffIcon;
-                break;
-            case 'received':
-                icon = receivedIcon;
-                break;
-            default:
-                icon = null;
-        }
-
-        return (
-            <Link
-                {...stylex.props(s.imageButtonsStyle, s.sansMarginBlock)}
-                onClick={() => navigate(props.path)}
-                component={'button'}
-            >
-                {icon}
-                {props.type}
-            </Link>
-        )
-    }
 
     return (
         <div {...stylex.props(s.informationTable)}>
-
             <div {...stylex.props(s.imageButtonsContainer)}>
                 <div {...stylex.props(s.imageButtonsStyle)}>
-                    <RawFilePanel url={file.fileUrl} path={file.path} />
+                    <RawFilePanel url={image.fileUrl} path={image.path} />
                 </div>
             </div>
 
             <div {...stylex.props(s.imageButtonsContainer)}>
-                {file?.siblingPaths?.filter(sibling => sibling.type !== file.type).length > 0 && (
-                    <Typography variant='body2' sx={{ marginRight: '1rem', alignItems: 'center' }}>
-                        Related images:
-                    </Typography>
-                )}
-                {file.siblingPaths
-                    .filter(sibling => sibling.type !== file.type)
-                    .map((sibling, index) => {
-                        return (
-                            <div key={index} {...stylex.props(s.imageButtons)}>
-                                <ImageButtons path={sibling.previewUrl} type={sibling.type} />
-                                { index !== 1 && (
-                                    <Divider orientation='vertical' flexItem sx={{marginInline: '1rem'}} /> 
-                                )}
-                            </div>
-                        );
-                    })
-                }
-
+                <ButtonGroup variant="text" aria-label="Basic button group">
+                    {image.siblingPaths
+                        .filter(sibling => sibling.type !== image.type)
+                        .map((sibling, index) => {
+                            return (
+                                <Button
+                                    key={index}
+                                    onClick={() => navigate(sibling.previewUrl)}
+                                    variant='text'
+                                    startIcon={<ImageTwoToneIcon />}
+                                >
+                                    {sibling.type}
+                                </Button>
+                            );
+                        })
+                    }
+                </ButtonGroup>
             </div>
         </div>
     );

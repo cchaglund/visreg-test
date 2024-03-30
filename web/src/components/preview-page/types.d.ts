@@ -1,11 +1,11 @@
-export type File = {
-	name: string;
+export type Image = {
+    name: string;
     fileName: string;
     createdAt: Date;
-	modifiedAt: Date;
+    modifiedAt: Date;
     type: string;
     suiteName: string;
-	sizeString: string;
+    sizeString: string;
     url: string;
     siblingPaths: SiblingPath[];
     fileUrl: string;

@@ -1,8 +1,8 @@
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import FileOpenTwoToneIcon from '@mui/icons-material/FileOpenTwoTone';
 import { Button } from '@mui/material';
-import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
-const RawFilePanel = ({ url, path }: { url?: string; path?: string}) => {
+const RawFilePanel = ({ url, path }: { url?: string; path?: string; }) => {
 
     return (
         <div>
@@ -12,8 +12,12 @@ const RawFilePanel = ({ url, path }: { url?: string; path?: string}) => {
                     target='_blank'
                     rel='noreferrer'
                 >
-                    <Button variant='outlined' color="primary" size='small' sx={{ marginRight: '0.5rem' }}>
-                        <OpenInNewIcon sx={{ mr: 1 }} />
+                    <Button
+                        variant='text'
+                        color='primary'
+                        startIcon={<FileOpenTwoToneIcon />}
+                        sx={{ mr: 1 }}
+                    >
                         Open file
                     </Button>
                 </a>
@@ -21,15 +25,15 @@ const RawFilePanel = ({ url, path }: { url?: string; path?: string}) => {
 
             {path && (
                 <Button
-                    variant='outlined' color="primary"
+                    variant='outlined' color="secondary"
                     size='small'
+                    startIcon={<ContentCopyIcon />}
                     onClick={() => {
                         if (path) {
                             navigator.clipboard.writeText(path);
                         }
                     }}
                 >
-                    <ContentCopyIcon sx={{ mr: 1 }} />
                     Copy disk path
                 </Button>
             )}

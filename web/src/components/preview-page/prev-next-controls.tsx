@@ -1,13 +1,13 @@
 import { useContext, useEffect, useState } from 'react';
 import { useLoaderData, useNavigate, } from 'react-router-dom';
-import { FilesListsType, SuiteContext } from '../suite-page/suite-page';
+import { ImagesListType, SuiteContext } from '../suite-page/suite-page';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import stylex from '@stylexjs/stylex';
+import x from '@stylexjs/stylex';
 import { Link, Typography } from '@mui/material';
-import { File } from './types.d';
+import { Image } from './types.d';
 
-const s = stylex.create({
+const s = x.create({
     controlsContainer: {
         width: 'auto',
         display: 'flex',
@@ -43,56 +43,59 @@ const s = stylex.create({
 
 
 const PrevNextControls = () => {
-    const { file } = useLoaderData() as { file: File}
-    const { filesList } = useContext(SuiteContext);
+    const { image } = useLoaderData() as { image: Image; };
+    const { imagesList } = useContext(SuiteContext);
     const [ previousImageName, setPreviousImageName ] = useState<string | null>(null);
-    const [ nextImageName, setNextImageName ] = useState<string | null>(null);    
+    const [ nextImageName, setNextImageName ] = useState<string | null>(null);
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (!file || !filesList) return;
+        if (!image || !imagesList) return;
 
-        const listName = file.type + 'List' as FilesListsType;
-        const list = filesList[listName];
+        const listName = image.type + 'List' as ImagesListType;
+        const list = imagesList[ listName ];
 
-        const indexOfCurrentFile = list.indexOf(file.fileName);
+        const indexOfCurrentFile = list.indexOf(image.fileName);
         const nextFileIndex = indexOfCurrentFile + 1 === list.length ? 0 : indexOfCurrentFile + 1;
         const prevFileIndex = indexOfCurrentFile - 1 < 0 ? list.length - 1 : indexOfCurrentFile - 1;
 
-        setNextImageName(list[nextFileIndex]);
-        setPreviousImageName(list[prevFileIndex]);        
-    }, [file, filesList]);
+        setNextImageName(list[ nextFileIndex ]);
+        setPreviousImageName(list[ prevFileIndex ]);
+    }, [ image, imagesList ]);
 
     const ControlsContainer = (props: { children: React.ReactNode; }) => (
-        <div {...stylex.props(s.controlsContainer)}>
+        <div {...x.props(s.controlsContainer)}>
             {props.children}
         </div>
-    )
+    );
 
     const PrevNextBlock = (props: { direction: string; }) => {
         const name = props.direction === 'prev' ? previousImageName : nextImageName;
         const icon = props.direction === 'prev' ? <ArrowBackIcon /> : <ArrowForwardIcon />;
 
-        if (name && name.includes(file.name)) return null; // if there's no next or previous file, don't render the block
+        if (name && name.includes(image.name)) return null; // if there's no next or previous image, don't render the block
 
         return (
             <Link
-                {...stylex.props(s.link)}
+                {...x.props(s.link)}
                 component="button"
                 onClick={() => {
-                    navigate(`/suite/${file.suiteName}/files/${file.type}/${name}`)
+                    navigate(`/suite/${image.suiteName}/images/${image.type}/${name}`);
                 }}
             >
-                <div {...stylex.props(s.prevNextBlock, props.direction === 'next' && s.nextBlock)}>
+                <div {...x.props(s.prevNextBlock, props.direction === 'next' && s.nextBlock)}>
                     {icon}
-                    <Typography {...stylex.props(s.text)} variant="body1">
+                    <Typography
+                        {...x.props(s.text)}
+                        variant="body1"
+                        color={'text.primary'}
+                    >
                         {name}
                     </Typography>
                 </div>
             </Link>
-        )
-    }
-
+        );
+    };
 
     return (
         <ControlsContainer>

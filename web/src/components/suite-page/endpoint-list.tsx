@@ -8,6 +8,7 @@ import TableRow from '@mui/material/TableRow';
 import { Endpoint } from './suite-page';
 import stylex from '@stylexjs/stylex';
 import EndpointListItem from './endpoint-item';
+import { Paper } from '@mui/material';
 
 const s = stylex.create({
     list: {
@@ -23,7 +24,7 @@ type EndpointsListProps = {
 };
 
 const EndpointsList = (props: EndpointsListProps) => {
-    const { endpoints } = props;    
+    const { endpoints } = props;
 
     if (!endpoints) {
         return null;
@@ -31,13 +32,14 @@ const EndpointsList = (props: EndpointsListProps) => {
 
     return (
         <React.Fragment>
-            <TableContainer {...stylex.props(s.list)}>
+            <TableContainer {...stylex.props(s.list)} component={Paper}>
                 <Table aria-label="collapsible table">
                     <TableHead>
                         <TableRow>
-                            <TableCell sx={{width: 0}} padding="normal"/>
+                            <TableCell sx={{ width: 0 }} padding="normal" />
                             <TableCell>Title</TableCell>
                             <TableCell>Path</TableCell>
+                            <TableCell>Attributes</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>

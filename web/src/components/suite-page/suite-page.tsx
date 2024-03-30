@@ -9,7 +9,7 @@ export type SuiteContextType = {
     selectedViewport: string;
     suiteConfig?: TestConfig;
     parsedViewports?: string[];
-    filesList?: FilesLists;
+    imagesList?: ImagesList;
 };
 
 const defaultValue: SuiteContextType = {
@@ -31,23 +31,24 @@ export type TestConfig = {
     baseUrl: string;
     endpoints: Endpoint[];
     viewports?: string[] | number[][];
-    snapsFilePath: string;
-    snapsFileUrl: string;
+    formatUrl?: string;
+    onPageVisit?: string;
+    files: string[];
+    fileEndpoint: string;
+    directory: string;
 };
 
-type FilesLists = {
+type ImagesList = {
     baselineList: string[];
     diffList: string[];
     receivedList: string[];
 };
 
-export type FilesListsType = keyof FilesLists;
-
-
+export type ImagesListType = keyof ImagesList;
 
 export type SuitePageData = {
     suiteSlug: string;
-    filesList: FilesLists,
+    imagesList: ImagesList,
     suiteConfig: TestConfig;
 };
 
@@ -71,12 +72,11 @@ const s = stylex.create({
 });
 
 const SuitePage = () => {
-    const { suiteSlug, filesList, suiteConfig } = useLoaderData() as SuitePageData;
+    const { suiteSlug, imagesList, suiteConfig } = useLoaderData() as SuitePageData;
     const { setSuiteName } = useContext(AppContext);
     const [ parsedViewports, setParsedViewports ] = useState<string[]>([]);
     const [ selectedName, setSelectedName ] = useState<string>('');
     const [ selectedViewport, setSelectedViewport ] = useState<string>('');
-
 
     useEffect(() => {
         setSuiteName(suiteSlug);
@@ -108,7 +108,7 @@ const SuitePage = () => {
                     selectedViewport,
                     suiteConfig,
                     parsedViewports,
-                    filesList,
+                    imagesList,
                 }}>
                     <Outlet />
                 </SuiteContext.Provider>

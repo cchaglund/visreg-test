@@ -35,7 +35,13 @@ const Home = () => {
                     <Card elevation={3} key={index}>
                         <CardActionArea onClick={() => navigate(`/suite/${suite}`)}>
                             <CardContent {...stylex.props(s.card)}>
-                                <Typography gutterBottom variant="h5" component="div" sx={{ textTransform: 'capitalize' }}>
+                                <Typography
+                                    gutterBottom
+                                    variant="h5"
+                                    component="div"
+                                    color='text.secondary'
+                                    sx={{ textTransform: 'capitalize' }}
+                                >
                                     {suite}
                                 </Typography>
                             </CardContent>

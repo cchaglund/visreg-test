@@ -12,12 +12,12 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import AssessmentPage from './components/assessment-page/assessment-page.tsx';
 import Summary from './components/assessment-page/summary.tsx';
 import Home from './components/home/home.tsx';
-import { getAssessmentData, getFileDetails, GetFileDetailsParams, getFilesList, GetFilesListParams, getProjectInformation, getSuiteConfig, getSuiteFilesList, GetSuiteFilesListParams, getSummary } from './loaders.ts';
+import { getAssessmentData, getImageDetails, GetFileDetailsParams, getImagesList, GetImagesListParams, getProjectInformation, getSuiteConfig, getSuiteImagesList, GetSuiteImagesListParams, getSummary } from './loaders.ts';
 import SuitePage from './components/suite-page/suite-page.tsx';
 import PreviewPage from './components/preview-page/preview-page.tsx';
-import FileLists from './components/suite-page/file-lists.tsx';
+import ImageLists from './components/suite-page/image-lists.tsx';
 import SuiteHome from './components/suite-page/suite-home.tsx';
-import FilesOverview from './components/suite-page/files-overview.tsx';
+import ImagesOverview from './components/suite-page/images-overview.tsx';
 import { AssessmentData } from './components/assessment-page/types';
 
 const router = createBrowserRouter([
@@ -40,10 +40,10 @@ const router = createBrowserRouter([
 				},
 				handle: {
 					crumb: () => {
-						return [{
+						return [ {
 							path: '/',
 							slug: 'Home',
-						}];
+						} ];
 					},
 				},
 			},
@@ -77,7 +77,7 @@ const router = createBrowserRouter([
 					return { assessmentData };
 				},
 				handle: {
-					crumb: ({ assessmentData }: { assessmentData: AssessmentData }) => {
+					crumb: ({ assessmentData }: { assessmentData: AssessmentData; }) => {
 						return [
 							{
 								path: '/',
@@ -99,10 +99,11 @@ const router = createBrowserRouter([
 				path: "/suite/:suiteSlug",
 				element: <SuitePage />,
 				loader: async ({ params }) => {
-					const filesList = await getSuiteFilesList(params as GetSuiteFilesListParams);
+					const imagesList = await getSuiteImagesList(params as GetSuiteImagesListParams);
 					const suiteConfig = await getSuiteConfig(params.suiteSlug);
-					return { 
-						filesList,
+
+					return {
+						imagesList,
 						suiteSlug: params.suiteSlug,
 						suiteConfig,
 					};
@@ -126,78 +127,78 @@ const router = createBrowserRouter([
 						path: "/suite/:suiteSlug",
 						index: true,
 						element: <SuiteHome />,
-						loader: ({params}) => ({ suiteSlug: params.suiteSlug})
+						loader: ({ params }) => ({ suiteSlug: params.suiteSlug })
 					},
 					{
-						path: "/suite/:suiteSlug/files",
-						element: <FilesOverview />,
+						path: "/suite/:suiteSlug/images",
+						element: <ImagesOverview />,
 						loader: async ({ params }) => {
-							const filesList = await getSuiteFilesList(params as GetSuiteFilesListParams);
-							return { filesList };
+							const imagesList = await getSuiteImagesList(params as GetSuiteImagesListParams);
+							return { imagesList };
 						},
 						handle: {
 							crumb: ({ suiteSlug }: { suiteSlug: string; }) => {
 								return [
 									{
-										path: `/suite/${suiteSlug}/files`,
-										slug: 'Files',
+										path: `/suite/${suiteSlug}/images`,
+										slug: 'Images',
 									}
 								];
 							}
 						},
 					},
 					{
-						path: "/suite/:suiteSlug/files/:typeOfFiles",
-						element: <FileLists />,
+						path: "/suite/:suiteSlug/images/:typeOfImage",
+						element: <ImageLists />,
 						loader: async ({ params }) => {
-							const files = await getFilesList(params as GetFilesListParams);
-							
-							return { 
+							const images = await getImagesList(params as GetImagesListParams);
+
+							return {
 								suiteSlug: params.suiteSlug,
-								typeOfFiles: params.typeOfFiles,
-								fileNames: files
+								typeOfImage: params.typeOfImage,
+								imageNames: images
 							};
 						},
 						handle: {
-							crumb: ({ suiteSlug, typeOfFiles }: { suiteSlug: string; typeOfFiles: string }) => {
+							crumb: ({ suiteSlug, typeOfImage }: { suiteSlug: string; typeOfImage: string; }) => {
 								return [
 									{
-										path: `/suite/${suiteSlug}/files`,
-										slug: 'Files',
+										path: `/suite/${suiteSlug}/images`,
+										slug: 'Images',
 									},
 									{
-										path: `/suite/${suiteSlug}/files/${typeOfFiles}`,
-										slug: typeOfFiles,
+										path: `/suite/${suiteSlug}/images/${typeOfImage}`,
+										slug: typeOfImage,
 									}
 								];
 							}
 						},
 					},
 					{
-						path: "/suite/:suiteSlug/files/:typeOfFiles/:fileName",
+						path: "/suite/:suiteSlug/images/:typeOfImage/:fileName",
 						element: <PreviewPage />,
 						loader: async ({ params }) => {
-							const file = await getFileDetails(params as GetFileDetailsParams);
+							const image = await getImageDetails(params as GetFileDetailsParams);
 							return {
-								file,
+								image,
 								suiteSlug: params.suiteSlug,
 								fileName: params.fileName,
-								typeOfFiles: params.typeOfFiles,
+								typeOfImage: params.typeOfImage,
 							};
 						},
 						handle: {
-							crumb: ({ fileName, suiteSlug, typeOfFiles }: { fileName: string; suiteSlug: string; typeOfFiles: string }) => {								
+							crumb: ({ fileName, suiteSlug, typeOfImage }: { fileName: string; suiteSlug: string; typeOfImage: string; }) => {
 								return [
 									{
-										path: `/suite/${suiteSlug}/files`,
-										slug: 'Files',
+										path: `/suite/${suiteSlug}/images`,
+										slug: 'Images',
 									},
 									{
-										path: `/suite/${suiteSlug}/files/${typeOfFiles}`,
-										slug: typeOfFiles,
+										path: `/suite/${suiteSlug}/images/${typeOfImage}`,
+										slug: typeOfImage,
 									},
 									{
-										path: `/suite/${suiteSlug}/files/${typeOfFiles}/${fileName}`,
+										path: `/suite/${suiteSlug}/images/${typeOfImage}/${fileName}`,
 										slug: fileName,
 									}
 								];

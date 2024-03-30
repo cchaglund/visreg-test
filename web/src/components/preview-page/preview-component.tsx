@@ -3,7 +3,7 @@ import ImagePreview from './image-preview';
 import InformationTable from './information-table';
 import stylex from '@stylexjs/stylex';
 import PreviewHeader from './preview-header';
-import { File } from './types.d';
+import { Image } from './types.d';
 import { Accordion, AccordionDetails, AccordionSummary } from '@mui/material';
 import { ExpandMore } from '@mui/icons-material';
 import EndpointsList from '../suite-page/endpoint-list';
@@ -39,7 +39,7 @@ const s = stylex.create({
 	column2: {
 		maxWidth: '800px',
 		width: 'auto',
-        minWidth: '375px',
+		minWidth: '375px',
 	},
 	accordion: {
 		'::before': {
@@ -49,12 +49,12 @@ const s = stylex.create({
 	}
 });
 
-const PreviewComponent = (props: { file: File; children?: React.ReactNode; }) => {
+const PreviewComponent = (props: { image: Image; children?: React.ReactNode; }) => {
 	const [ zoomedIn, setZoomedIn ] = useState(false);
-	const { file } = props;
+	const { image } = props;
 
 	const handleKeyPress = (event: React.KeyboardEvent) => {
-        if (event.key === 'Escape') {
+		if (event.key === 'Escape') {
 			setZoomedIn(false);
 		}
 	};
@@ -70,15 +70,15 @@ const PreviewComponent = (props: { file: File; children?: React.ReactNode; }) =>
 						<ImagePreview
 							toggleZoom={() => toggleZoom()}
 							zoomedIn={zoomedIn}
-							file={file}
+							image={image}
 						/>
 					</div>
 				</div>
 
 				<div {...stylex.props(s.column, s.column2)}>
-                    <PreviewHeader file={file} />
-					<InformationTable file={file} />
-					<Accordion sx={{borderRadius: '12px'}} {...stylex.props(s.accordion)}>
+					<PreviewHeader image={image} />
+					<InformationTable image={image} />
+					<Accordion sx={{ borderRadius: '12px' }} {...stylex.props(s.accordion)} color='primary'>
 						<AccordionSummary
 							expandIcon={<ExpandMore />}
 							aria-controls="panel1-content"
@@ -87,10 +87,10 @@ const PreviewComponent = (props: { file: File; children?: React.ReactNode; }) =>
 							Endpoint configuration
 						</AccordionSummary>
 						<AccordionDetails>
-							<EndpointsList endpoints={[file.endpoint]} />
+							<EndpointsList endpoints={[ image.endpoint ]} />
 						</AccordionDetails>
 					</Accordion>
-                    { props?.children }
+					{props?.children}
 				</div>
 			</div>
 		</div>

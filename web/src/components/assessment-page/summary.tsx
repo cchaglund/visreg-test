@@ -40,9 +40,9 @@ const Summary = () => {
 
     useEffect(() => {
         setCurrentDiffIndex(null);
-    }, [setCurrentDiffIndex]);
+    }, [ setCurrentDiffIndex ]);
 
-    const FilesList = ({ files, title }: { files: string[]; title: string; }) => (
+    const ImagesList = ({ files, title }: { files: string[]; title: string; }) => (
         <div>
             <Typography sx={{ mt: 4, mb: 2 }} variant="h4" component="div" color={'text.primary'}>
                 {title}: {files.length}
@@ -78,10 +78,10 @@ const Summary = () => {
                         </Typography>
                     </Grid>
                     <Grid xs={6}>
-                        <FilesList title={'Approved'} files={summary.approvedFiles} />
+                        <ImagesList title={'Approved'} files={summary.approvedFiles} />
                     </Grid>
                     <Grid xs={6}>
-                        <FilesList title={'Rejected'} files={summary.rejectedFiles} />
+                        <ImagesList title={'Rejected'} files={summary.rejectedFiles} />
                     </Grid>
                     <Grid xs={12} sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}>
                         <Button
