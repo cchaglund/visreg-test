@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import ImagePreview from './image-preview';
+import ImagePreview from './image';
 import InformationTable from './information-table';
 import stylex from '@stylexjs/stylex';
-import PreviewHeader from './preview-header';
-import { Image } from './types.d';
+import PreviewHeader from './viewer-header';
 import { Accordion, AccordionDetails, AccordionSummary } from '@mui/material';
 import { ExpandMore } from '@mui/icons-material';
-import EndpointsList from '../suite-page/endpoint-list';
+import EndpointsTable from '../endpoints-info-table/endpoints-table';
+import { Image } from '../../types';
 
 const s = stylex.create({
 	wrapper: {
@@ -49,7 +49,7 @@ const s = stylex.create({
 	}
 });
 
-const PreviewComponent = (props: { image: Image; children?: React.ReactNode; }) => {
+const ImageViewer = (props: { image: Image; children?: React.ReactNode; }) => {
 	const [ zoomedIn, setZoomedIn ] = useState(false);
 	const { image } = props;
 
@@ -78,18 +78,21 @@ const PreviewComponent = (props: { image: Image; children?: React.ReactNode; }) 
 				<div {...stylex.props(s.column, s.column2)}>
 					<PreviewHeader image={image} />
 					<InformationTable image={image} />
-					<Accordion sx={{ borderRadius: '12px' }} {...stylex.props(s.accordion)} color='primary'>
-						<AccordionSummary
-							expandIcon={<ExpandMore />}
-							aria-controls="panel1-content"
-							id="panel1-header"
-						>
-							Endpoint configuration
-						</AccordionSummary>
-						<AccordionDetails>
-							<EndpointsList endpoints={[ image.endpoint ]} />
-						</AccordionDetails>
-					</Accordion>
+
+					{ image.endpoint && (
+						<Accordion sx={{ borderRadius: '12px' }} {...stylex.props(s.accordion)} color='primary'>
+							<AccordionSummary
+								expandIcon={<ExpandMore />}
+								aria-controls="panel1-content"
+								id="panel1-header"
+							>
+								Endpoint configuration
+							</AccordionSummary>
+							<AccordionDetails>
+								<EndpointsTable endpoints={[ image.endpoint ]} />
+							</AccordionDetails>
+						</Accordion>
+					)}
 					{props?.children}
 				</div>
 			</div>
@@ -97,4 +100,4 @@ const PreviewComponent = (props: { image: Image; children?: React.ReactNode; }) 
 	);
 };
 
-export default PreviewComponent;
+export default ImageViewer;

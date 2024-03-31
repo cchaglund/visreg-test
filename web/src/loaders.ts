@@ -1,5 +1,5 @@
-import { AssessmentData } from './components/assessment-page/types';
-import { TestConfig } from './components/suite-page/suite-page';
+import { AssessmentData } from './pages/assessment-page/types';
+import { TestConfig } from './types';
 import { serverBaseUrl } from './shared';
 
 export type GetImagesListParams = {
@@ -11,8 +11,13 @@ export type GetSuiteImagesListParams = {
     suiteSlug: string;
 };
 
-export const getAssessmentData = async (): Promise<AssessmentData> => {
-    const response = await fetch(serverBaseUrl + '/assessment/data');
+export const getAssessmentData = async (suiteSlug?: string): Promise<AssessmentData> => {
+    const response = await fetch(serverBaseUrl + '/assessment/data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ suiteSlug }),
+    });
+
     const data = await response.json();
     return data;
 };

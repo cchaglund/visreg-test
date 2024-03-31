@@ -26,10 +26,10 @@ const s = x.create({
 });
 
 
-const ImageLists = () => {
+const ImageList = () => {
     const { imageNames, typeOfImage } = useLoaderData() as ImageListsData;
     const { suiteName } = useContext(AppContext);
-    const { selectedName, selectedViewport } = useContext(SuiteContext);
+    const { selectedEndpoint, selectedViewport } = useContext(SuiteContext);
     const navigate = useNavigate();
 
     return (
@@ -46,7 +46,7 @@ const ImageLists = () => {
             {imageNames && typeOfImage && (
                 <ul {...x.props(s.listNoStyle)}>
                     {imageNames
-                        .filter(image => image.includes(selectedName) && image.includes(selectedViewport))
+                        .filter(image => image.includes(selectedEndpoint) && image.includes(selectedViewport))
                         .map((image, index) => (
                             <li>
                                 <Button
@@ -64,4 +64,4 @@ const ImageLists = () => {
     );
 };
 
-export default ImageLists;
+export default ImageList;

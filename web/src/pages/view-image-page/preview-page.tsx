@@ -1,8 +1,8 @@
 import { useContext, useEffect } from 'react';
 import { useLoaderData, } from 'react-router-dom';
-import { Image } from './types.d';
+import { Image } from '../../types';
 import { AppContext } from '../../contexts/app-context';
-import PreviewComponent from './preview-component';
+import PreviewComponent from '../../components/image-viewer/image-viewer';
 import PrevNextControls from './prev-next-controls';
 
 type PreviewData = {

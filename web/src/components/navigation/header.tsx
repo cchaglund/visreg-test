@@ -42,7 +42,7 @@ const Header = () => {
                     <BreadcrumbsComponent />
                 </div>
 
-                {location.pathname !== '/assessment' && currentDiffIndex !== null && (
+                {!location.pathname.includes('/assessment') && currentDiffIndex !== null && (
                     <Link to='/assessment' {...stylex.props(s.backToAssessment)}>
                         <Button variant="contained" color="error">
                             Back to ongoing assessment

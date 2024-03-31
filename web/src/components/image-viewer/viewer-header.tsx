@@ -1,6 +1,6 @@
 import { Chip, Link, Typography } from '@mui/material';
 import stylex from '@stylexjs/stylex';
-import { Image } from './types.d';
+import { Image } from '../../types';
 
 const s = stylex.create({
     chipContainer: {
@@ -23,7 +23,7 @@ const s = stylex.create({
     },
 });
 
-const PreviewHeader = (props: { image: Image; }) => {
+const ViewerHeader = (props: { image: Image; }) => {
     const { image } = props;
 
     const typeColor = () => {
@@ -77,4 +77,4 @@ const PreviewHeader = (props: { image: Image; }) => {
     );
 };
 
-export default PreviewHeader;
+export default ViewerHeader;

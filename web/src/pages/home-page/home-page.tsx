@@ -1,5 +1,5 @@
 import { useLoaderData, useNavigate } from 'react-router-dom';
-import { ProjectInformationData } from '../navigation/menu';
+import { ProjectInformationData } from '../../components/navigation/menu';
 import { Card, CardActionArea, CardContent, Typography } from '@mui/material';
 import stylex from '@stylexjs/stylex';
 

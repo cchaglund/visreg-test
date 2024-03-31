@@ -25,27 +25,23 @@ const s = stylex.create({
 });
 
 type SidebarProps = {
-    setSelectedName: React.Dispatch<React.SetStateAction<string>>;
-    setSelectedViewport: React.Dispatch<React.SetStateAction<string>>;
-    selectedName: string;
-    selectedViewport: string;
     parsedViewports: string[];
+    endpointState: [string, React.Dispatch<React.SetStateAction<string>>];
+    viewportState: [string, React.Dispatch<React.SetStateAction<string>>];
 };
 
-const Sidebar = (props: SidebarProps) => {
+const FilterSidebar = (props: SidebarProps) => {
     const location = useLocation();
-    const { setSelectedName, setSelectedViewport, selectedName, selectedViewport, parsedViewports } = props;
     const { suiteSlug, suiteConfig } = useLoaderData() as SuitePageData;
+    const { parsedViewports, endpointState, viewportState } = props;
+    const [ selectedName, setSelectedName ] = endpointState;
+    const [ selectedViewport, setSelectedViewport ] = viewportState;
 
-    const Sidebar = (props: { children: React.ReactNode; }) => {
-        if (location.pathname.includes('.png') || location.pathname === `/suite/${suiteSlug}`) return <div></div>;
-
-        return (
-            <div {...stylex.props(s.suitePageSidebar)}>
-                {props.children}
-            </div>
-        );
-    };
+    const StyledSidebar = (props: { children: React.ReactNode; }) => (
+        <div {...stylex.props(s.suitePageSidebar)}>
+            {props.children}
+        </div>
+    );
 
     const Section = (props: { children: React.ReactNode; }) => (
         <div {...stylex.props(s.section)}>
@@ -68,8 +64,16 @@ const Sidebar = (props: SidebarProps) => {
         setSelectedViewport(prev => prev === viewportString ? '' : viewportString);
     };
 
+    if (
+        location.pathname.includes('.png')
+        || location.pathname === `/suite/${suiteSlug}`
+        || location.pathname === `/suite/${suiteSlug}/test`
+    ) {
+        return <div></div>;
+    }
+
     return (
-        <Sidebar>
+        <StyledSidebar>
             <Typography variant="h6" mb={4} color='text.primary'>
                 Filter
             </Typography>
@@ -124,8 +128,8 @@ const Sidebar = (props: SidebarProps) => {
                     Clear filter
                 </Typography>
             </Section>
-        </Sidebar>
+        </StyledSidebar>
     );
 };
 
-export default Sidebar;
+export default FilterSidebar;

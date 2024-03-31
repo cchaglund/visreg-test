@@ -5,15 +5,15 @@ import Progress from './progress';
 import { useLoaderData, useNavigate } from 'react-router-dom';
 import { AssessmentData, DiffObject } from './types';
 import { getImageDetails } from '../../loaders';
-import PreviewComponent from '../preview-page/preview-component';
+import PreviewComponent from '../../components/image-viewer/image-viewer';
 
 
 const AssessmentPage = () => {
 	const [ imageDetails, setImageDetails ] = useState(null);
 	const [ currentDiff, setCurrentDiff ] = useState<DiffObject>();
-	const navigate = useNavigate();
 	const { serverBaseUrl, setSuiteName, setCurrentDiffIndex, currentDiffIndex } = useContext(AppContext);
 	const { assessmentData } = useLoaderData() as { assessmentData: AssessmentData; };
+	const navigate = useNavigate();
 
 	useEffect(() => {
 		// TODO: This is way too reactive
@@ -40,7 +40,7 @@ const AssessmentPage = () => {
 
 		const getFile = async () => {
 			const image = await getImageDetails({
-				suiteSlug: assessmentData.programChoices.suite,
+				suiteSlug: assessmentData.suiteSlug,
 				fileName: diff?.imageName + '.diff.png',
 			});
 
@@ -55,8 +55,8 @@ const AssessmentPage = () => {
 
 
 	useEffect(() => {
-		setSuiteName(assessmentData?.programChoices?.suite);
-	}, [ assessmentData?.programChoices?.suite, setSuiteName ]);
+		setSuiteName(assessmentData?.suiteSlug);
+	}, [ assessmentData?.suiteSlug, setSuiteName ]);
 
 	// TODO: Implement keyboard shortcuts
 	// const handleKeyPress = (event: React.KeyboardEvent) => {

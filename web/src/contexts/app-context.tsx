@@ -1,6 +1,6 @@
 import React from 'react';
-import { TestConfig } from '../components/suite-page/suite-page';
 import { serverBaseUrl } from '../shared';
+import { TestConfig } from '../types';
 
 type AppContextType = {
     serverBaseUrl: string;

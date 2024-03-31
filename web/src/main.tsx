@@ -9,16 +9,17 @@ import '@fontsource/roboto/700.css';
 import { ColorContext } from './contexts/color-context.tsx';
 import { AppContextWrapper } from './contexts/app-context.tsx';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import AssessmentPage from './components/assessment-page/assessment-page.tsx';
-import Summary from './components/assessment-page/summary.tsx';
-import Home from './components/home/home.tsx';
+import AssessmentPage from './pages/assessment-page/assessment-page.tsx';
+import Summary from './pages/assessment-page/summary.tsx';
+import Home from './pages/home-page/home-page.tsx';
 import { getAssessmentData, getImageDetails, GetFileDetailsParams, getImagesList, GetImagesListParams, getProjectInformation, getSuiteConfig, getSuiteImagesList, GetSuiteImagesListParams, getSummary } from './loaders.ts';
-import SuitePage from './components/suite-page/suite-page.tsx';
-import PreviewPage from './components/preview-page/preview-page.tsx';
-import ImageLists from './components/suite-page/image-lists.tsx';
-import SuiteHome from './components/suite-page/suite-home.tsx';
-import ImagesOverview from './components/suite-page/images-overview.tsx';
-import { AssessmentData } from './components/assessment-page/types';
+import SuitePage from './pages/suite-page/suite-page.tsx';
+import ImagePage from './pages/view-image-page/preview-page.tsx';
+import ImageList from './pages/suite-page/image-list.tsx';
+import SuiteHome from './pages/suite-page/suite-home/suite-home.tsx';
+import ImagesOverview from './pages/suite-page/images-overview.tsx';
+import { AssessmentData } from './pages/assessment-page/types';
+import TestPage from './pages/test-page/test-page.tsx';
 
 const router = createBrowserRouter([
 	{
@@ -70,23 +71,25 @@ const router = createBrowserRouter([
 				},
 			},
 			{
-				path: "/assessment",
+				path: "/assessment/:suiteSlug?",
 				element: <AssessmentPage />,
-				loader: async () => {
-					const assessmentData = await getAssessmentData();
+				loader: async ({ params }) => {
+					const assessmentData = await getAssessmentData(params.suiteSlug);
 					return { assessmentData };
 				},
 				handle: {
 					crumb: ({ assessmentData }: { assessmentData: AssessmentData; }) => {
+						console.log(assessmentData);
+						
 						return [
 							{
 								path: '/',
 								slug: 'Home',
 							},
-							{
-								path: `/suite/${assessmentData?.programChoices?.suite}`,
-								slug: assessmentData?.programChoices?.suite,
-							},
+							// {
+							// 	path: `/suite/${assessmentData?.suiteSlug}`,
+							// 	slug: assessmentData?.suiteSlug,
+							// },
 							{
 								path: '/assessment',
 								slug: 'Assessment',
@@ -148,8 +151,26 @@ const router = createBrowserRouter([
 						},
 					},
 					{
+						path: "/suite/:suiteSlug/test",
+						element: <TestPage />,
+						loader: async ({ params }) => {
+							const imagesList = await getSuiteImagesList(params as GetSuiteImagesListParams);
+							return { imagesList };
+						},
+						handle: {
+							crumb: ({ suiteSlug }: { suiteSlug: string; }) => {
+								return [
+									{
+										path: `/suite/${suiteSlug}/test`,
+										slug: 'Test',
+									}
+								];
+							}
+						},
+					},
+					{
 						path: "/suite/:suiteSlug/images/:typeOfImage",
-						element: <ImageLists />,
+						element: <ImageList />,
 						loader: async ({ params }) => {
 							const images = await getImagesList(params as GetImagesListParams);
 
@@ -176,7 +197,7 @@ const router = createBrowserRouter([
 					},
 					{
 						path: "/suite/:suiteSlug/images/:typeOfImage/:fileName",
-						element: <PreviewPage />,
+						element: <ImagePage />,
 						loader: async ({ params }) => {
 							const image = await getImageDetails(params as GetFileDetailsParams);
 							return {

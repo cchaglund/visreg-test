@@ -2,10 +2,11 @@ import { Outlet, useLoaderData } from 'react-router-dom';
 import { AppContext } from '../../contexts/app-context';
 import { createContext, useContext, useEffect, useState } from 'react';
 import stylex from '@stylexjs/stylex';
-import Sidebar from './sidebar';
+import FilterSidebar from './filter-sidebar';
+import { TestConfig } from '../../types';
 
 export type SuiteContextType = {
-    selectedName: string;
+    selectedEndpoint: string;
     selectedViewport: string;
     suiteConfig?: TestConfig;
     parsedViewports?: string[];
@@ -13,35 +14,21 @@ export type SuiteContextType = {
 };
 
 const defaultValue: SuiteContextType = {
-    selectedName: '',
+    selectedEndpoint: '',
     selectedViewport: '',
 };
 
 export const SuiteContext = createContext(defaultValue);
 
-export type Endpoint = {
-    title: string;
-    path: string;
-    blackout?: string[];
-    elementToMatch?: string;
-};
-
-export type TestConfig = {
-    suiteName?: string;
-    baseUrl: string;
-    endpoints: Endpoint[];
-    viewports?: string[] | number[][];
-    formatUrl?: string;
-    onPageVisit?: string;
-    files: string[];
-    fileEndpoint: string;
-    directory: string;
-};
-
 type ImagesList = {
     baselineList: string[];
     diffList: string[];
     receivedList: string[];
+};
+
+export type SiblingPath = {
+    type: 'baseline' | 'received' | 'diff';
+    previewUrl: string;
 };
 
 export type ImagesListType = keyof ImagesList;
@@ -75,8 +62,11 @@ const SuitePage = () => {
     const { suiteSlug, imagesList, suiteConfig } = useLoaderData() as SuitePageData;
     const { setSuiteName } = useContext(AppContext);
     const [ parsedViewports, setParsedViewports ] = useState<string[]>([]);
-    const [ selectedName, setSelectedName ] = useState<string>('');
-    const [ selectedViewport, setSelectedViewport ] = useState<string>('');
+    const endpointState = useState<string>('');
+    const viewportState = useState<string>('');
+
+    const [ selectedEndpoint ] = endpointState;
+    const [ selectedViewport ] = viewportState;
 
     useEffect(() => {
         setSuiteName(suiteSlug);
@@ -95,16 +85,14 @@ const SuitePage = () => {
         <div {...stylex.props(s.suitePage)}>
             <div {...stylex.props(s.suitePageContent)}>
 
-                <Sidebar
-                    setSelectedName={setSelectedName}
-                    setSelectedViewport={setSelectedViewport}
-                    selectedName={selectedName}
-                    selectedViewport={selectedViewport}
+                <FilterSidebar
+                    endpointState={endpointState}
+                    viewportState={viewportState}
                     parsedViewports={parsedViewports}
                 />
 
                 <SuiteContext.Provider value={{
-                    selectedName,
+                    selectedEndpoint,
                     selectedViewport,
                     suiteConfig,
                     parsedViewports,

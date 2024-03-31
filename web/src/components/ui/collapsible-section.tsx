@@ -29,7 +29,7 @@ type CollapsibleSectionProps = {
 };
 
 const CollapsibleSection = ({ heading, children, initialExpanded }: CollapsibleSectionProps) => {
-    const [ expanded, setExpanded ] = useState(initialExpanded ?? false);
+    const [ expanded, setExpanded ] = useState(initialExpanded ?? false);    
 
     return (
         <div {...x.props(s.expandableArea)}>
@@ -48,9 +48,9 @@ const CollapsibleSection = ({ heading, children, initialExpanded }: CollapsibleS
                 )}
             >
                 <Collapse in={expanded} timeout="auto" unmountOnExit>
-                    <Typography variant="body1" {...x.props(s.mt1)} color='text.primary'>
+                    <div {...x.props(s.mt1)}>
                         {children}
-                    </Typography>
+                    </div>
                 </Collapse>
             </div>
         </div>

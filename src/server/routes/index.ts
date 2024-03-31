@@ -8,6 +8,7 @@ import file from './files/file';
 import projectInformation from './general/project-information';
 import getSuiteConfig from './suite/get-suite-config';
 import deliverSuiteConfig from './suite/deliver-suite-config';
+import runTest from './run-test/run-test';
 
 const express = require('express');
 const router = express.Router();
@@ -32,5 +33,7 @@ router.use('/', projectInformation);
 router.use('/suite', getSuiteConfig);
 router.use('/suite', deliverSuiteConfig);
 
+// Run tests
+router.use('/run-test', runTest);
 
 export default router;

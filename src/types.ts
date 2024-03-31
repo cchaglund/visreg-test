@@ -111,6 +111,7 @@ export type ProgramChoices = {
 	scaffoldTs?: boolean,
 	containerized?: boolean,
 	serverStart?: boolean,
+	webTesting?: boolean,
 }
 
 export type ConfigurationSettings = {

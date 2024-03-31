@@ -1,15 +1,25 @@
-import { getSuites } from '../../../utils';
+import { getDiffsForWeb } from '../../../visreg';
 const express = require('express');
 const router = express.Router();
 
-const suites = getSuites();
+router.post('/data/', (req: any, res: any) => {
+    const suiteSlug = req.body.suiteSlug;
 
-router.get('/data', (req: any, res: any) => {    
-    res.send({
-        programChoices: req.programChoices,
-        diffFiles: req.diffFiles,
-        suites,
-    })
+    if (!suiteSlug) {
+        res.send({
+            suiteSlug: req.programChoices.suite,
+            diffFiles: req.diffFiles,
+        })
+    }
+
+    const diffs = getDiffsForWeb(suiteSlug);
+    console.log('diffs', diffs);
+    
+    res.send({ 
+        suiteSlug: suiteSlug,
+        diffFiles: diffs
+    });
+
 });
 
 export default router;

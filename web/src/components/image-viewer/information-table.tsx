@@ -1,9 +1,9 @@
 import { Button, ButtonGroup } from '@mui/material';
 import stylex from '@stylexjs/stylex';
-import { Image } from './types.d';
 import { useNavigate } from 'react-router-dom';
 import ImageTwoToneIcon from '@mui/icons-material/ImageTwoTone';
-import RawFilePanel from './raw-file';
+import RawFilePanel from '../ui/raw-file';
+import { Image } from '../../types';
 
 const s = stylex.create({
     imageButtonsStyle: {

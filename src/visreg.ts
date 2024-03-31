@@ -4,10 +4,10 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { spawn } from 'child_process';
 import * as readline from 'readline';
-import { ConfigurationSettings, NonOverridableSettings, TestType } from './types';
+import { ConfigurationSettings, NonOverridableSettings, ProgramChoices, TestType } from './types';
 import { programChoices } from './cli';
 import startServer from './server';
-import { assessInWeb } from './diff-assessment-web';
+import { assessInWeb, processImageViaWeb } from './diff-assessment-web';
 import { BACKUP_DIFF_DIR, BACKUP_RECEIVED_DIR, DIFF_DIR, RECEIVED_DIR, cleanUp, getDiffingFiles, getSuiteDirOrFail, getSuites, hasFiles, includedInSpecification, isSpecifiedTest, parsedViewport, pathExists, printColorText, projectRoot, removeBackups, suitesDirectory } from './utils';
 import { assessInCLI } from './diff-assessment-terminal';
 import { summarizeResultsAndQuit } from './summarize';
@@ -427,6 +427,37 @@ const exitIfNoDIffs = () => {
 	}
 }
 
+export const getDiffsForWeb = (suiteSlug: string, conf?: ConfigurationSettings) => {
+	console.log('HEJ suiteSlug', suiteSlug);
+	
+	programChoices.suite = suiteSlug;
+	programChoices.testType = 'assess-existing-diffs';
+	programChoices.webTesting = true;
+
+	visregConfig = conf || visregConfig;
+
+	let files = getDiffingFiles();
+
+	const diffFiles = files.map((file, index) => {
+		return processImageViaWeb(file, index, files.length);
+	});
+
+	return diffFiles;
+}
+
+export const startWebTest = (progChoices: ProgramChoices, conf?: ConfigurationSettings) => {
+	programChoices.suite = progChoices.suite;
+	programChoices.testType = progChoices.testType;
+	programChoices.webTesting = true;
+
+	visregConfig = conf || visregConfig;
+
+	if (programChoices.testType === 'asses-existing-diffs') {
+		assessExistingDiffs();
+		return;
+	}
+}
+
 const fullRegressionTest = async () => {
 	if (pathExists(DIFF_DIR())) {
 		fs.rmSync(DIFF_DIR(), { recursive: true });
@@ -499,23 +530,7 @@ const createTemporaryDiffList = () => {
 	return fs.readdirSync(DIFF_DIR()).filter(file => file.endsWith('.diff.png'));
 }
 
-
-const assessExistingDiffImages = async () => {
-	exitIfNoDIffs();
-	let files = getDiffingFiles();
-
-	if (files.length === 0) {
-		summarizeResultsAndQuit([], [], failed, duration);
-	}
-
-	console.log('\n\n');
-
-	const targetText = programChoices.viewport || programChoices.endpointTitle
-		? ` (scoped to ${programChoices.endpointTitle ? `"${programChoices.endpointTitle}"` : ''}${programChoices.viewport ? `@${programChoices.viewport}` : ''})`
-		: '';
-
-	printColorText(`🚨 Detected ${files.length} diffs${targetText}\n`, '33');
-	
+const selectWhereToAssess = async () => {
 	console.log(`Press SPACE to assess diffs in the browser`);
 	console.log('...or ENTER to continue in the terminal\n');
 
@@ -553,6 +568,28 @@ const assessExistingDiffImages = async () => {
 
 	if (process.stdin.isTTY) process.stdin.setRawMode(false);
 	rl.close();
+
+	return answer;
+}
+
+const assessExistingDiffImages = async () => {
+	exitIfNoDIffs();
+	let files = getDiffingFiles();
+
+	if (files.length === 0) {
+		summarizeResultsAndQuit([], [], failed, duration);
+	}
+
+	console.log('\n\n');
+
+	const targetText = programChoices.viewport || programChoices.endpointTitle
+		? ` (scoped to ${programChoices.endpointTitle ? `"${programChoices.endpointTitle}"` : ''}${programChoices.viewport ? `@${programChoices.viewport}` : ''})`
+		: '';
+
+
+	printColorText(`🚨 Detected ${files.length} diffs${targetText}\n`, '33');
+
+	const answer = await selectWhereToAssess();
 
 	if (answer === 'web') {
 		assessInWeb({files, duration, failed});

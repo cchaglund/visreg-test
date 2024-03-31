@@ -5,7 +5,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import x from '@stylexjs/stylex';
 import { Link, Typography } from '@mui/material';
-import { Image } from './types.d';
+import { Image } from '../../types';
 
 const s = x.create({
     controlsContainer: {

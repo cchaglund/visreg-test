@@ -5,7 +5,7 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-import { Endpoint } from './suite-page';
+import { Endpoint } from '../../types';
 import stylex from '@stylexjs/stylex';
 import EndpointListItem from './endpoint-item';
 import { Paper } from '@mui/material';
@@ -23,7 +23,7 @@ type EndpointsListProps = {
     endpoints?: Endpoint[];
 };
 
-const EndpointsList = (props: EndpointsListProps) => {
+const EndpointsTable = (props: EndpointsListProps) => {
     const { endpoints } = props;
 
     if (!endpoints) {
@@ -53,4 +53,4 @@ const EndpointsList = (props: EndpointsListProps) => {
     );
 };
 
-export default EndpointsList;
+export default EndpointsTable;

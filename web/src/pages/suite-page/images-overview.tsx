@@ -26,7 +26,7 @@ const s = stylex.create({
 const ImagesOverview = () => {
     const { imagesList, } = useLoaderData() as FilesOverviewData;
     const { suiteName } = useContext(AppContext);
-    const { selectedName, selectedViewport } = useContext(SuiteContext);
+    const { selectedEndpoint, selectedViewport } = useContext(SuiteContext);
     const navigate = useNavigate();
 
     const ListOfImageLinks = (list: string[], type: string) => (
@@ -42,7 +42,7 @@ const ImagesOverview = () => {
             </Link>
             <List>
                 {list
-                    .filter(image => image.includes(selectedName) && image.includes(selectedViewport))
+                    .filter(image => image.includes(selectedEndpoint) && image.includes(selectedViewport))
                     .map((image, index) => (
                         <Button
                             key={index}

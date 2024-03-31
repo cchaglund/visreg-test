@@ -3,7 +3,7 @@ import { DiffFilesType } from './types';
 
 type ProgressProps = {
     currentDiffIndex: number | null;
-    diffFiles: DiffFilesType;
+    diffFiles?: DiffFilesType;
 };
 
 const Progress = ({ currentDiffIndex, diffFiles }: ProgressProps) => {

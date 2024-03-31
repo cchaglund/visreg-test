@@ -98,7 +98,7 @@ export const getSummary = () => {
 	return summary;
 }
 
-const processImageViaWeb = (diffImageFile: string, index: number, total: number) => {
+export const processImageViaWeb = (diffImageFile: string, index: number, total: number) => {
 	const imageName = diffImageFile.replace('.diff.png', '');
 	const receivedImageFile = imageName + '-received.png';
 	const baseImageFile = imageName + '.base.png';

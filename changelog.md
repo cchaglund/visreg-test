@@ -1,3 +1,7 @@
+4.0.8
+- Web interfece: all files in suite config can now be opened as files
+- Styling
+  
 4.0.3
 - Fixed a bug with assessment of diffs in the web interface.
 - Added the endpoint data to the image previewer in the web interface.

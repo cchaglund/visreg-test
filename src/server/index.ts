@@ -92,7 +92,6 @@ const startServer = (programChoices: ProgramChoices, diffFiles?: DiffObject[]) =
             errorMessage: err.errorMessage,
         });
     });
-
     
     app.listen(serverPort, () => {
         const webInterfacePort = process.env.NODE_ENV === 'development' ? devPort : serverPort;
@@ -111,6 +110,7 @@ const startServer = (programChoices: ProgramChoices, diffFiles?: DiffObject[]) =
         
         enableSpaceToOpen(url);
     });
+    
 }
 
 export default startServer;
