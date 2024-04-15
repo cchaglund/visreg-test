@@ -8,18 +8,18 @@ const express = require('express');
 const crypto = require('crypto');
 const router = express.Router();
 
-const fileCache = new Map<string, any>();
+const imageCache = new Map<string, any>();
 
 router.get('/image/:suiteSlug/:fileName', async (req: any, res: any) => {
     const { suiteSlug, fileName } = req.params;
 
     const hash = crypto.createHash('md5').update(suiteSlug + fileName).digest('hex');
-    if (fileCache.has(hash)) {
-        res.send(fileCache.get(hash));
+    if (imageCache.has(hash)) {
+        res.send(imageCache.get(hash));
         return;
     }
 
-    const suiteImagesDir = path.join(req.allSuitesDir, suiteSlug, 'snapshots/snaps');
+    const suiteImagesDir = path.join(req.local.suitesDirectory, suiteSlug, 'snapshots/snaps');
 
     const cleanName = getFileNameWithoutExtension(fileName);
 
@@ -86,7 +86,7 @@ router.get('/image/:suiteSlug/:fileName', async (req: any, res: any) => {
         fullUrl,
     };
 
-    fileCache.set(hash, image);
+    imageCache.set(hash, image);
 
     res.send(image);
 });

@@ -12,7 +12,7 @@ suites.forEach((suiteDir: string) => {
             'Content-Disposition': 'inline'
         });
 
-        const file = path.join(req.allSuitesDir, suiteDir, req.params.fileName);
+        const file = path.join(req.local.suitesDirectory, suiteDir, req.params.fileName);
         res.sendFile(file);
     });
 });

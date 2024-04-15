@@ -1,7 +1,10 @@
 import { useLoaderData, useLocation } from 'react-router-dom';
 import stylex from '@stylexjs/stylex';
-import { Chip, Typography } from '@mui/material';
+import { Button, Chip, Typography } from '@mui/material';
 import { SuitePageData } from './suite-page';
+import VrpanoTwoToneIcon from '@mui/icons-material/VrpanoTwoTone';
+import { style } from '../../components/ui/helper-styles';
+import { ArticleTwoTone } from '@mui/icons-material';
 
 const s = stylex.create({
     suitePageContent: {
@@ -12,6 +15,7 @@ const s = stylex.create({
     },
     suitePageSidebar: {
         maxWidth: '220px',
+        width: '100%',
         marginRight: '4rem',
     },
     chipContainer: {
@@ -67,20 +71,20 @@ const FilterSidebar = (props: SidebarProps) => {
     if (
         location.pathname.includes('.png')
         || location.pathname === `/suite/${suiteSlug}`
-        || location.pathname === `/suite/${suiteSlug}/test`
+        || location.pathname === `/suite/${suiteSlug}/run-test`
     ) {
         return <div></div>;
     }
 
     return (
         <StyledSidebar>
-            <Typography variant="h6" mb={4} color='text.primary'>
-                Filter
-            </Typography>
             <Section>
-                <Typography variant="body1" mb={1} color='text.primary'>
-                    Title
-                </Typography>
+                <div {...stylex.props(style.flex, style.alignCenter, style.mb1)}>
+                    <ArticleTwoTone />
+                    <Typography variant="h6" ml={1} color='text.primary'>
+                        Endpoints
+                    </Typography>
+                </div>
                 <ChipContainer>
                     {suiteConfig?.endpoints?.map((endpoint, index) => (
                         <Chip
@@ -90,15 +94,18 @@ const FilterSidebar = (props: SidebarProps) => {
                             disabled={location.pathname === `/suite/${suiteSlug}`}
                             variant={selectedName === endpoint.title ? 'filled' : 'outlined'}
                             clickable
-                            color='primary'
+                            color='secondary'
                         />
                     ))}
                 </ChipContainer>
             </Section>
             <Section>
-                <Typography variant="body1" mb={1} color='text.primary'>
-                    Viewport
-                </Typography>
+                <div {...stylex.props(style.flex, style.alignCenter, style.mb1)}>
+                    <VrpanoTwoToneIcon />
+                    <Typography variant="h6" ml={1} color='text.primary'>
+                        Viewports
+                    </Typography>
+                </div>
 
                 <ChipContainer>
                     {parsedViewports?.map((viewport, index) => (
@@ -109,16 +116,16 @@ const FilterSidebar = (props: SidebarProps) => {
                             disabled={location.pathname === `/suite/${suiteSlug}`}
                             variant={selectedViewport === viewport ? 'filled' : 'outlined'}
                             clickable
-                            color='primary'
+                            color='secondary'
                         />
                     ))}
                 </ChipContainer>
             </Section>
             <Section>
-                <Typography
+                {/* <Typography
                     variant="body2"
                     mb={1}
-                    sx={{ cursor: 'pointer', textDecoration: 'underline' }}
+                    sx={{ cursor: 'pointer', }}
                     color='text.primary'
                     onClick={() => {
                         setSelectedName('');
@@ -126,7 +133,13 @@ const FilterSidebar = (props: SidebarProps) => {
                     }}
                 >
                     Clear filter
-                </Typography>
+                </Typography> */}
+                <Button variant='text' size='small' color='secondary' onClick={() => {
+                    setSelectedName('');
+                    setSelectedViewport('');
+                }}>
+                    Clear filter
+                </Button>
             </Section>
         </StyledSidebar>
     );

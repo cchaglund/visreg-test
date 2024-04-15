@@ -14,7 +14,6 @@ const s = stylex.create({
     list: {
         width: '100%',
         minWidth: '400px',
-        border: '1px solid rgba(0,0,0,0.1)',
         borderRadius: '12px',
     },
 });

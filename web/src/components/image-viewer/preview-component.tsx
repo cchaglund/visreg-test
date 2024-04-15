@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import ImagePreview from './image';
+import ImageComponent from './image';
 import InformationTable from './information-table';
 import stylex from '@stylexjs/stylex';
 import PreviewHeader from './viewer-header';
@@ -49,7 +49,7 @@ const s = stylex.create({
 	}
 });
 
-const ImageViewer = (props: { image: Image; children?: React.ReactNode; }) => {
+const PreviewComponent = (props: { image: Image; children?: React.ReactNode; }) => {
 	const [ zoomedIn, setZoomedIn ] = useState(false);
 	const { image } = props;
 
@@ -67,7 +67,7 @@ const ImageViewer = (props: { image: Image; children?: React.ReactNode; }) => {
 			<div {...stylex.props(s.container)}>
 				<div {...stylex.props(s.column, s.column1)}>
 					<div>
-						<ImagePreview
+						<ImageComponent
 							toggleZoom={() => toggleZoom()}
 							zoomedIn={zoomedIn}
 							image={image}
@@ -100,4 +100,4 @@ const ImageViewer = (props: { image: Image; children?: React.ReactNode; }) => {
 	);
 };
 
-export default ImageViewer;
+export default PreviewComponent;

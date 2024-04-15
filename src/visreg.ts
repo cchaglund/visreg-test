@@ -217,7 +217,7 @@ const selectType = async () => {
 	rl.close();
 };
 
-const prepareConfig = () => {
+const prepareConfig = (diffList?: string[]) => {
 	const suiteRoot = path.join(suitesDirectory, programChoices.suite || '');
 	const suiteConfigPath = path.join(suiteRoot, 'visreg.config.json');
 
@@ -257,14 +257,40 @@ const prepareConfig = () => {
 	
 	process.env.CYPRESS_VISREG_OPTIONS = JSON.stringify(conf)
 	process.env.CYPRESS_SNAPSHOT_SETTINGS = JSON.stringify(snapshotSettings);
-	process.env.PROGRAM_CHOICES = JSON.stringify(programChoices);
 	process.env.SEND_SUITE_CONF = 'false';
 
-	return snapshotSettings;
+	const specPath = getSuiteDirOrFail(programChoices.suite);
+		
+	const testSettings = {
+		testType: programChoices.testType,
+		suite: programChoices.suite,
+		diffList: diffList || [],
+		viewport: programChoices.viewport,
+		endpointTitle: programChoices.endpointTitle,
+		noSnap: !programChoices.snap,
+	}
+
+	const nonOverridableSettings: NonOverridableSettings = {
+		suitesDirectory,
+		useRelativeSnapshotsDir: true,
+		storeReceivedOnFailure: true,
+		snapFilenameExtension: '.base',
+		customSnapshotsDir: '',
+	};
+
+	process.env.CYPRESS_failOnSnapshotDiff = 'false';
+	process.env.CYPRESS_updateSnapshots = 'false';
+	process.env.CYPRESS_TEST_SETTINGS = Buffer.from(JSON.stringify(testSettings)).toString('base64');
+	process.env.CYPRESS_NON_OVERRIDABLE_SETTINGS = JSON.stringify(nonOverridableSettings);		
+
+	return {
+		specPath,
+		browser: snapshotSettings.browser,
+	}
 }
 
-const runCypressTest = async (diffList: string[] = []): Promise<void> => {
-	const conf = prepareConfig();
+const runCypressTest = async (diffList?: string[]): Promise<void> => new Promise((resolve, reject) => {
+	const conf = prepareConfig(diffList);
 
 	start = Date.now();
 	const labModeOn = programChoices.testType === 'lab';
@@ -282,94 +308,180 @@ const runCypressTest = async (diffList: string[] = []): Promise<void> => {
 			: printColorText(`\nStarting Cypress (${ conf.browser || 'electron' }) \n`, '2')
 	}
 
-    return new Promise((resolve, reject) => {
-		const specPath = getSuiteDirOrFail(programChoices.suite);
-		
-		const testSettings = {
-			testType: programChoices.testType,
-			suite: programChoices.suite,
-			diffList,
-			viewport: programChoices.viewport,
-			endpointTitle: programChoices.endpointTitle,
-			noSnap: !programChoices.snap,
-		}
-
-		const nonOverridableSettings: NonOverridableSettings = {
-			suitesDirectory,
-			useRelativeSnapshotsDir: true,
-			storeReceivedOnFailure: true,
-			snapFilenameExtension: labModeOn ? '.lab' : '.base',
-			customSnapshotsDir: labModeOn ? 'lab' : '',
-		};
-
-		process.env.CYPRESS_failOnSnapshotDiff = 'false';
-		process.env.CYPRESS_updateSnapshots = labModeOn ? 'true' : 'false';
-		process.env.CYPRESS_TEST_SETTINGS = Buffer.from(JSON.stringify(testSettings)).toString('base64');
-		process.env.CYPRESS_NON_OVERRIDABLE_SETTINGS = JSON.stringify(nonOverridableSettings);		
-
-		process.chdir(__dirname); 
-		let cypressCommand: string		
-		
-		if (labModeOn && programChoices.gui) {
-			cypressCommand = 'npx cypress open';
+	process.chdir(__dirname); 
+	let cypressCommand: string		
+	
+	if (labModeOn && programChoices.gui) {
+		cypressCommand = 'npx cypress open';
+	} else {
+		if (programChoices.containerized) {
+			// Only electron is currently supported in docker
+			cypressCommand = `npx cypress run --spec "${conf.specPath}"`;
 		} else {
-			if (programChoices.containerized) {
-				// Only electron is currently supported in docker
-				cypressCommand = `npx cypress run --spec "${specPath}"`;
-			} else {
-				cypressCommand = `npx cypress run --spec "${specPath}" ${conf.browser ? `--browser ${conf.browser}` : ''}`;
-			}
+			cypressCommand = `npx cypress run --spec "${conf.specPath}" ${conf.browser ? `--browser ${conf.browser}` : ''}`;
+		}
+	}
+
+	const parts = cypressCommand.split(' ');
+	const command = parts[0];
+	const args = parts.slice(1);
+
+	const child = spawn(`DEBUG=cypress ${command}`, args, { shell: true, stdio: 'inherit' });
+
+	child.on('data', (data) => console.log(`${data}`));
+	child.on('error', (error) => console.error(`exec error: ${error}`));
+	child.on('close', (code) => {
+		if (labModeOn) resolve();
+		
+		if (isSpecifiedTest() && code === 0) {
+			/**
+			 * Restore the files which were not specified in the test. 
+			 * Why not just omit them from the backup in the first place? Because we need to remove 
+			 * all the files from diff and received folders before running the test (so that cypress 
+			 * can do clean comparisons).
+			 */
+			const unaffectedFiles = (fileName: string) => !includedInSpecification(fileName);
+			restoreFromBackup(unaffectedFiles);
+			resolve();
 		}
 
-		const parts = cypressCommand.split(' ');
-        const command = parts[0];
-        const args = parts.slice(1);
+		if (code !== 0) {
+			failed = true;
 
-        const child = spawn(`DEBUG=cypress ${command}`, args, { shell: true, stdio: 'inherit' });
-
-		child.on('data', (data) => console.log(`${data}`));
-		child.on('error', (error) => console.error(`exec error: ${error}`));
-		child.on('close', (code) => {
-			if (labModeOn) resolve();
+			console.log('\n\n');
+			console.log('------------------');
+			console.log('\n');
 			
-			if (isSpecifiedTest() && code === 0) {
-				/**
-				 * Restore the files which were not specified in the test. 
-				 * Why not just omit them from the backup in the first place? Because we need to remove 
-				 * all the files from diff and received folders before running the test (so that cypress 
-				 * can do clean comparisons).
-				 */
-				const unaffectedFiles = (fileName: string) => !includedInSpecification(fileName);
-				restoreFromBackup(unaffectedFiles);
-				resolve();
+			printColorText('Cypress could not complete one or more tests (see above for details) - run targetted tests on these', '33');
+
+			if (programChoices.testType === 'diffs-only') {
+				printColorText('\nDiffs-only testing requires all tests to be successes. Any failure results in the diffs being restored. Fix the issues or remove the offending diff files from the diff directory.', '33');
+				restoreFromBackup();
+				process.exit(1);
 			}
 
-            if (code !== 0) {
-				failed = true;
+			resolve()
+		}
 
-				console.log('\n\n');
-				console.log('------------------');
-				console.log('\n');
-				
-				printColorText('Cypress could not complete one or more tests (see above for details) - run targetted tests on these', '33');
+		// Images have been created, so we can remove the backups
+		removeBackups();
 
-				if (programChoices.testType === 'diffs-only') {
-					printColorText('\nDiffs-only testing requires all tests to be successes. Any failure results in the diffs being restored. Fix the issues or remove the offending diff files from the diff directory.', '33');
-					restoreFromBackup();
-					process.exit(1);
-				}
-
-				resolve()
-            }
-
-			// Images have been created, so we can remove the backups
-			removeBackups();
-
-			duration = Math.round((Date.now() - start) / 1000);
-			resolve();
-		});
+		duration = Math.round((Date.now() - start) / 1000);
+		resolve();
 	});
-};
+});
+
+
+
+
+const runWebCypressTest = async (ws: WebSocket, diffList?: string[]): Promise<{ duration: number }> => new Promise((resolve, reject) => {
+	start = Date.now();
+	
+	const conf = prepareConfig(diffList);
+	process.chdir(__dirname); 
+
+	let cypressCommand: string		
+	
+	if (programChoices.containerized) {
+		// Only electron is currently supported in docker
+		printColorText(`\nStarting Cypress (electron) \n`, '2')
+		cypressCommand = `npx cypress run --spec "${conf.specPath}"`;
+	} else {
+		printColorText(`\nStarting Cypress (${ conf.browser || 'electron' }) \n`, '2')
+		cypressCommand = `npx cypress run --spec "${conf.specPath}" ${conf.browser ? `--browser ${conf.browser}` : ''}`;
+	}
+
+	const parts = cypressCommand.split(' ');
+	const command = parts[0];
+	const args = parts.slice(1);
+
+	console.log('command', command);
+	
+
+	const child = spawn(`DEBUG=cypress ${command}`, args, { shell: true});
+	// const child = spawn('echo', ['Hello, world!'], { shell: true });
+
+
+	child.stdout?.on('data', (data) => {
+		ws.send(JSON.stringify({ type: 'text', payload: `${data}` }));
+	});
+
+	child.stderr?.on('data', (data) => {
+		if (
+			data.includes('DevTools listening on ws://127.0.0.1')
+			|| data.includes('NSApplicationDelegate')
+		) return;
+		
+		ws.send(JSON.stringify({ type: 'error', payload: `${data}` }));
+	});
+
+	child.on('exit', (code) => {
+		console.log(`child process exited with code ${code}`);
+		duration = Math.round((Date.now() - start) / 1000);
+		console.log('duration', duration);
+
+		const payload = { name: 'summary', duration, failed, diffList: getDiffingFiles() };
+		ws.send(JSON.stringify({ type: 'data', payload }));
+	});
+
+	child.on('close', (code) => {
+
+		duration = Math.round((Date.now() - start) / 1000);
+
+		const payload = {
+			name: 'summary',
+			duration,
+			failed,
+		}
+		
+		if (isSpecifiedTest() && code === 0) {
+			/**
+			 * Restore the files which were not specified in the test. 
+			 * Why not just omit them from the backup in the first place? Because we need to remove 
+			 * all the files from diff and received folders before running the test (so that cypress 
+			 * can do clean comparisons).
+			 */
+			const unaffectedFiles = (fileName: string) => !includedInSpecification(fileName);
+			restoreFromBackup(unaffectedFiles);
+
+			const jsonData = JSON.stringify({ type: 'data', payload });
+			ws.send(jsonData);
+			ws.close();
+			resolve({ duration });
+		}
+
+		if (code !== 0) {
+			failed = true;
+
+			console.log('\n\n');
+			console.log('------------------');
+			console.log('\n');
+			
+			printColorText('Cypress could not complete one or more tests (see above for details) - run targetted tests on these', '33');
+
+			if (programChoices.testType === 'diffs-only') {
+				printColorText('\nDiffs-only testing requires all tests to be successes. Any failure results in the diffs being restored. Fix the issues or remove the offending diff files from the diff directory.', '33');
+				restoreFromBackup();
+				process.exit(1);
+			}
+
+			const jsonData = JSON.stringify({ type: 'data', payload });
+			ws.send(jsonData);
+			ws.close();
+			resolve({ duration })
+		}
+
+		// Images have been created, so we can remove the backups
+		removeBackups();
+
+		const jsonData = JSON.stringify({ type: 'data', payload });
+		ws.send(jsonData);
+		ws.close();
+		resolve({ duration });
+	});
+});
+
+
 
 // const filterForErrors = (stdout: string) => {
 // 	const failingLine = stdout.indexOf('failing');
@@ -427,9 +539,7 @@ const exitIfNoDIffs = () => {
 	}
 }
 
-export const getDiffsForWeb = (suiteSlug: string, conf?: ConfigurationSettings) => {
-	console.log('HEJ suiteSlug', suiteSlug);
-	
+export const getDiffsForWeb = (suiteSlug: string, conf?: ConfigurationSettings) => {	
 	programChoices.suite = suiteSlug;
 	programChoices.testType = 'assess-existing-diffs';
 	programChoices.webTesting = true;
@@ -439,23 +549,45 @@ export const getDiffsForWeb = (suiteSlug: string, conf?: ConfigurationSettings) 
 	let files = getDiffingFiles();
 
 	const diffFiles = files.map((file, index) => {
-		return processImageViaWeb(file, index, files.length);
+		return processImageViaWeb(file, index, files.length, suiteSlug);
 	});
 
 	return diffFiles;
 }
 
-export const startWebTest = (progChoices: ProgramChoices, conf?: ConfigurationSettings) => {
+export const startWebTest = (ws: WebSocket, progChoices: ProgramChoices, conf?: ConfigurationSettings) => {
 	programChoices.suite = progChoices.suite;
 	programChoices.testType = progChoices.testType;
 	programChoices.webTesting = true;
 
-	visregConfig = conf || visregConfig;
+	visregConfig = conf || visregConfig;	
 
-	if (programChoices.testType === 'asses-existing-diffs') {
-		assessExistingDiffs();
+	if (programChoices.testType === 'full-test') {
+		fullWebRegressionTest(ws);
 		return;
 	}
+
+	if (programChoices.testType === 'diffs-only') {
+		diffsOnly();
+		return;
+	}
+	
+	if (programChoices.testType === 'targetted') {
+		targettedTest();
+		return;
+	}
+}
+
+const fullWebRegressionTest = async (ws: WebSocket) => {
+	if (pathExists(DIFF_DIR())) {
+		fs.rmSync(DIFF_DIR(), { recursive: true });
+	}
+	
+	if (pathExists(RECEIVED_DIR())) {
+		fs.rmSync(RECEIVED_DIR(), { recursive: true });
+	}
+
+	await runWebCypressTest(ws);
 }
 
 const fullRegressionTest = async () => {

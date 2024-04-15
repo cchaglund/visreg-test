@@ -1,10 +1,11 @@
-import { Button, Chip, Typography } from '@mui/material';
+import { Button, Typography } from '@mui/material';
 import x from '@stylexjs/stylex';
 import RawFilePanel from '../../../components/ui/raw-file';
 import CollapsibleSection from '../../../components/ui/collapsible-section';
 import FileOpenTwoToneIcon from '@mui/icons-material/FileOpenTwoTone';
 import { useContext } from 'react';
 import { SuiteContext } from '../suite-page';
+import { style } from '../../../components/ui/helper-styles';
 
 const s = x.create({
     leftAreaSection: {
@@ -24,7 +25,7 @@ const s = x.create({
 });
 
 const SuiteDetailsSidebar = () => {
-    const { suiteConfig, parsedViewports } = useContext(SuiteContext);
+    const { suiteConfig } = useContext(SuiteContext);
 
     const LeftArea = (props: { children: React.ReactNode; }) => (
         <div {...x.props(s.leftArea)}>
@@ -34,25 +35,6 @@ const SuiteDetailsSidebar = () => {
 
     return (
         <LeftArea>
-            <div {...x.props(s.leftAreaSection)}>
-                <Typography variant="h6" mb={1} color='text.primary'>
-                    Base url
-                </Typography>
-                <div {...x.props(s.flexContainer)}>
-                    <Chip label={suiteConfig?.baseUrl} variant='outlined' />
-                </div>
-            </div>
-
-            <div {...x.props(s.leftAreaSection)}>
-                <Typography variant="h6" mb={1} color='text.primary'>
-                    Viewports
-                </Typography>
-                <div {...x.props(s.flexContainer)}>
-                    {parsedViewports?.map((viewport, index) => (
-                        <Chip key={index} label={viewport} variant='outlined' />
-                    ))}
-                </div>
-            </div>
 
             {suiteConfig?.files.length && (
                 <div {...x.props(s.leftAreaSection)}>
@@ -81,24 +63,30 @@ const SuiteDetailsSidebar = () => {
                 </div>
             )}
 
-            <CollapsibleSection heading={'Directory'} initialExpanded>
-                <Typography variant="body2" mb={1} color='text.primary'>
-                    {suiteConfig?.directory}
-                </Typography>
-                <RawFilePanel path={suiteConfig?.directory} />
-            </CollapsibleSection>
+            <div {...x.props(style.mb2)}>
+                <CollapsibleSection heading={'Directory'}>
+                    <Typography variant="body2" mb={1} color='text.primary'>
+                        {suiteConfig?.directory}
+                    </Typography>
+                    <RawFilePanel path={suiteConfig?.directory} />
+                </CollapsibleSection>
+            </div>
 
-            <CollapsibleSection heading={'onPageVisit'}>
-                <Typography variant="body1"  color='text.primary'>
-                    {suiteConfig?.onPageVisit}
-                </Typography>
-            </CollapsibleSection>
+            <div {...x.props(style.mb2)}>
+                <CollapsibleSection heading={'Page visit code'}>
+                    <Typography variant="body2"  color='text.primary'>
+                        {suiteConfig?.onPageVisit}
+                    </Typography>
+                </CollapsibleSection>
+            </div>
 
-            <CollapsibleSection heading={'formatUrl'}>
-                <Typography variant="body1"  color='text.primary'>
-                    {suiteConfig?.formatUrl}
-                </Typography>
-            </CollapsibleSection>
+            <div {...x.props(style.mb2)}>
+                <CollapsibleSection heading={'Format URL'}>
+                    <Typography variant="body2"  color='text.primary'>
+                        {suiteConfig?.formatUrl}
+                    </Typography>
+                </CollapsibleSection>
+            </div>
         </LeftArea>
     );
 };

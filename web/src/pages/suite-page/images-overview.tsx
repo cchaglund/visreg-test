@@ -1,37 +1,36 @@
 import { Button, Link, List, Typography } from '@mui/material';
 import { useLoaderData, useNavigate } from 'react-router-dom';
 import { useContext } from 'react';
-import { AppContext } from '../../contexts/app-context';
 import stylex from '@stylexjs/stylex';
 import { SuiteContext } from './suite-page';
 import ImageTwoToneIcon from '@mui/icons-material/ImageTwoTone';
 
-export type FilesOverviewData = {
+export type ImagesOverviewData = {
     imagesList: {
         baselineList: string[];
         diffList: string[];
         receivedList: string[];
     },
+    suiteSlug: string;
 };
 
 const s = stylex.create({
     filesOverview: {
         width: '100%',
         display: 'flex',
-        gap: '1.5rem',
+        gap: '4rem',
         flexWrap: 'wrap',
     },
 });
 
 const ImagesOverview = () => {
-    const { imagesList, } = useLoaderData() as FilesOverviewData;
-    const { suiteName } = useContext(AppContext);
+    const { imagesList, suiteSlug } = useLoaderData() as ImagesOverviewData;
     const { selectedEndpoint, selectedViewport } = useContext(SuiteContext);
     const navigate = useNavigate();
 
     const ListOfImageLinks = (list: string[], type: string) => (
         <div>
-            <Link component={'button'} onClick={() => navigate(`/suite/${suiteName}/images/${type}`)}>
+            <Link color={'text.primary'} component={'button'} onClick={() => navigate(`/suite/${suiteSlug}/images/${type}`)}>
                 <Typography
                     variant='h5'
                     sx={{ textTransform: 'capitalize' }}
@@ -46,7 +45,7 @@ const ImagesOverview = () => {
                     .map((image, index) => (
                         <Button
                             key={index}
-                            onClick={() => navigate(`/suite/${suiteName}/images/${type}/${image}`)}
+                            onClick={() => navigate(`/suite/${suiteSlug}/images/${type}/${image}`)}
                             startIcon={<ImageTwoToneIcon />}
                             sx={{ display: 'flex', whiteSpace: 'nowrap' }}
                         >

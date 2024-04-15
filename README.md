@@ -41,6 +41,10 @@
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
+- [visreg-test](#visreg-test)
+  - [Release notes](#release-notes)
+  - [Features](#features)
+- [Table of contents](#table-of-contents)
 - [About](#about)
 - [Setup](#setup)
   - [Quick start](#quick-start)
@@ -64,6 +68,7 @@
   - [Developing with the container](#developing-with-the-container)
   - [Testing the package before publishing](#testing-the-package-before-publishing)
   - [Web interface](#web-interface-1)
+- [Web inteface - from the container](#web-inteface---from-the-container)
 - [Optional Configuration](#optional-configuration)
 - [Notes](#notes)
 - [Credits](#credits)
@@ -141,6 +146,7 @@ And add a `tsconfig.json` file to the root of your project:
   "compilerOptions": {
     "target": "es5",
     "lib": ["es5", "dom"],
+    "moduleResolution": "node",
   },
   "include": ["**/*.ts"]
 }
@@ -684,11 +690,23 @@ Want to contribute? Great! Here's how to get started
 
 ## Developing with the container
 
+First time setup:
+
 ```bash
 npm run scaffold-dev-container
 ```
 
-This will create a `sandbox-project` directory in the repo root (gitignored by default) and scaffold the container directory structure, build the container, and run it. Now you can develop both the package and the container at the same time. The package will be automatically symlinked to the container, so any change are reflected in real-time.
+This will create a `sandbox-project` directory in the repo root (gitignored by default) and scaffold the container directory structure, build the container, and run it. The repo's dist directory will be mounted to the container, so any changes are reflected in real-time.
+
+After the initial setup, to run the container, add the `--env=dev` flag to the commands you run, e.g.:
+
+```bash
+npx visreg-test --run-container --full-test --env=dev
+# or
+npx visreg-test -r -f --env=dev
+```
+
+Now you can develop both the package and the container at the same time. 
 
 ## Testing the package before publishing
 
@@ -718,7 +736,7 @@ npx visreg-test --run-container
 
 This is just intended for last-minute verification in a way which is as close to a published package as possible (without the extra symlinking and mounting which is done when you run `scaffold-dev-container` and work inside the `sandbox-project`). 
 
-<!-- TODO:  you will still need to manually run "npm run build" if you're working on the container scripts. When you run "npx visreg-test -run-container" (or "-build-container") you will be forced to give execute permissions to the ".bin/visreg-test" file again (every time). This is done in order to move the script files to the dist dir (will be fixed by using nodemon to watch non-typescript files). The container's files will NOT reflect the latest code of the package, only the code as it was when you built the image the first time (since they persist in the mounted volume). You'll need to manually copy/past the dist dir into the volume (/container/volumes/app/node_modules). Again, this is not intended for development -->
+<!-- TODO:  you will still need to manually run "npm run build" if you're working on the container shell scripts. This is done in order to move the script files to the dist dir (will be fixed by using nodemon to watch non-typescript files). When you run "npx visreg-test -run-container" (or "-build-container") you will be forced to give execute permissions to the ".bin/visreg-test" file again (every time). The container's files will NOT reflect the latest code of the package, only the code as it was when you built the image the first time (since they persist in the mounted volume). You'll need to manually copy/past the dist dir into the volume (/container/volumes/app/node_modules). Again, this is not intended for development -->
 
 Remember to unlink the package from your project and globally when you're done testing:
 
@@ -759,6 +777,21 @@ The environment variable ensures that the React dev server is used instead of th
 Note that using a **non-symlinked** project directory will **not** allow you to develop anything other than the web interface. If you want to develop the package (e.g. the server code or the test logic) and the web interface at the same time, you need to use a symlinked project.
 
 *Hot reloading of the server is not yet implemented, so you will need to restart the server manually if you make changes to the server code.*
+
+# Web inteface - from the container
+
+The react dev server isn't available in the container, so the closest you can get to developing the web interface in the container is to build the web interface and move it to the dist directory, then run the server in the container:
+
+```bash
+# from the repo root
+npm run build-web-interface # this will build the web interface and move it to the dist directory
+
+# from the sandbox-project directory
+npx visreg-test --run-container --server-start --env=dev # or -r -ss --env=dev
+```
+
+This will start the server in the container and serve the web interface from the dist directory. You can now access the web interface at `localhost:3000` as usual.
+
 
 <br>
 

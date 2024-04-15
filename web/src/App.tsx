@@ -13,8 +13,10 @@ const wrapper = stylex.create({
 		display: 'flex',
 		flexDirection: 'column',
 		alignItems: 'center',
-		justifyContent: 'space-between',
+		// justifyContent: 'space-between',
+		minHeight: '100vh',
 		width: '100%',
+		height: '100%',
 		'@media (max-width: 1000px)': {
 			justifyContent: 'flex-start',
 		},
@@ -23,6 +25,8 @@ const wrapper = stylex.create({
 
 
 const App = () => {
+	console.log('App');
+		
 	return (
 		<Box id="app" {...stylex.props(wrapper.box)} bgcolor={'background.default'}>
 			<Header />

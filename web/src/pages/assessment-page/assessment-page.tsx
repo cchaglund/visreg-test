@@ -5,13 +5,13 @@ import Progress from './progress';
 import { useLoaderData, useNavigate } from 'react-router-dom';
 import { AssessmentData, DiffObject } from './types';
 import { getImageDetails } from '../../loaders';
-import PreviewComponent from '../../components/image-viewer/image-viewer';
+import PreviewComponent from '../../components/image-viewer/preview-component';
 
 
 const AssessmentPage = () => {
 	const [ imageDetails, setImageDetails ] = useState(null);
 	const [ currentDiff, setCurrentDiff ] = useState<DiffObject>();
-	const { serverBaseUrl, setSuiteName, setCurrentDiffIndex, currentDiffIndex } = useContext(AppContext);
+	const { api, setSuiteName, setCurrentDiffIndex, currentDiffIndex } = useContext(AppContext);
 	const { assessmentData } = useLoaderData() as { assessmentData: AssessmentData; };
 	const navigate = useNavigate();
 
@@ -72,10 +72,15 @@ const AssessmentPage = () => {
 	const doAssessAction = async (action: string) => {
 		if (!assessmentData) return;
 
-		await fetch(serverBaseUrl + '/assessment/' + action, {
+		// "/Users/christoferhaglund/Code/misc/visreg/repo/visual-regression/sandbox-project/suites/test-suite/snapshots/snaps/AI help @ samsung-s10.base.png"
+		// console.log('currdiff', currentDiff);
+		// return;
+		
+
+		await fetch(api + '/assessment/' + action, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ index: currentDiffIndex }),
+			body: JSON.stringify({ diffImage: currentDiff }),
 		});
 
 		if (currentDiffIndex === assessmentData.diffFiles.length - 1) {

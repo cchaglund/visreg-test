@@ -1,9 +1,9 @@
 import React from 'react';
-import { serverBaseUrl } from '../shared';
+import { api } from '../shared';
 import { TestConfig } from '../types';
 
 type AppContextType = {
-    serverBaseUrl: string;
+    api: string;
     suiteName: string;
     suiteConfig?: TestConfig;
     setSuiteName: (name: string) => void;
@@ -13,7 +13,7 @@ type AppContextType = {
 };
 
 const defaultValue: AppContextType = {
-    serverBaseUrl: '',
+    api: '',
     suiteName: '',
     setSuiteName: () => {},
     setSuiteConfig: () => {},
@@ -30,7 +30,7 @@ export function AppContextWrapper(props: { children: React.ReactNode; }) {
 
     const appContext = React.useMemo(
         () => ({
-            serverBaseUrl,
+            api,
             suiteName,
             suiteConfig,
             currentDiffIndex,

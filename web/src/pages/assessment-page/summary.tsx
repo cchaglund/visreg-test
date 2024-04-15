@@ -9,6 +9,7 @@ import {
 import { AppContext } from '../../contexts/app-context';
 
 export type SummaryType = {
+    suiteSlug: string;
     approvedFiles: string[];
     rejectedFiles: string[];
     duration: number;
@@ -88,9 +89,9 @@ const Summary = () => {
                             variant='contained'
                             color='primary'
                             size='large'
-                            onClick={() => navigate('/')}
+                            onClick={() => navigate('/suite/' + summary.suiteSlug)}
                         >
-                            Back to Home
+                            Back to suite
                         </Button>
                     </Grid>
                 </Grid>

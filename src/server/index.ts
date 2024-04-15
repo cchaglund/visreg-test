@@ -56,12 +56,20 @@ const startServer = (programChoices: ProgramChoices, diffFiles?: DiffObject[]) =
     const app = express();
 
     app.use((req: any, res: any, next: any) => {
-        req.programChoices = programChoices;
-        req.diffFiles = diffFiles;
-        req.allSuitesDir = path.join(
+        req.local = {};
+
+        /**
+            TODO: I should remove this and just pass the programChoices to the routes and have the diffFiles be fetched by them.
+            Because I'm doing that now when the user starts a test from the web interface, meaning that I have two ways of doing it now.
+         */
+        req.local.programChoices = programChoices;
+        req.local.diffFiles = diffFiles;
+
+        req.local.suitesDirectory = path.join(
             programChoices?.containerized ? '/app' : initialCwd,
             '/suites'
         )
+
         next();
     });
 
@@ -86,6 +94,8 @@ const startServer = (programChoices: ProgramChoices, diffFiles?: DiffObject[]) =
     });
 
     app.use(function (err: any, req: any, res: any, next: any) {
+        console.error(err);
+        
         res.send({
             error: true,
             errorCode: err.errorCode,

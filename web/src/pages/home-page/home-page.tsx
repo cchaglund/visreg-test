@@ -1,7 +1,8 @@
 import { useLoaderData, useNavigate } from 'react-router-dom';
 import { ProjectInformationData } from '../../components/navigation/menu';
-import { Card, CardActionArea, CardContent, Typography } from '@mui/material';
+import { Typography } from '@mui/material';
 import stylex from '@stylexjs/stylex';
+import { ActionCard } from '../../components/ui/action-card';
 
 const s = stylex.create({
     wrapper: {
@@ -32,21 +33,11 @@ const Home = () => {
         <div {...stylex.props(s.wrapper)}>
             <div {...stylex.props(s.container)}>
                 {projectInformation?.suites?.map((suite, index) => (
-                    <Card elevation={3} key={index}>
-                        <CardActionArea onClick={() => navigate(`/suite/${suite}`)}>
-                            <CardContent {...stylex.props(s.card)}>
-                                <Typography
-                                    gutterBottom
-                                    variant="h5"
-                                    component="div"
-                                    color='text.secondary'
-                                    sx={{ textTransform: 'capitalize' }}
-                                >
-                                    {suite}
-                                </Typography>
-                            </CardContent>
-                        </CardActionArea>
-                    </Card>
+                    <ActionCard key={index} onClick={() => navigate(`/suite/${suite}`)}>
+                        <Typography variant="h5" color={'primary'}>
+                            {suite}
+                        </Typography>
+                    </ActionCard>
                 ))}
             </div>
         </div>

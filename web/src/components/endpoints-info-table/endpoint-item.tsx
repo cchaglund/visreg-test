@@ -31,7 +31,7 @@ const EndpointListItem = (props: { row: Endpoint; }) => {
 
     return (
         <React.Fragment>
-            <TableRow sx={{ '& > *': { borderBottom: 'unset' }, borderBottom: open ? '1px solid rgba(0,0,0,0.5)' : 'unset' }}>
+            <TableRow sx={{ '& > *': { borderBottom: 'unset' }, borderBottom: open ? '1px solid rgba(0,0,0,0.3)' : 'unset' }}>
                 <TableCell sx={{ width: 0 }} padding="checkbox">
                     {Object.keys(row).length > 2 && (
                         <IconButton
@@ -54,7 +54,7 @@ const EndpointListItem = (props: { row: Endpoint; }) => {
                     {Object.entries(row)
                         .filter(([ key ]) => key !== 'title' && key !== 'path')
                         .map(([ key ]) => <Chip key={key} label={key} variant='filled' />
-                        )}
+                    )}
                 </TableCell>
             </TableRow>
             {Object.keys(row).length > 2 && (

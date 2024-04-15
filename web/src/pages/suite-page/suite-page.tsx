@@ -1,6 +1,5 @@
 import { Outlet, useLoaderData } from 'react-router-dom';
-import { AppContext } from '../../contexts/app-context';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useEffect, useState } from 'react';
 import stylex from '@stylexjs/stylex';
 import FilterSidebar from './filter-sidebar';
 import { TestConfig } from '../../types';
@@ -60,7 +59,7 @@ const s = stylex.create({
 
 const SuitePage = () => {
     const { suiteSlug, imagesList, suiteConfig } = useLoaderData() as SuitePageData;
-    const { setSuiteName } = useContext(AppContext);
+    // const { setSuiteName } = useContext(AppContext);
     const [ parsedViewports, setParsedViewports ] = useState<string[]>([]);
     const endpointState = useState<string>('');
     const viewportState = useState<string>('');
@@ -69,8 +68,6 @@ const SuitePage = () => {
     const [ selectedViewport ] = viewportState;
 
     useEffect(() => {
-        setSuiteName(suiteSlug);
-
         if (suiteConfig?.viewports) {
             const parsedViewports = suiteConfig.viewports.map(viewport => {
                 if (Array.isArray(viewport)) return viewport.join(',');
@@ -79,7 +76,10 @@ const SuitePage = () => {
 
             setParsedViewports(parsedViewports);
         }
-    }, [ setSuiteName, suiteConfig, suiteSlug ]);
+    }, [ suiteConfig, suiteSlug ]);
+
+    console.log('S');
+    
 
     return (
         <div {...stylex.props(s.suitePage)}>

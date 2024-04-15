@@ -5,21 +5,21 @@ import { getFilesInDir, getSuiteDirOrFail, printColorText } from '../../utils';
 import { TestConfig } from '../../types';
 import { serverPort } from '../config';
 
-let suiteName = '';
+let suiteSlug = '';
 let snapsFilePath = '';
 let fileName = '';
 
 const suiteConfigCache = new Map<string, TestConfig>();
 
 const runSuiteConfig = async (): Promise<void> => {
-	if (!suiteName) {
+	if (!suiteSlug) {
 		printColorText('runSuiteConfig: No suite path - see README', '31');
 		return;
 	}
 
 	process.env.SEND_SUITE_CONF = 'true';
 
-	const suiteConfigDir = getSuiteDirOrFail(suiteName);
+	const suiteConfigDir = getSuiteDirOrFail(suiteSlug);
 	const isTypescript = fs.existsSync(path.join(suiteConfigDir, 'snaps.ts'));
 	fileName = isTypescript ? 'snaps.ts' : 'snaps.js';
 	snapsFilePath = path.join(suiteConfigDir, fileName);
@@ -59,27 +59,27 @@ const runSuiteConfig = async (): Promise<void> => {
 };
 
 export const setSuiteConfigCache = (testConfig: TestConfig) => {
-	const suiteConfigDir = getSuiteDirOrFail(suiteName);
+	const suiteConfigDir = getSuiteDirOrFail(suiteSlug);
 	const filesInDir = getFilesInDir(suiteConfigDir).filter(file => file !== '.DS_Store');
 
 	const parsedTestConfig = {
 		...testConfig,
-		suiteName,
+		suiteSlug,
 		directory: suiteConfigDir,
 		files: filesInDir,
-		fileEndpoint: `http://localhost:${serverPort}/files/${suiteName}/`,
+		fileEndpoint: `http://localhost:${serverPort}/files/${suiteSlug}/`,
 	};
 
-	suiteConfigCache.set(suiteName, parsedTestConfig);
+	suiteConfigCache.set(suiteSlug, parsedTestConfig);
 };
 
-export const fetchSuiteConfig = async (incomingSuiteName: string) => {
-	if (suiteConfigCache.has(incomingSuiteName)) {
-		return suiteConfigCache.get(incomingSuiteName);
+export const fetchSuiteConfig = async (incomingSuiteSlug: string) => {
+	if (suiteConfigCache.has(incomingSuiteSlug)) {
+		return suiteConfigCache.get(incomingSuiteSlug);
 	}
 
-	suiteName = incomingSuiteName;
+	suiteSlug = incomingSuiteSlug;
 
 	await runSuiteConfig();
-	return suiteConfigCache.get(suiteName);
+	return suiteConfigCache.get(suiteSlug);
 };

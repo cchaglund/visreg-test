@@ -1,8 +1,6 @@
-import approve from './assessment/approve';
-import reject from './assessment/reject';
-import assessmentData from './assessment/assessment-data';
-import summary from './assessment/summary';
+import assessmentData from './assessment/assessment';
 import images from './images/images';
+import serveImages from './images/serve-images';
 import image from './images/image';
 import file from './files/file';
 import projectInformation from './general/project-information';
@@ -14,26 +12,25 @@ const express = require('express');
 const router = express.Router();
 
 // Assessment
-router.use('/assessment', approve);
-router.use('/assessment', reject);
-router.use('/assessment', assessmentData);
-router.use('/assessment', summary);
+router.use('/api/assessment', assessmentData);
 
 // Images
-router.use('/images', images);
-router.use('/images', image);
+router.use('/api/images', images);
+router.use('/api/images', image);
+router.use('/images', serveImages);
+
 
 // Files
-router.use('/files', file);
+router.use('/api/files', file);
 
 // General
-router.use('/', projectInformation);
+router.use('/api/', projectInformation);
 
 // Suite
-router.use('/suite', getSuiteConfig);
-router.use('/suite', deliverSuiteConfig);
+router.use('/api/suite', getSuiteConfig);
+router.use('/api/suite', deliverSuiteConfig);
 
 // Run tests
-router.use('/run-test', runTest);
+router.use('/api/test', runTest);
 
 export default router;

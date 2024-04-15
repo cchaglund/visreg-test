@@ -6,6 +6,7 @@ import startServer from './server';
 import { devPort, serverPort } from './server/config';
 
 export type Summary = {
+	suiteSlug: string;
 	approvedFiles: string[];
 	rejectedFiles: string[];
 	duration: number;
@@ -16,6 +17,7 @@ export type DiffObject = {
 	imageName: string;
 	recievedSizeString: string;
 	baselineModified: Date;
+	suite: string;
 	index: number;
 	total: number;
 	files: {
@@ -52,8 +54,8 @@ export const assessInWeb = (args: WebAssessmentArgs) => {
 	duration = durationArg;
 	failed = failedArg;
 
-	const diffFiles = files.map((file, index) => {
-		return processImageViaWeb(file, index, files.length);
+	const diffFiles = files.map((file: string, index: number) => {
+		return processImageViaWeb(file, index, files.length, programChoices.suite);
 	});
 
 	diffFilesForWeb = diffFiles;
@@ -89,6 +91,7 @@ export const getSummary = () => {
 	cleanUp();
 
 	const summary: Summary = {
+		suiteSlug: programChoices.suite || '',
 		approvedFiles,
 		rejectedFiles,
 		duration,
@@ -98,7 +101,7 @@ export const getSummary = () => {
 	return summary;
 }
 
-export const processImageViaWeb = (diffImageFile: string, index: number, total: number) => {
+export const processImageViaWeb = (diffImageFile: string, index: number, total: number, suiteSlug?: string) => {
 	const imageName = diffImageFile.replace('.diff.png', '');
 	const receivedImageFile = imageName + '-received.png';
 	const baseImageFile = imageName + '.base.png';
@@ -114,6 +117,7 @@ export const processImageViaWeb = (diffImageFile: string, index: number, total: 
 		imageName,
 		recievedSizeString,
 		baselineModified: baselineInfo.modifiedAt,
+		suite: suiteSlug || '',
 		index,
 		total,
 		files: {

@@ -24,7 +24,7 @@ const Controls = ({ doAssessAction }: { doAssessAction: (arg: string) => void; }
                     startIcon={<ThumbDownIcon />}
                     onClick={() => doAssessAction('reject')}
                 >
-                    Reject (Spacebar)
+                    Reject {/* (Spacebar) */}
                 </Button>
             </Grid>
             <Grid container item xs={6} justifyContent={'flex-start'} sx={{ p: 2 }}>
@@ -35,7 +35,7 @@ const Controls = ({ doAssessAction }: { doAssessAction: (arg: string) => void; }
                     endIcon={<ThumbUpIcon />}
                     onClick={() => doAssessAction('approve')}
                 >
-                    Approve (Enter)
+                    Approve {/* (Enter) */}
                 </Button>
             </Grid>
         </div>

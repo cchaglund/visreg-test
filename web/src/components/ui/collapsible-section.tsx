@@ -1,54 +1,57 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Collapse, Typography } from '@mui/material';
 import x from '@stylexjs/stylex';
 import { ExpandLess, ExpandMore } from '@mui/icons-material';
+import { style } from './helper-styles';
 
-
-const s = x.create({
-    expandableArea: {
-        marginBottom: '2rem',
-        cursor: 'pointer',
-    },
-    flexContainer: {
-        display: 'flex',
-        gap: '0.5rem',
-        alignItems: 'center',
-    },
-    mt1: {
-        marginTop: '1rem',
-    },
-    mt2: {
-        marginTop: '2rem',
-    },
-});
 
 type CollapsibleSectionProps = {
-    heading: string;
+    heading: string | React.ReactNode;
     children: React.ReactNode;
     initialExpanded?: boolean;
+    parentToggle?: () => void;
+    parentState?: boolean;
+    duration?: number;
 };
 
-const CollapsibleSection = ({ heading, children, initialExpanded }: CollapsibleSectionProps) => {
-    const [ expanded, setExpanded ] = useState(initialExpanded ?? false);    
+const CollapsibleSection = ({ heading, children, initialExpanded, parentToggle, parentState, duration }: CollapsibleSectionProps) => {
+    const [ expanded, setExpanded ] = useState(parentState ? parentState : initialExpanded ?? false);
+
+    useEffect(() => {
+        if (parentState === undefined) return;
+        setExpanded(parentState);
+    }, [parentState]);
+
+    // useEffect(() => {
+    //     if (initialExpanded === undefined) return;
+    //     setExpanded(initialExpanded);
+    // }, [initialExpanded]);
 
     return (
-        <div {...x.props(s.expandableArea)}>
-            <div
-                {...x.props(s.flexContainer)}
-                onClick={() => setExpanded(!expanded)}
+        <div>
+            <div 
+                {...x.props(style.flex, style.gapS, style.alignCenter, style.cursorPointer,)}
+                onClick={() => {
+                    if (parentToggle) {
+                        parentToggle();
+                    } else {
+                        setExpanded(!expanded)
+                    }
+                }}
             >
-                <Typography variant="h6" color='text.primary'>
-                    {heading}
-                </Typography>
+                { typeof heading === 'string' 
+                    ? (
+                        <Typography variant="h6" color='text.primary'>
+                            {heading}
+                        </Typography>
+                    )
+                    : heading }
+
                 {expanded ? <ExpandLess color='primary' /> : <ExpandMore color='primary' />}
             </div>
-            <div
-                {...x.props(
-                    s.flexContainer,
-                )}
-            >
-                <Collapse in={expanded} timeout="auto" unmountOnExit>
-                    <div {...x.props(s.mt1)}>
+            <div {...x.props(style.flex, style.gapS, style.alignCenter)}>
+                <Collapse in={expanded} timeout={duration ?? 'auto'}>
+                    <div {...x.props(style.mt1)}>
                         {children}
                     </div>
                 </Collapse>

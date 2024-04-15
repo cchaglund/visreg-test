@@ -3,10 +3,21 @@ export type Endpoint = {
     path: string;
     blackout?: string[];
     elementToMatch?: string;
+    title: string;
+	path: string;
+	blackout?: string[];
+	elementToMatch?: string;
+	padding?: string;
+	capture?: string
+	excludeFromTest?: string;
+	onBefore?: string;
+	onEndpointVisit?: string;
+	onCleanup?: string;
+	data?: string;
 };
 
 export type TestConfig = {
-    suiteName?: string;
+    suiteSlug: string;
     baseUrl: string;
     endpoints: Endpoint[];
     viewports?: string[] | number[][];

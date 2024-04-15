@@ -24,6 +24,6 @@ chmod +x "$DIST"/entry.sh
 
 npm install --save-dev typescript
 
-# Build the container
-"$DIST"/entry.sh --build-container --env=dev
+# Run/build the container
+"$DIST"/entry.sh --run-container --env=dev
 

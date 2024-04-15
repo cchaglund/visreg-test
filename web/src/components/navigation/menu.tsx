@@ -122,7 +122,6 @@ export default function Menu() {
                                 >
                                     <ListItemIcon>
                                         <Check color='success' />
-                                        {/* <CheckCircleRoundedIcon color='success' /> */}
                                     </ListItemIcon>
                                     <ListItemText
                                         primary="Baselines"

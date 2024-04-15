@@ -1,6 +1,6 @@
 import { AssessmentData } from './pages/assessment-page/types';
 import { TestConfig } from './types';
-import { serverBaseUrl } from './shared';
+import { api } from './shared';
 
 export type GetImagesListParams = {
     suiteSlug: string;
@@ -12,7 +12,7 @@ export type GetSuiteImagesListParams = {
 };
 
 export const getAssessmentData = async (suiteSlug?: string): Promise<AssessmentData> => {
-    const response = await fetch(serverBaseUrl + '/assessment/data', {
+    const response = await fetch(api + '/assessment/diffs-data', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ suiteSlug }),
@@ -23,22 +23,22 @@ export const getAssessmentData = async (suiteSlug?: string): Promise<AssessmentD
 };
 
 export const getSummary = async () => {
-    const response = await fetch(serverBaseUrl + '/assessment/summary');
+    const response = await fetch(api + '/assessment/summary');
     const summary = await response.json();
     return summary;
 };
 
 export const getProjectInformation = async () => {
-    const response = await fetch(serverBaseUrl + '/project-information');
+    const response = await fetch(api + '/project-information');
     const projectInformation = await response.json();
     return projectInformation;
 };
 
 export const getSuiteConfig = async (suiteSlug?: string): Promise<TestConfig> => {
-    const response = await fetch(serverBaseUrl + '/suite/get-suite-config', {
+    const response = await fetch(api + '/suite/get-suite-config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ suiteName: suiteSlug }),
+        body: JSON.stringify({ suiteSlug: suiteSlug }),
     });
 
     const suiteConfig = await response.json();
@@ -46,8 +46,15 @@ export const getSuiteConfig = async (suiteSlug?: string): Promise<TestConfig> =>
 };
 
 
-export const getSuiteImagesList = async (args: GetSuiteImagesListParams) => {
-    const { suiteSlug } = args;
+export const getSuiteImagesList = async (suiteSlug?: string) => {
+    if (!suiteSlug) {
+        return {
+            diffList: [],
+            baselineList: [],
+            receivedList: [],
+        };
+    }
+
     const diffList = await getImagesList({ suiteSlug, typeOfImage: 'diff' });
     const baselineList = await getImagesList({ suiteSlug, typeOfImage: 'baseline' });
     const receivedList = await getImagesList({ suiteSlug, typeOfImage: 'received' });
@@ -62,7 +69,7 @@ export const getSuiteImagesList = async (args: GetSuiteImagesListParams) => {
 export const getImagesList = async (args: GetImagesListParams) => {
     const { suiteSlug, typeOfImage } = args;
 
-    const url = `${serverBaseUrl}/images/list/${suiteSlug}/${typeOfImage}-list`;
+    const url = `${api}/images/list/${suiteSlug}/${typeOfImage}-list`;
     const response = await fetch(url);
     const images = await response.json();
 
@@ -76,7 +83,7 @@ export type GetFileDetailsParams = {
 
 export const getImageDetails = async (args: GetFileDetailsParams) => {
     const { suiteSlug, fileName } = args;
-    const url = `${serverBaseUrl}/images/image/${suiteSlug}/${fileName}`;
+    const url = `${api}/images/image/${suiteSlug}/${fileName}`;
     const response = await fetch(url);
     const image = await response.json();
 

@@ -12,13 +12,13 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import AssessmentPage from './pages/assessment-page/assessment-page.tsx';
 import Summary from './pages/assessment-page/summary.tsx';
 import Home from './pages/home-page/home-page.tsx';
-import { getAssessmentData, getImageDetails, GetFileDetailsParams, getImagesList, GetImagesListParams, getProjectInformation, getSuiteConfig, getSuiteImagesList, GetSuiteImagesListParams, getSummary } from './loaders.ts';
+import { getAssessmentData, getImageDetails, GetFileDetailsParams, getImagesList, GetImagesListParams, getProjectInformation, getSuiteConfig, getSuiteImagesList, getSummary } from './loaders.ts';
 import SuitePage from './pages/suite-page/suite-page.tsx';
-import ImagePage from './pages/view-image-page/preview-page.tsx';
+import PreviewPage from './pages/view-image-page/preview-page.tsx';
 import ImageList from './pages/suite-page/image-list.tsx';
 import SuiteHome from './pages/suite-page/suite-home/suite-home.tsx';
 import ImagesOverview from './pages/suite-page/images-overview.tsx';
-import { AssessmentData } from './pages/assessment-page/types';
+// import { AssessmentData } from './pages/assessment-page/types';
 import TestPage from './pages/test-page/test-page.tsx';
 
 const router = createBrowserRouter([
@@ -78,9 +78,7 @@ const router = createBrowserRouter([
 					return { assessmentData };
 				},
 				handle: {
-					crumb: ({ assessmentData }: { assessmentData: AssessmentData; }) => {
-						console.log(assessmentData);
-						
+					crumb: () => {
 						return [
 							{
 								path: '/',
@@ -102,7 +100,7 @@ const router = createBrowserRouter([
 				path: "/suite/:suiteSlug",
 				element: <SuitePage />,
 				loader: async ({ params }) => {
-					const imagesList = await getSuiteImagesList(params as GetSuiteImagesListParams);
+					const imagesList = await getSuiteImagesList(params.suiteSlug);
 					const suiteConfig = await getSuiteConfig(params.suiteSlug);
 
 					return {
@@ -136,8 +134,8 @@ const router = createBrowserRouter([
 						path: "/suite/:suiteSlug/images",
 						element: <ImagesOverview />,
 						loader: async ({ params }) => {
-							const imagesList = await getSuiteImagesList(params as GetSuiteImagesListParams);
-							return { imagesList };
+							const imagesList = await getSuiteImagesList(params.suiteSlug);
+							return { imagesList, suiteSlug: params.suiteSlug};
 						},
 						handle: {
 							crumb: ({ suiteSlug }: { suiteSlug: string; }) => {
@@ -151,18 +149,20 @@ const router = createBrowserRouter([
 						},
 					},
 					{
-						path: "/suite/:suiteSlug/test",
+						path: "/suite/:suiteSlug/run-test",
 						element: <TestPage />,
 						loader: async ({ params }) => {
-							const imagesList = await getSuiteImagesList(params as GetSuiteImagesListParams);
-							return { imagesList };
+							// const imagesList = await getSuiteImagesList(params.suiteSlug);
+							const suiteConfig = await getSuiteConfig(params.suiteSlug);
+
+							return {/*  imagesList,  */suiteConfig };
 						},
 						handle: {
 							crumb: ({ suiteSlug }: { suiteSlug: string; }) => {
 								return [
 									{
-										path: `/suite/${suiteSlug}/test`,
-										slug: 'Test',
+										path: `/suite/${suiteSlug}/run-test`,
+										slug: 'Run test',
 									}
 								];
 							}
@@ -197,7 +197,7 @@ const router = createBrowserRouter([
 					},
 					{
 						path: "/suite/:suiteSlug/images/:typeOfImage/:fileName",
-						element: <ImagePage />,
+						element: <PreviewPage />,
 						loader: async ({ params }) => {
 							const image = await getImageDetails(params as GetFileDetailsParams);
 							return {

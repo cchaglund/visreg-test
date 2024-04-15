@@ -11,11 +11,11 @@ export const runVisreg: RunTest = async (props: TestConfig) => {
 };
 
 const sendSuiteConf = (props: TestConfig) => {
-    const baseUrl = 'http://localhost:' + serverPort;
+    const api = `http://localhost:${serverPort}/api`;
 
     const stringifiedConfig = stringifyConfig(props);
 
-    fetch(baseUrl + '/suite/deliver-suite-config', {
+    fetch(api + '/suite/deliver-suite-config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ testConfig: stringifiedConfig }),
