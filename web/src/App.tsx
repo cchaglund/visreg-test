@@ -4,7 +4,6 @@ import stylex from '@stylexjs/stylex';
 import { Outlet } from 'react-router-dom';
 import { Box } from '@mui/material';
 
-
 const wrapper = stylex.create({
 	assessmentPage: {
 		width: '100%',
@@ -13,7 +12,6 @@ const wrapper = stylex.create({
 		display: 'flex',
 		flexDirection: 'column',
 		alignItems: 'center',
-		// justifyContent: 'space-between',
 		minHeight: '100vh',
 		width: '100%',
 		height: '100%',
@@ -23,10 +21,7 @@ const wrapper = stylex.create({
 	}
 });
 
-
 const App = () => {
-	console.log('App');
-		
 	return (
 		<Box id="app" {...stylex.props(wrapper.box)} bgcolor={'background.default'}>
 			<Header />

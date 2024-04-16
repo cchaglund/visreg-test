@@ -1,19 +1,21 @@
-import { useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
+import { TestContext } from '../../contexts/test-context';
 import x from '@stylexjs/stylex';
-import { SummaryPayload } from '../../pages/test-page/test-page';
 
 const s = x.create({
     terminal: {
-        padding: '1rem',
         backgroundColor: '#0B2027',
         color: '#FCF7F8',
         height: '700px',
         overflowY: 'scroll',
         fontFamily: 'monospace',
         width: '100%',
-        minWidth: '900px',
+        maxWidth: '-webkit-fill-available',
         margin: '0 auto',
         marginBottom: '2rem',
+    },
+    log: {
+        margin: 0,
     },
 });
 
@@ -22,16 +24,6 @@ export type EndpointTestResult = {
     errorMessage?: string;
     endpointName: string;
     viewport: string;
-};
-
-type TerminalProps = {
-    onFinished: (summary: SummaryPayload) => void;
-    suiteSlug: string;
-    testType: string;
-    initiate: boolean;
-    setSummary: (summary: SummaryObject) => void;
-    addPassingEndpoint: (endpoint: EndpointTestResult) => void;
-    addFailingEndpoint: (failedEndpoint: EndpointTestResult) => void;
 };
 
 export type SummaryObject = {
@@ -43,26 +35,37 @@ export type SummaryObject = {
     duration?: number;
 };
 
-const Terminal = (props: TerminalProps) => {
-    const { onFinished, setSummary, suiteSlug, testType, initiate, addPassingEndpoint, addFailingEndpoint } = props;
+const Terminal = () => {
+    const { 
+        suiteConfig,
+        onFinished,
+        applySummary,
+        testStatus,
+        runningTest,
+        addToPassingEndpoints,
+        addToFailingEndpoints,
+        terminalRef,
+    } = useContext(TestContext);
     const [ output, setOutput ] = useState<string[]>([]);
     const endRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         endRef.current?.scrollIntoView({ block: 'end'});
+        terminalRef.current?.scrollIntoView();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ output ]);
 
 
     useEffect(() => {
         const ws = new WebSocket('ws://localhost:8080');
 
-        if (initiate) {
+        if (testStatus === 'running') {
             ws.onopen = () => {
                 ws.send(JSON.stringify({
                     type: 'start-test',
                     payload: {
-                        suiteSlug: suiteSlug,
-                        testType: testType,
+                        suiteSlug: suiteConfig.suiteSlug,
+                        testType: runningTest,
                     },
                 }));
             };
@@ -85,11 +88,11 @@ const Terminal = (props: TerminalProps) => {
             }
 
             if (data.type === 'text') {
-                const errorMessage = new RegExp(`(\\d+\\)\\s*${suiteSlug})`, 'g'); // e.g. 1) suiteSlug
+                const errorMessage = new RegExp(`(\\d+\\)\\s*${suiteConfig.suiteSlug})`, 'g'); // e.g. 1) suiteSlug
 
                 if (data.payload.includes('Spec Ran')) {
                     const summary = parseSummary(data.payload);
-                    setSummary(summary);
+                    applySummary(summary);
                     return;
                 } 
                 
@@ -109,7 +112,7 @@ const Terminal = (props: TerminalProps) => {
             }
         };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [initiate]);
+    }, [testStatus]);
 
     const addPassingEndpoints = (payload: string) => {
         // E.g. "✓ Start @ samsung-s10 (6090ms)"
@@ -117,7 +120,7 @@ const Terminal = (props: TerminalProps) => {
         const testTitle = payload.replace(/✓| \(\d+ms\)/g, '').trim();
         const [ endpointName, viewport ] = testTitle.split(' @ ');
 
-        addPassingEndpoint({
+        addToPassingEndpoints({
             testTitle: testTitle,
             endpointName,
             viewport: viewport,
@@ -141,7 +144,7 @@ const Terminal = (props: TerminalProps) => {
 
             const errorMessage = message.substring(splitIndex + 1).trim();
 
-            addFailingEndpoint({
+            addToFailingEndpoints({
                 testTitle: testTitle,
                 errorMessage: errorMessage,
                 endpointName,
@@ -167,7 +170,7 @@ const Terminal = (props: TerminalProps) => {
 
     return (
         <div {...x.props(s.terminal)}>
-            {output.map((item, i) => <pre key={i}>{item}</pre>)}
+            {output.map((item, i) => <pre {...x.props(s.log)} key={i}>{item}</pre>)}
             <div ref={endRef} />
         </div>
     );

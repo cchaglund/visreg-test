@@ -20,12 +20,12 @@ export type TestConfig = {
     suiteSlug: string;
     baseUrl: string;
     endpoints: Endpoint[];
-    viewports?: string[] | number[][];
-    formatUrl?: string;
-    onPageVisit?: string;
     files: string[];
     fileEndpoint: string;
     directory: string;
+    viewports?: string[] | number[][];
+    formatUrl?: string;
+    onPageVisit?: string;
 };
 
 

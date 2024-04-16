@@ -35,6 +35,9 @@ export const style = x.create({
     gap6: {
         gap: '6rem',
     },
+    gap7: {
+        gap: '7rem',
+    },
     gap8: {
         gap: '8rem',
     },

@@ -4,7 +4,7 @@ import React from 'react';
 
 export const ColorModeContext = React.createContext({ toggleColorMode: () => { } });
 
-export function ColorContext(props: { children: React.ReactNode; }) {
+export function ThemeContext(props: { children: React.ReactNode; }) {
     const prefersDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     const [ mode, setMode ] = React.useState<'light' | 'dark'>(prefersDarkMode ? 'dark' : 'light');
     const colorMode = React.useMemo(
@@ -19,6 +19,14 @@ export function ColorContext(props: { children: React.ReactNode; }) {
     const theme = React.useMemo(
         () =>
             createTheme({
+                typography: {
+                    fontFamily: [
+                        'Ubunto Mono',
+                        'monospace',
+                    ].join(','),
+                    // fontWeightRegular: 600,
+                    fontSize: 12,
+                },
                 palette: {
                     mode,
                     text: {

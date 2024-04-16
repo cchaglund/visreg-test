@@ -6,11 +6,11 @@ import '@fontsource/roboto/300.css';
 import '@fontsource/roboto/400.css';
 import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
-import { ColorContext } from './contexts/color-context.tsx';
+import { ThemeContext } from './contexts/theme-context.tsx';
 import { AppContextWrapper } from './contexts/app-context.tsx';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import AssessmentPage from './pages/assessment-page/assessment-page.tsx';
-import Summary from './pages/assessment-page/summary.tsx';
+import AssessmentSummary from './pages/assessment-page/assessment-summary.tsx';
 import Home from './pages/home-page/home-page.tsx';
 import { getAssessmentData, getImageDetails, GetFileDetailsParams, getImagesList, GetImagesListParams, getProjectInformation, getSuiteConfig, getSuiteImagesList, getSummary } from './loaders.ts';
 import SuitePage from './pages/suite-page/suite-page.tsx';
@@ -20,6 +20,7 @@ import SuiteHome from './pages/suite-page/suite-home/suite-home.tsx';
 import ImagesOverview from './pages/suite-page/images-overview.tsx';
 // import { AssessmentData } from './pages/assessment-page/types';
 import TestPage from './pages/test-page/test-page.tsx';
+import { TestContextWrapper } from './contexts/test-context.tsx';
 
 const router = createBrowserRouter([
 	{
@@ -50,7 +51,7 @@ const router = createBrowserRouter([
 			},
 			{
 				path: "/summary",
-				element: <Summary />,
+				element: <AssessmentSummary />,
 				loader: async () => {
 					const summary = await getSummary();
 					return { summary };
@@ -127,7 +128,7 @@ const router = createBrowserRouter([
 					{
 						path: "/suite/:suiteSlug",
 						index: true,
-						element: <SuiteHome />,
+						element: (<SuiteHome />),
 						loader: ({ params }) => ({ suiteSlug: params.suiteSlug })
 					},
 					{
@@ -150,7 +151,11 @@ const router = createBrowserRouter([
 					},
 					{
 						path: "/suite/:suiteSlug/run-test",
-						element: <TestPage />,
+						element: (
+							<TestContextWrapper>
+								<TestPage />
+							</TestContextWrapper>
+						),
 						loader: async ({ params }) => {
 							// const imagesList = await getSuiteImagesList(params.suiteSlug);
 							const suiteConfig = await getSuiteConfig(params.suiteSlug);
@@ -236,9 +241,9 @@ const router = createBrowserRouter([
 ReactDOM.createRoot(document.getElementById('root')!).render(
 	<React.StrictMode>
 		<AppContextWrapper>
-			<ColorContext>
+			<ThemeContext>
 				<RouterProvider router={router} />
-			</ColorContext>
+			</ThemeContext>
 		</AppContextWrapper>
 	</React.StrictMode>,
 );

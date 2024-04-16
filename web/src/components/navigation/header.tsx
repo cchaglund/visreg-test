@@ -1,5 +1,5 @@
 import React from 'react';
-import { ColorModeContext } from '../../contexts/color-context';
+import { ColorModeContext } from '../../contexts/theme-context';
 import { useTheme } from '@mui/material/styles';
 import { AppBar, Button, IconButton, Toolbar } from '@mui/material';
 import Brightness4Icon from '@mui/icons-material/Brightness4';

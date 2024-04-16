@@ -59,7 +59,6 @@ const s = stylex.create({
 
 const SuitePage = () => {
     const { suiteSlug, imagesList, suiteConfig } = useLoaderData() as SuitePageData;
-    // const { setSuiteName } = useContext(AppContext);
     const [ parsedViewports, setParsedViewports ] = useState<string[]>([]);
     const endpointState = useState<string>('');
     const viewportState = useState<string>('');
@@ -78,8 +77,6 @@ const SuitePage = () => {
         }
     }, [ suiteConfig, suiteSlug ]);
 
-    console.log('S');
-    
 
     return (
         <div {...stylex.props(s.suitePage)}>

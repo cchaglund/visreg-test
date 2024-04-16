@@ -34,7 +34,7 @@ type SummaryData = {
     summary: SummaryType;
 };
 
-const Summary = () => {
+const AssessmentSummary = () => {
     const { setCurrentDiffIndex } = useContext(AppContext);
     const { summary } = useLoaderData() as SummaryData;
     const navigate = useNavigate();
@@ -100,4 +100,4 @@ const Summary = () => {
     );
 };
 
-export default Summary;
+export default AssessmentSummary;
