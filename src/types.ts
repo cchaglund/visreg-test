@@ -80,31 +80,33 @@ export type TestConfig = {
 	onPageVisit?: EndpointHookFunction;
 };
 
+export type TestTypeSlug = 'full-test' | 'diffs-only' | 'targetted' | 'lab' | 'assess-existing-diffs';
+
 export type TestType = {
 	name: string;
-	slug: string;
+	slug: TestTypeSlug;
 	description: string;
 };
 
-export type EnvsPassedViaCypress = {
-    testType: 'full-test' | 'diffs-only' | 'targetted' | 'lab';
+export type TestSettings = {
+    testType: TestTypeSlug;
     diffList: string[];
     suite?: string;
-	endpointTitle?: string;
-	viewport?: VisregViewport;
+	targetEndpointTitles?: string[];
+	targetViewports?: VisregViewport[];
 	noSnap?: boolean;
 }
 
 export type ProgramChoices = {
 	suite?: string,
-	endpointTitle?: string,
-	viewport?: string | number[],
+	targetEndpointTitles: string[] | [],
+	targetViewports: VisregViewport[] | [],
 	fullTest?: boolean | string,
 	diffsOnly?: boolean | string,
 	assessExistingDiffs?: boolean | string,
 	targetted?: boolean | string,
 	labMode?: boolean,
-	testType?: string,
+	testType: TestTypeSlug,
 	gui?: boolean,
 	snap?: boolean,
 	scaffold?: boolean,
@@ -113,6 +115,12 @@ export type ProgramChoices = {
 	serverStart?: boolean,
 	webTesting?: boolean,
 }
+
+export type CliProgramChoices = ProgramChoices & {
+	viewports?: string;
+	endpointTitles?: string;
+}
+
 
 export type ConfigurationSettings = {
 	/**

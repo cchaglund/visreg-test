@@ -12,7 +12,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import AssessmentPage from './pages/assessment-page/assessment-page.tsx';
 import AssessmentSummary from './pages/assessment-page/assessment-summary.tsx';
 import Home from './pages/home-page/home-page.tsx';
-import { getAssessmentData, getImageDetails, GetFileDetailsParams, getImagesList, GetImagesListParams, getProjectInformation, getSuiteConfig, getSuiteImagesList, getSummary } from './loaders.ts';
+import { getAssessmentData, getImageDetails, GetFileDetailsParams, getImagesList, GetImagesListParams, getProjectInformation, getSuiteConfig, getSuiteImagesList, getSummary } from './loaders-and-fetchers.ts';
 import SuitePage from './pages/suite-page/suite-page.tsx';
 import PreviewPage from './pages/view-image-page/preview-page.tsx';
 import ImageList from './pages/suite-page/image-list.tsx';
@@ -74,8 +74,12 @@ const router = createBrowserRouter([
 			{
 				path: "/assessment/:suiteSlug?",
 				element: <AssessmentPage />,
-				loader: async ({ params }) => {
-					const assessmentData = await getAssessmentData(params.suiteSlug);
+				loader: async ({ params, request }) => {
+					const url = new URL(request.url);
+					const diffList = url.searchParams.get('diff-list-subset');
+					const diffListSubset = diffList ? JSON.parse(diffList) : null;
+				
+					const assessmentData = await getAssessmentData(params.suiteSlug, diffListSubset);
 					return { assessmentData };
 				},
 				handle: {
@@ -157,10 +161,10 @@ const router = createBrowserRouter([
 							</TestContextWrapper>
 						),
 						loader: async ({ params }) => {
-							// const imagesList = await getSuiteImagesList(params.suiteSlug);
+							const imagesList = await getSuiteImagesList(params.suiteSlug);
 							const suiteConfig = await getSuiteConfig(params.suiteSlug);
 
-							return {/*  imagesList,  */suiteConfig };
+							return {imagesList, suiteConfig };
 						},
 						handle: {
 							crumb: ({ suiteSlug }: { suiteSlug: string; }) => {

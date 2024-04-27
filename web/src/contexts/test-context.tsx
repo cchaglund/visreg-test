@@ -1,41 +1,77 @@
 import React, { useState, useRef } from 'react';
 import { useLoaderData } from 'react-router-dom';
-import { SummaryObject, EndpointTestResult } from '../components/terminal/terminal';
-import { SummaryPayload } from '../pages/test-page/test-page';
 import { TestConfig } from '../types';
 import { api } from '../shared';
+import { ImagesList } from '../pages/suite-page/suite-page';
+import { SummaryObject, EndpointTestResult, WebSocketCommand } from '../pages/test-page/panel/terminal/terminal';
 
 export type TestPageData = {
     suiteConfig: TestConfig;
+    imagesList: ImagesList;
 };
 
+export type ProgramChoices = {
+	suite?: string,
+	targetEndpointTitles: string[] | [],
+	targetViewports: (string | number[])[] | [],
+	fullTest?: boolean | string,
+	diffsOnly?: boolean | string,
+	assessExistingDiffs?: boolean | string,
+	targetted?: boolean | string,
+	labMode?: boolean,
+	testType: TestTypeSlug,
+	gui?: boolean,
+	snap?: boolean,
+	scaffold?: boolean,
+	scaffoldTs?: boolean,
+	containerized?: boolean,
+	serverStart?: boolean,
+	webTesting?: boolean,
+}
+
+
+export type SummaryPayload = {
+    userTerminatedTest: boolean;
+    testDiffList: string[];
+    allDiffList: string[];
+    testType: TestTypeSlug;
+    endpointTestResults: {
+        passing: EndpointTestResult[];
+        failing: EndpointTestResult[];
+        skipped: EndpointTestResult[];
+        unchanged: EndpointTestResult[];
+    };
+    programChoices: ProgramChoices;
+    cypressSummary: SummaryObject;
+    testAgenda: string[];
+};
+
+export type TestTypeSlug = 'full-test' | 'diffs-only' | 'targetted';
+export type TestStatusType = 'terminated' | 'terminating' | 'running' | 'idle' | 'done';
+
 type TestContextType = {
-    testStatus: string;
-    selectedName: string;
-    startTest: (testType: string) => Promise<void>;
+    testStatus: TestStatusType;
+    selectedTargetEndpoints: string[];
+    startTest: (testType: TestTypeSlug) => Promise<void>;
     suiteConfig: TestConfig;
-    changeName: (name: string) => void;
-    changeViewport: (viewport: string | number[]) => void;
-    selectedViewport: string;
+    images: ImagesList;
+    addTargetEndpoint: (name: string) => void;
+    addTargetViewport: (viewport: string | number[]) => void;
+    selectedTargetViewports: (string | number[])[];
     resultsRef: React.RefObject<HTMLDivElement>;
     terminalRef: React.RefObject<HTMLDivElement>;
-    summary: SummaryPayload | undefined;
-    runningTest: string;
+    visregSummary: SummaryPayload | undefined;
+    runningTest?: TestTypeSlug;
     terminalViewOpen: boolean;
-    summaryState: SummaryObject | undefined;
+    cypressSummaryState: SummaryObject | undefined;
     passingEndpoints: EndpointTestResult[];
     failingEndpoints: EndpointTestResult[];
-    setTestStatus: (status: string) => void;
-    setSelectedName: (name: string) => void;
-    setRunningTest: (test: string) => void;
+    skippedEndpoints: EndpointTestResult[];
     toggleTerminalOpen: () => void;
-    setSelectedViewport: (viewport: string) => void;
-    applySummary: (summary: SummaryObject | undefined) => void;
-    setPassingEndpoints: (endpoints: EndpointTestResult[]) => void;
-    setFailingEndpoints: (endpoints: EndpointTestResult[]) => void;
-    onFinished: (summary: SummaryPayload) => void;
-    addToPassingEndpoints: (endpoint: EndpointTestResult) => void;
-    addToFailingEndpoints: (failedEndpoint: EndpointTestResult) => void;
+    onFinished: (visregSummary: SummaryPayload) => void;
+    terminalOutput: (string | React.ReactNode)[];
+    updateTerminalOutput: (output: string | React.ReactNode, color?: string) => void;
+    initiateTerminationOfTest: () => void;
 };
 
 const defaultValue: TestContextType = {
@@ -47,95 +83,142 @@ const defaultValue: TestContextType = {
         fileEndpoint: '',
         directory: '',
     },
+    images: {
+        diffList: [],
+        baselineList: [],
+        receivedList: [],
+    },
     testStatus: 'idle',
-    selectedName: '',
-    selectedViewport: '',
+    selectedTargetEndpoints: [],
+    selectedTargetViewports: [],
     startTest: async () => {},
-    changeName: () => {},
-    changeViewport: () => {},
+    addTargetEndpoint: () => {},
+    addTargetViewport: () => {},
     resultsRef: { current: null },
     terminalRef: { current: null },
-    summary: undefined,
-    runningTest: '',
+    visregSummary: undefined,
+    runningTest: undefined,
     terminalViewOpen: false,
-    summaryState: undefined,
+    cypressSummaryState: undefined,
     passingEndpoints: [],
     failingEndpoints: [],
-    setTestStatus: () => {},
-    setSelectedName: () => {},
-    setRunningTest: () => {},
+    skippedEndpoints: [],
     toggleTerminalOpen: () => {},
-    setSelectedViewport: () => {},
-    applySummary: () => {},
-    setPassingEndpoints: () => {},
-    setFailingEndpoints: () => {},
     onFinished: () => {},
-    addToPassingEndpoints: () => {},
-    addToFailingEndpoints: () => {},
+    terminalOutput: [],
+    updateTerminalOutput: () => {},
+    initiateTerminationOfTest: () => {},
 };
 
 export const TestContext = React.createContext(defaultValue);
 
+const ws = new WebSocket('ws://localhost:8080');
+
 export function TestContextWrapper(props: { children: React.ReactNode; }) {
     const resultsRef = useRef<HTMLDivElement>(null);
     const terminalRef = useRef<HTMLDivElement>(null);
-    const { suiteConfig } = useLoaderData() as TestPageData;
-    const [ testStatus, setTestStatus ] = useState('idle');
-    const [ selectedName, setSelectedName ] = useState<string>('');
-    const [ summary, setSummary ] = useState<SummaryPayload>();
-    const [ runningTest, setRunningTest ] = useState<string>('');
+    const { suiteConfig, imagesList } = useLoaderData() as TestPageData;
+    const [ testStatus, setTestStatus ] = useState<TestStatusType>('idle');
+    const [ selectedTargetEndpoints, setSelectedTargetEndpoints ] = useState<string[]>([]);
+    const [ visregSummary, setVisregSummary ] = useState<SummaryPayload>();
+    const [ runningTest, setRunningTest ] = useState<TestTypeSlug>();
     const [ terminalViewOpen, setTerminalViewOpen ] = useState<boolean>(false);
-    const [ selectedViewport, setSelectedViewport ] = useState<string>('');
-    const [ summaryState, setSummaryState ] = useState<SummaryObject>();
+    const [ selectedTargetViewports, setSelectedViewport ] = useState<(string | number[])[]>([]);
+    const [ cypressSummaryState, setCypressSummaryState ] = useState<SummaryObject>();
+    const [ terminalOutput, setTerminalOutput ] = useState<(string | React.ReactNode)[]>([]);
     const [ passingEndpoints, setPassingEndpoints ] = useState<EndpointTestResult[]>([]);
     const [ failingEndpoints, setFailingEndpoints ] = useState<EndpointTestResult[]>([]);
+    const [ skippedEndpoints, setSkippedEndpoints ] = useState<EndpointTestResult[]>([]);
+    const [ images, setImages ] = useState<ImagesList>(imagesList);
 
-    const startTest = async (testType: string) => {
+
+    const startTest = async (testType: TestTypeSlug) => {
+        setTerminalOutput([]);
         setPassingEndpoints([]);
         setFailingEndpoints([]);
-        setSummary(undefined);        
+        setVisregSummary(undefined);        
         setTerminalViewOpen(true);
 
-        await new Promise(res => {
-            setTimeout(() => res(1), 400);   
-        });
-
-        terminalRef.current?.scrollIntoView({ behavior: 'smooth' });
-
-        await new Promise(res => {
-            setTimeout(() => res(1), 400);
-        });
-
-        const res = await fetch(`${api}/test/start-ws`, {
-            method: 'GET',
-        });
+        const res = await fetch(`${api}/test/start-ws`, { method: 'GET' });
 
         if (res.ok) {
+            scrollDown();
             setRunningTest(testType);
             setTestStatus('running');
         }
     };
 
-    const applySummary = (summary?: SummaryObject) => {
-        setSummaryState(summary);
+    const scrollDown = async () => {
+        await new Promise(res => { setTimeout(() => res(1), 400); });        
+        const pageHeight = document.documentElement.scrollHeight;
+        window.scrollTo({ top: pageHeight, behavior: 'smooth' });
     }
 
-    const toggleTerminalOpen = () => {        
-        setTerminalViewOpen(prev => !prev);
+    const updateTerminalOutput = (output: string | React.ReactNode, color?: string) => {
+        let outputElement = output;
+
+        if (color) {
+            outputElement = <span style={{ color }}>{output}</span>;
+        }
+        setTerminalOutput(prev => [ ...prev, outputElement ]);
     }
 
-    const changeName = (name: string) => {
-        setSelectedName(prev => prev === name ? '' : name);
+    const toggleTerminalOpen = () => setTerminalViewOpen(prev => !prev);
+
+    const addTargetEndpoint = (name: string) => {
+        setSelectedTargetEndpoints(prev => {
+            return prev.includes(name) 
+                ? prev.filter(n => n !== name)
+                : [ ...prev, name ]
+        });
     };
 
-    const changeViewport = (viewport: string | number[]) => {
+    const addTargetViewport = (viewport: string | number[]) => {
         const viewportString = Array.isArray(viewport) ? viewport.join(',') : viewport;
-        setSelectedViewport(prev => prev === viewportString ? '' : viewportString);
+        setSelectedViewport(prev => {
+            return prev.includes(viewportString) 
+                ? prev.filter(v => v !== viewportString)
+                : [ ...prev, viewportString ]
+        });
     };
 
-    const onFinished = (summary: SummaryPayload) => {
-        setSummary(summary);
-        setTestStatus('done');
+    const initiateTerminationOfTest = () => {        
+        setTestStatus('terminating');
+        updateTerminalOutput(
+            <pre>
+                <br />
+                <pre style={{ color: '#faa916', textAlign: 'center'}}>
+                    Stopping tests after current endpoint completes... (this may take a few seconds)
+                </pre>
+                <br />
+            </pre>
+        )
+        
+        const data: WebSocketCommand = {
+            type: 'command',
+            name: 'terminate',
+            payload: '',
+        };
+
+        ws.send(JSON.stringify(data))
+    }
+
+    const onFinished = (visregSummary: SummaryPayload) => {
+        setSelectedTargetEndpoints([]);
+        setSelectedViewport([]);
+        setCypressSummaryState(visregSummary.cypressSummary);
+
+        setImages({
+            ...images,
+            diffList: visregSummary.allDiffList || [],
+        });
+        
+        setPassingEndpoints(visregSummary.endpointTestResults.passing);
+        setFailingEndpoints(visregSummary.endpointTestResults.failing);
+        setSkippedEndpoints(visregSummary.endpointTestResults.skipped);
+
+        setVisregSummary({...visregSummary, testType: runningTest!});
+        setTestStatus(prev => prev === 'terminating' ? 'terminated' : 'done');
 
         setTerminalViewOpen(false);
         setTimeout(() => {
@@ -143,47 +226,32 @@ export function TestContextWrapper(props: { children: React.ReactNode; }) {
         }, 300);
     };
 
-
-    const addToPassingEndpoints = (endpoint: EndpointTestResult) => {
-        setPassingEndpoints(prev => [ ...prev, endpoint ]);
-    };
-
-    const addToFailingEndpoints = (failedEndpoint: EndpointTestResult) => {
-        setFailingEndpoints(prev => [ ...prev, failedEndpoint ]);
-    };
-
-
-    const testContext = React.useMemo(
+    const testContext: TestContextType = React.useMemo(
         () => ({
             suiteConfig,
+            images,
             testStatus,
-            selectedName,
-            startTest,
-            changeName,
-            changeViewport,
-            selectedViewport,
             resultsRef,
             terminalRef,
-            summary,
+            visregSummary,
             runningTest,
             terminalViewOpen,
-            summaryState,
+            cypressSummaryState,
             passingEndpoints,
             failingEndpoints,
-            setTestStatus,
-            setSelectedName,
-            setRunningTest,
+            skippedEndpoints,
+            startTest,
             toggleTerminalOpen,
-            setSelectedViewport,
-            applySummary,
-            setPassingEndpoints,
-            setFailingEndpoints,
             onFinished,
-            addToPassingEndpoints,
-            addToFailingEndpoints,
-
+            addTargetEndpoint,
+            addTargetViewport,
+            selectedTargetViewports,
+            selectedTargetEndpoints,
+            terminalOutput,
+            updateTerminalOutput,
+            initiateTerminationOfTest,
         }),
-        [failingEndpoints, passingEndpoints, runningTest, selectedName, selectedViewport, suiteConfig, summary, summaryState, terminalViewOpen, testStatus],
+        [failingEndpoints, passingEndpoints, skippedEndpoints, runningTest, selectedTargetEndpoints, selectedTargetViewports, suiteConfig, visregSummary, cypressSummaryState, terminalViewOpen, testStatus, terminalOutput, imagesList],
     );
 
     return (

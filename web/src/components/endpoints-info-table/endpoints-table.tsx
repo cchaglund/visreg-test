@@ -6,17 +6,8 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import { Endpoint } from '../../types';
-import stylex from '@stylexjs/stylex';
 import EndpointListItem from './endpoint-item';
 import { Paper } from '@mui/material';
-
-const s = stylex.create({
-    list: {
-        width: '100%',
-        minWidth: '400px',
-        borderRadius: '12px',
-    },
-});
 
 type EndpointsListProps = {
     endpoints?: Endpoint[];
@@ -31,7 +22,7 @@ const EndpointsTable = (props: EndpointsListProps) => {
 
     return (
         <React.Fragment>
-            <TableContainer {...stylex.props(s.list)} component={Paper}>
+            <TableContainer component={Paper} sx={{ width: '100%', minWidth: '400px', borderRadius: '12px' }}>
                 <Table aria-label="collapsible table">
                     <TableHead>
                         <TableRow>

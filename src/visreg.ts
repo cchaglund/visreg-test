@@ -4,13 +4,44 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { spawn } from 'child_process';
 import * as readline from 'readline';
-import { ConfigurationSettings, NonOverridableSettings, ProgramChoices, TestType } from './types';
+import { ConfigurationSettings, Endpoint, NonOverridableSettings, ProgramChoices, TestSettings, TestType, VisregViewport } from './types';
 import { programChoices } from './cli';
 import startServer from './server';
 import { assessInWeb, processImageViaWeb } from './diff-assessment-web';
-import { BACKUP_DIFF_DIR, BACKUP_RECEIVED_DIR, DIFF_DIR, RECEIVED_DIR, cleanUp, getDiffingFiles, getSuiteDirOrFail, getSuites, hasFiles, includedInSpecification, isSpecifiedTest, parsedViewport, pathExists, printColorText, projectRoot, removeBackups, suitesDirectory } from './utils';
+import { BACKUP_DIFF_DIR, BACKUP_RECEIVED_DIR, DIFF_DIR, RECEIVED_DIR, cleanUp, createFailingEndpointTestResult, createPassingEndpointTestResult, getAllDiffingFiles, getDiffingFilesFromTestResult, getSkippedEndpoints, getSuiteDirOrFail, getSuites, getUnchangedEndpoints, hasFiles, includedInTarget, isTargettedTest, parseAgenda, parseCypressSummary, parseViewport, pathExists, printColorText, projectRoot, removeBackups, suitesDirectory } from './utils';
 import { assessInCLI } from './diff-assessment-terminal';
 import { summarizeResultsAndQuit } from './summarize';
+
+type DataPackage = {
+	name: string;
+	type: string;
+	stdout: string;
+	payload?: EndpointTestResult | SummaryObject;
+	color: string;
+};
+
+export type SummaryObject = {
+    tests?: number;
+    passing?: number;
+    failing?: number;
+    pending?: number;
+    skipped?: number;
+    duration?: number;
+};
+
+export type EndpointTestResult = {
+    testTitle: string;
+    errorMessage?: string;
+    endpointTitle: string;
+    viewport: string;
+};
+
+export type EndpointTestResultsGroup = {
+	passing: EndpointTestResult[],
+	failing: EndpointTestResult[],
+	skipped: EndpointTestResult[],
+	unchanged: EndpointTestResult[],
+};
 
 const configPath = path.join(projectRoot, 'visreg.config.json');
 let visregConfig: ConfigurationSettings = {};
@@ -19,12 +50,20 @@ if (pathExists(configPath)) {
 	const fileContent = fs.readFileSync(configPath, 'utf-8');
 	try {
 		visregConfig = JSON.parse(fileContent);
-	} catch (e) {}
+	} catch (e) { }
 }
 
-let start: number;
-let duration: number;
 let failed = false;
+let userTerminatedTest = false;
+let cypressSummary: SummaryObject = {};
+let testAgenda: string[] = [];
+
+const endpointTestResults: EndpointTestResultsGroup = {
+	passing: [] as EndpointTestResult[],
+	failing: [] as EndpointTestResult[],
+	skipped: [] as EndpointTestResult[],
+	unchanged: [] as EndpointTestResult[],
+}
 
 const typesList: TestType[] = [
 	{
@@ -59,7 +98,7 @@ const getVersion = () => {
 	const packageJsonPath = path.join(__dirname, '..', 'package.json');
 	const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8') || '{}');
 	return packageJson.version;
-}
+};
 
 // Print config path
 if (pathExists(configPath)) {
@@ -76,16 +115,16 @@ const promptForEndpointTitle = async () => {
 	});
 
 	await new Promise<void>((resolve) => {
-		if (programChoices.endpointTitle) resolve();
+		if (programChoices.targetEndpointTitles.length) resolve();
 
 		rl.question('Enter endpoint title: ', (endpointTitle) => {
-			programChoices.endpointTitle = endpointTitle;
+			programChoices.targetEndpointTitles = [ endpointTitle ];
 			resolve();
 		});
-	})
+	});
 
 	rl.close();
-}
+};
 
 
 const promptForViewport = async () => {
@@ -95,15 +134,35 @@ const promptForViewport = async () => {
 	});
 
 	await new Promise<void>((resolve) => {
-		if (programChoices.viewport) resolve();
+		if (programChoices.targetViewports.length) resolve();
 
 		rl.question('Enter viewport (e.g. 1920,1080, or iphone-6): ', (viewport) => {
-			programChoices.viewport = parsedViewport(viewport);
+			const parsedViewport = parseViewport(viewport as VisregViewport) || [];
+			programChoices.targetViewports = [ parsedViewport as VisregViewport ];
 			resolve();
 		});
-	})
-	
+	});
+
 	rl.close();
+};
+
+const startLabMode = async (programChoices: ProgramChoices) => {
+	const { targetEndpointTitles, targetViewports } = programChoices;
+	const requiredTargets = targetEndpointTitles.length && targetViewports.length;
+		
+	if (!requiredTargets) {
+		printColorText('Lab mode requires both endpoint title and viewport to be specified\n', '2');
+
+		await promptForEndpointTitle();
+		await promptForViewport();
+
+		if (!requiredTargets) {
+			printColorText('Lab mode requires both endpoint title and viewport to be specified\n', '31');
+			return;
+		}
+	}
+
+	runCypressTest();
 }
 
 const main = async (): Promise<void> => {
@@ -112,44 +171,31 @@ const main = async (): Promise<void> => {
 
 	const { testType } = programChoices;
 	
-	if (testType === 'full-test') {
-		fullRegressionTest();
-		return;
-	}
-
-	if (testType === 'diffs-only') {
-		diffsOnly();
+	if (testType === 'lab') {
+		startLabMode(programChoices);
 		return;
 	}
 
 	if (testType === 'assess-existing-diffs') {
-		assessExistingDiffs();
+		assessExistingDiffImages(getAllDiffingFiles());
 		return;
 	}
 
-	if (!programChoices.viewport || !programChoices.endpointTitle) {	
-		const testName = testType === 'lab' ? 'Lab' : 'Targetted';
-		printColorText(`${testName} mode requires both endpoint title and viewport to be specified\n`, '2');
-
-		await promptForEndpointTitle();
-		await promptForViewport();
-
-		if (!programChoices.viewport || !programChoices.endpointTitle) {
-			printColorText(`${testName} mode requires both endpoint title and viewport to be specified\n`, '31');
-			return;
-		}
+	if (testType === 'diffs-only') {
+		exitIfNoDIffs();
 	}
 
-	if (testType === 'lab') {
-		runCypressTest();
-		return
-	} 
+	const allCurrentDiffs = createTemporaryDiffList();
+	backupDiffs();
+	backupReceived();
+	const testResultDiffs = await runCypressTest(allCurrentDiffs);
+	assessExistingDiffImages(testResultDiffs);
 
-	targettedTest();
+	return;
 };
 
 
-const selectSuite = async () => {	
+const selectSuite = async () => {
 	const suites: string[] = getSuites();
 
 	if (suites.length === 0) {
@@ -191,7 +237,7 @@ const selectType = async () => {
 	if (specifiedType) {
 		return;
 	}
-	
+
 	console.log('\nSelect type of test:\n');
 	typesList.forEach((type, index) => {
 		if (programChoices.containerized) {
@@ -227,19 +273,19 @@ const prepareConfig = (diffList?: string[]) => {
 		const fileContent = fs.readFileSync(suiteConfigPath, 'utf-8');
 		try {
 			suiteConfig = JSON.parse(fileContent);
-		} catch (e) {}
+		} catch (e) { }
 	}
 
 	pathExists(suiteConfigPath) && printColorText(`\nSuite config: ${suiteConfigPath}`, '2');
 
 	Object.assign(visregConfig, suiteConfig);
 
-	const { 
+	const {
 		screenshotOptions,
 		comparisonOptions,
 		...conf
 	} = visregConfig;
-	
+
 	const snapshotSettings = {
 		failureThreshold: 0.001,
 		failureThresholdType: 'percent',
@@ -253,22 +299,22 @@ const prepareConfig = (diffList?: string[]) => {
 		...screenshotOptions,
 		...comparisonOptions,
 		...conf,
-	}
-	
-	process.env.CYPRESS_VISREG_OPTIONS = JSON.stringify(conf)
+	};
+
+	process.env.CYPRESS_VISREG_OPTIONS = JSON.stringify(conf);
 	process.env.CYPRESS_SNAPSHOT_SETTINGS = JSON.stringify(snapshotSettings);
 	process.env.SEND_SUITE_CONF = 'false';
 
 	const specPath = getSuiteDirOrFail(programChoices.suite);
-		
-	const testSettings = {
+
+	const testSettings: TestSettings = {
 		testType: programChoices.testType,
 		suite: programChoices.suite,
 		diffList: diffList || [],
-		viewport: programChoices.viewport,
-		endpointTitle: programChoices.endpointTitle,
+		targetViewports: programChoices.targetViewports,
+		targetEndpointTitles: programChoices.targetEndpointTitles,
 		noSnap: !programChoices.snap,
-	}
+	};
 
 	const nonOverridableSettings: NonOverridableSettings = {
 		suitesDirectory,
@@ -281,237 +327,342 @@ const prepareConfig = (diffList?: string[]) => {
 	process.env.CYPRESS_failOnSnapshotDiff = 'false';
 	process.env.CYPRESS_updateSnapshots = 'false';
 	process.env.CYPRESS_TEST_SETTINGS = Buffer.from(JSON.stringify(testSettings)).toString('base64');
-	process.env.CYPRESS_NON_OVERRIDABLE_SETTINGS = JSON.stringify(nonOverridableSettings);		
+	process.env.CYPRESS_NON_OVERRIDABLE_SETTINGS = JSON.stringify(nonOverridableSettings);
 
 	return {
 		specPath,
 		browser: snapshotSettings.browser,
-	}
-}
+	};
+};
 
-const runCypressTest = async (diffList?: string[]): Promise<void> => new Promise((resolve, reject) => {
-	const conf = prepareConfig(diffList);
-
-	start = Date.now();
-	const labModeOn = programChoices.testType === 'lab';
-
+const getInitMessage = (labModeOn: boolean, browser?: string) => {
 	let labModeText = '- lab mode';
 	labModeText += programChoices?.gui ? ' (GUI)' : '';
 	labModeText += !programChoices?.snap ? ' (no snapshot)' : '';
 
 	if (labModeOn) {
-		printColorText(`\nStarting Cypress ${ labModeText } \n`, '2');
-	} else {
-		// Only electron currently supported in docker
-		programChoices.containerized
-			? printColorText(`\nStarting Cypress (electron) \n`, '2')
-			: printColorText(`\nStarting Cypress (${ conf.browser || 'electron' }) \n`, '2')
+		return `Starting Cypress ${labModeText}`;
 	}
-
-	process.chdir(__dirname); 
-	let cypressCommand: string		
 	
+	// Only electron currently supported in docker
+	return programChoices.containerized
+		? `Starting Cypress (electron)`
+		: `Starting Cypress (${browser || 'electron'})`;
+}
+
+const runCypressTest = async (diffList?: string[]): Promise<string[]> => new Promise((resolve) => {
+	const conf = prepareConfig(diffList);
+	process.chdir(__dirname);
+	const labModeOn = programChoices.testType === 'lab';
+	
+	const message = getInitMessage(labModeOn, conf.browser)
+	printColorText(`\n${message}\n`, '2');
+	
+	let cypressCommand: string;
+
 	if (labModeOn && programChoices.gui) {
-		cypressCommand = 'npx cypress open';
+		cypressCommand = 'npx cypress open --env HEADED=true';
 	} else {
 		if (programChoices.containerized) {
 			// Only electron is currently supported in docker
-			cypressCommand = `npx cypress run --spec "${conf.specPath}"`;
+			cypressCommand = `npx cypress run --env CLI=true --spec "${conf.specPath}"`;
 		} else {
-			cypressCommand = `npx cypress run --spec "${conf.specPath}" ${conf.browser ? `--browser ${conf.browser}` : ''}`;
+			cypressCommand = `npx cypress run --env CLI=true --spec "${conf.specPath}" ${conf.browser ? `--browser ${conf.browser}` : ''}`;
 		}
 	}
 
 	const parts = cypressCommand.split(' ');
-	const command = parts[0];
+	const command = parts[ 0 ];
 	const args = parts.slice(1);
 
-	const child = spawn(`DEBUG=cypress ${command}`, args, { shell: true, stdio: 'inherit' });
+	const child = spawn(`DEBUG=cypress ${command}`, args, { shell: true });
 
-	child.on('data', (data) => console.log(`${data}`));
+	child.stdout?.on('data', (data) => onTerminalDataOut(data, diffList));
 	child.on('error', (error) => console.error(`exec error: ${error}`));
 	child.on('close', (code) => {
-		if (labModeOn) resolve();
-		
-		if (isSpecifiedTest() && code === 0) {
-			/**
-			 * Restore the files which were not specified in the test. 
-			 * Why not just omit them from the backup in the first place? Because we need to remove 
-			 * all the files from diff and received folders before running the test (so that cypress 
-			 * can do clean comparisons).
-			 */
-			const unaffectedFiles = (fileName: string) => !includedInSpecification(fileName);
-			restoreFromBackup(unaffectedFiles);
-			resolve();
-		}
-
-		if (code !== 0) {
-			failed = true;
-
-			console.log('\n\n');
-			console.log('------------------');
-			console.log('\n');
-			
-			printColorText('Cypress could not complete one or more tests (see above for details) - run targetted tests on these', '33');
-
-			if (programChoices.testType === 'diffs-only') {
-				printColorText('\nDiffs-only testing requires all tests to be successes. Any failure results in the diffs being restored. Fix the issues or remove the offending diff files from the diff directory.', '33');
-				restoreFromBackup();
-				process.exit(1);
-			}
-
-			resolve()
-		}
-
-		// Images have been created, so we can remove the backups
-		removeBackups();
-
-		duration = Math.round((Date.now() - start) / 1000);
-		resolve();
+		if (labModeOn) return;
+	
+		const testDiffList = onTerminalCypressClose();
+		resolve(testDiffList);
 	});
 });
 
+const onTerminalDataOut = (data: Buffer, diffList?: string[]) => {
+	const dataString = data.toString()
 
+	if (dataString.includes('✓')) {
+		const passing = createPassingEndpointTestResult(dataString);
+		endpointTestResults.passing.push(passing)
 
+		printColorText(`${dataString}`, '32');
+		return;
+	} 
 
-const runWebCypressTest = async (ws: WebSocket, diffList?: string[]): Promise<{ duration: number }> => new Promise((resolve, reject) => {
-	start = Date.now();
+	const failedRegexp = new RegExp(`(\\d+\\)\\s*${programChoices.suite})`, 'g'); // e.g. 1) suiteSlug
+	if (dataString.match(failedRegexp)) {		
+		const { userTerminated, failingEndpoints } = createFailingEndpointTestResult(dataString, failedRegexp);
+		userTerminatedTest = userTerminated;
+		endpointTestResults.failing = [...endpointTestResults.failing, ...failingEndpoints];
+
+		printColorText(`${dataString}`, '31');
+		return;
+	}
+
+	const failedInline = new RegExp(`(\\d+\\)\\s*[\\w\\s-]+\\s*\\@\\s*[\\w\\s-]+)`, 'g'); // e.g. 1) Start page @ samsung-s10
+	if (dataString.match(failedInline)) {
+		printColorText(`${dataString}`, '31');
+		return;
+	}
 	
+	if (dataString.includes('visreg-test-agenda')) {
+		if (!testAgenda.length) {
+			if (programChoices.testType === 'diffs-only') {
+				testAgenda = diffList?.map(diff => diff.replace('.diff.png', '')) || [];
+				return;
+			}
+
+			testAgenda = parseAgenda(dataString);
+		}
+		return;
+	}
+	
+	if (dataString.includes('Spec Ran')) {
+		cypressSummary = parseCypressSummary(dataString);
+		// console.log(`${data}`)
+		printColorText(`${dataString}`, '2');
+		return;
+	}
+
+	if (dataString.match(/Spec\s+Tests\s+Passing\s+Failing\s+Pending\s+Skipped/)) {
+		// We don't want to show Cypress' summary because we interpret and summarize the results ourselves
+		return;
+	}
+
+	console.log(`${dataString}`)
+}
+
+const onTerminalCypressClose = () => {
+	endpointTestResults.skipped = getSkippedEndpoints(endpointTestResults, testAgenda);
+	endpointTestResults.unchanged = getUnchangedEndpoints(endpointTestResults);
+
+	const testDiffList = getDiffingFilesFromTestResult(); 
+	restoreBackups();
+	const allDiffList = getAllDiffingFiles();
+
+	const summary = {
+		name: 'visreg-summary',
+		testType: programChoices.testType,
+		testDiffList,
+		allDiffList,
+		userTerminatedTest,
+		endpointTestResults,
+		programChoices,
+		cypressSummary,
+		testAgenda,
+	};
+
+	printColorText(`\nTest duration: ${cypressSummary.duration} seconds\n`, '2');
+
+	printColorText('\nTested:', '2');
+	summary.testAgenda.forEach(testTitle => {
+		printColorText(`${testTitle}`, '0');
+	})
+
+	if (summary.endpointTestResults.failing.length) {
+		printColorText('\nError:', '2');
+		summary.endpointTestResults.failing.forEach(endpoint => {
+			printColorText(`${endpoint.testTitle}`, '31');
+		})
+	}
+
+	if (testDiffList.length) {
+		printColorText('\nDiffs:', '2');
+		testDiffList.forEach(diff => {
+			printColorText(`${diff}`, '33');
+		})
+	}
+
+	if (summary.endpointTestResults.unchanged.length) {
+		printColorText('\nNo change:', '2');
+		summary.endpointTestResults.unchanged.forEach(endpoint => {
+			printColorText(`${endpoint.testTitle}`, '32');
+		})
+	}
+
+	return testDiffList;
+};
+
+const onDataOut = (data: Buffer, ws: WebSocket, diffList?: string[]) => {
+	// Remove ASCII escape codes
+	const dataString = data
+		.toString()
+		.replace(/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]/g, '');
+
+	const dataPackage: DataPackage = {
+		name: '',
+		type: 'text',
+		stdout: dataString,
+		color: ''
+	};
+
+	if (dataString.includes('✓')) {
+		const passing = createPassingEndpointTestResult(dataString);
+		endpointTestResults.passing.push(passing)
+		dataPackage.color = '#749C75';
+
+		ws.send(JSON.stringify(dataPackage));
+		return;
+	} 
+
+	const failedRegexp = new RegExp(`(\\d+\\)\\s*${programChoices.suite})`, 'g'); // e.g. 1) suiteSlug
+	if (dataString.match(failedRegexp)) {		
+		const { userTerminated, failingEndpoints } = createFailingEndpointTestResult(dataString, failedRegexp);
+		userTerminatedTest = userTerminated;
+		endpointTestResults.failing = [...endpointTestResults.failing, ...failingEndpoints];
+		return;
+	}
+
+	const failedInline = new RegExp(`(\\d+\\)\\s*[\\w\\s-]+\\s*\\@\\s*[\\w\\s-]+)`, 'g'); // e.g. 1) Start page @ samsung-s10
+	if (dataString.match(failedInline)) {
+		dataPackage.color = '#c81d25';
+
+		ws.send(JSON.stringify(dataPackage));
+		return;
+	}
+	
+	if (dataString.includes('visreg-test-agenda')) {
+		if (!testAgenda.length) {
+			if (programChoices.testType === 'diffs-only') {
+				testAgenda = diffList?.map(diff => diff.replace('.diff.png', '')) || [];
+				return;
+			}
+
+			testAgenda = parseAgenda(dataString);	
+		}
+		return;
+	}
+	
+	if (dataString.includes('Spec Ran')) {
+		cypressSummary = parseCypressSummary(dataString);
+		return;
+	}
+
+	if (dataString.match(/Spec\s+Tests\s+Passing\s+Failing\s+Pending\s+Skipped/)) {
+		// We don't want to show Cypress' summary because we interpret and summarize the results ourselves
+		return;
+	}
+		
+	ws.send(JSON.stringify(dataPackage));
+}
+
+const onErrOut = (data: Buffer, ws: WebSocket) => {
+	if (
+		data.includes('DevTools listening on ws://127.0.0.1')
+		|| data.includes('NSApplicationDelegate')
+	) return;
+
+	ws.send(JSON.stringify({ type: 'error', payload: `${data}` }));
+}
+
+const onCypressClose = (ws: WebSocket, resolve: () => void) => {
+	endpointTestResults.skipped = getSkippedEndpoints(endpointTestResults, testAgenda);
+	endpointTestResults.unchanged = getUnchangedEndpoints(endpointTestResults);
+	
+	const testDiffList = getDiffingFilesFromTestResult();
+	restoreBackups();
+	const allDiffList = getAllDiffingFiles();
+
+	const summary = JSON.stringify({
+		type: 'data',
+		payload: {
+			name: 'visreg-summary',
+			testType: programChoices.testType,
+			testDiffList,
+			allDiffList,
+			userTerminatedTest,
+			endpointTestResults,
+			programChoices,
+			cypressSummary,
+			testAgenda,
+		}
+	});
+
+	ws.send(summary);
+	resolve();
+	return;
+};
+
+const runWebCypressTest = async (ws: WebSocket, diffList?: string[]): Promise<void> => new Promise((resolve, reject) => {
 	const conf = prepareConfig(diffList);
-	process.chdir(__dirname); 
+	process.chdir(__dirname);
 
-	let cypressCommand: string		
+	const initMessage = programChoices.containerized 
+		? 'Starting Cypress (electron) in container'
+		: `Starting Cypress (${conf.browser || 'electron'})`;
+
+	printColorText(`\n${initMessage}\n`, '2');
 	
+	const initMessagePackage: DataPackage = {
+		name: '',
+		type: 'text',
+		stdout: initMessage,
+		color: '#7D7D7D'
+	};
+
+	ws.send(JSON.stringify(initMessagePackage));
+
+	let cypressCommand: string;
+
 	if (programChoices.containerized) {
 		// Only electron is currently supported in docker
-		printColorText(`\nStarting Cypress (electron) \n`, '2')
 		cypressCommand = `npx cypress run --spec "${conf.specPath}"`;
 	} else {
-		printColorText(`\nStarting Cypress (${ conf.browser || 'electron' }) \n`, '2')
 		cypressCommand = `npx cypress run --spec "${conf.specPath}" ${conf.browser ? `--browser ${conf.browser}` : ''}`;
 	}
 
 	const parts = cypressCommand.split(' ');
-	const command = parts[0];
+	const command = parts[ 0 ];
 	const args = parts.slice(1);
 
-	console.log('command', command);
+	const child = spawn(`DEBUG=cypress ${command}`, args, { shell: true });
+
+	child.stdout?.on('data', (data) => onDataOut(data, ws, diffList));
+	child.stderr?.on('data', (data) => onErrOut(data, ws));
 	
-
-	const child = spawn(`DEBUG=cypress ${command}`, args, { shell: true});
-	// const child = spawn('echo', ['Hello, world!'], { shell: true });
-
-
-	child.stdout?.on('data', (data) => {
-		ws.send(JSON.stringify({ type: 'text', payload: `${data}` }));
-	});
-
-	child.stderr?.on('data', (data) => {
-		if (
-			data.includes('DevTools listening on ws://127.0.0.1')
-			|| data.includes('NSApplicationDelegate')
-		) return;
-		
-		ws.send(JSON.stringify({ type: 'error', payload: `${data}` }));
-	});
-
-	child.on('exit', (code) => {
-		console.log(`child process exited with code ${code}`);
-		duration = Math.round((Date.now() - start) / 1000);
-		console.log('duration', duration);
-
-		const payload = { name: 'summary', duration, failed, diffList: getDiffingFiles() };
-		ws.send(JSON.stringify({ type: 'data', payload }));
-	});
-
-	child.on('close', (code) => {
-
-		duration = Math.round((Date.now() - start) / 1000);
-
-		const payload = {
-			name: 'summary',
-			duration,
-			failed,
-		}
-		
-		if (isSpecifiedTest() && code === 0) {
-			/**
-			 * Restore the files which were not specified in the test. 
-			 * Why not just omit them from the backup in the first place? Because we need to remove 
-			 * all the files from diff and received folders before running the test (so that cypress 
-			 * can do clean comparisons).
-			 */
-			const unaffectedFiles = (fileName: string) => !includedInSpecification(fileName);
-			restoreFromBackup(unaffectedFiles);
-
-			const jsonData = JSON.stringify({ type: 'data', payload });
-			ws.send(jsonData);
-			ws.close();
-			resolve({ duration });
-		}
-
-		if (code !== 0) {
-			failed = true;
-
-			console.log('\n\n');
-			console.log('------------------');
-			console.log('\n');
-			
-			printColorText('Cypress could not complete one or more tests (see above for details) - run targetted tests on these', '33');
-
-			if (programChoices.testType === 'diffs-only') {
-				printColorText('\nDiffs-only testing requires all tests to be successes. Any failure results in the diffs being restored. Fix the issues or remove the offending diff files from the diff directory.', '33');
-				restoreFromBackup();
-				process.exit(1);
-			}
-
-			const jsonData = JSON.stringify({ type: 'data', payload });
-			ws.send(jsonData);
-			ws.close();
-			resolve({ duration })
-		}
-
-		// Images have been created, so we can remove the backups
-		removeBackups();
-
-		const jsonData = JSON.stringify({ type: 'data', payload });
-		ws.send(jsonData);
-		ws.close();
-		resolve({ duration });
-	});
+	child.on('error', (error) => console.log(`exec error: ${error}`));
+	child.on('close', (code) => onCypressClose(ws, resolve));
 });
 
 
+const isNotTargetOfTest = (fileName: string) => {
+	const res = !includedInTarget(fileName);
+	return res;
+}
 
-// const filterForErrors = (stdout: string) => {
-// 	const failingLine = stdout.indexOf('failing');
-// 	if (failingLine === -1) return;
+const couldNotTest = (fileName: string, notTested: EndpointTestResult[]) => {
+	if (notTested.length === 0) return false;
 
-// 	const resultsLine = stdout.indexOf('(Results)');
-// 	const failingEndpoints = stdout.substring(failingLine, resultsLine);
-// 	const errorLines = failingEndpoints.split('\n');
+	const untested = notTested.some(endpoint => (
+		fileName.includes(endpoint.endpointTitle) && fileName.includes(endpoint.viewport)
+	));
 
-// 	const failingTests: string[] = []
+	return untested;
+};
 
-// 	errorLines.forEach((line, index) => {
-// 		if (line.includes('Error')) {
-// 			failingTests.push(errorLines[index - 1]);
-// 		}
-// 	})
-
-// 	failingTests.forEach((text) => {
-// 		printColorText(text, '31');
-// 	});
-// };
-
-
-const restoreFromBackup = (restoreCondition: (fileName: string) => boolean = () => true) => {
+const restoreBackups = () => {
 	const backupDiffDir = BACKUP_DIFF_DIR();
 	const backupReceivedDir = BACKUP_RECEIVED_DIR();
 
+	const skipped = getSkippedEndpoints(endpointTestResults, testAgenda);
+	const notTested = [...endpointTestResults.failing, ...skipped];	
+
+	const restoreCondition = (fileName: string) => (
+		isNotTargetOfTest(fileName) || couldNotTest(fileName, notTested)
+	)
+
 	if (pathExists(backupDiffDir)) {
 		fs.readdirSync(backupDiffDir)
-			.filter(restoreCondition) // restore the files which were not specified in the test
+			.filter(restoreCondition)
 			.forEach(fileName => {
 				fs.renameSync(path.join(backupDiffDir, fileName), path.join(DIFF_DIR(), fileName));
 			});
@@ -519,117 +670,87 @@ const restoreFromBackup = (restoreCondition: (fileName: string) => boolean = () 
 
 	if (pathExists(backupReceivedDir)) {
 		fs.readdirSync(backupReceivedDir)
-			.filter(restoreCondition) // restore the files which were not specified in the test
+			.filter(restoreCondition)
 			.forEach(fileName => {
 				fs.renameSync(path.join(backupReceivedDir, fileName), path.join(RECEIVED_DIR(), fileName));
 			});
 	}
 
-	cleanUp();
-}
+	cleanUp();	
+};
 
 const exitIfNoDIffs = () => {
 	if (programChoices.testType === 'lab') {
 		process.exit();
 	}
-	
+
 	if (!pathExists(DIFF_DIR()) || !hasFiles(DIFF_DIR())) {
-		summarizeResultsAndQuit([], [], failed, duration);
+		summarizeResultsAndQuit([], [], failed);
 		process.exit();
 	}
-}
+};
 
-export const getDiffsForWeb = (suiteSlug: string, conf?: ConfigurationSettings) => {	
+export const getDiffsForWeb = (suiteSlug: string, conf?: ConfigurationSettings) => {
 	programChoices.suite = suiteSlug;
 	programChoices.testType = 'assess-existing-diffs';
 	programChoices.webTesting = true;
 
 	visregConfig = conf || visregConfig;
 
-	let files = getDiffingFiles();
+	let files = getDiffingFilesFromTestResult();
 
 	const diffFiles = files.map((file, index) => {
 		return processImageViaWeb(file, index, files.length, suiteSlug);
 	});
 
 	return diffFiles;
+};
+
+const resetPreviousTest = () => {
+	testAgenda = [];
+	failed = false;
+	cypressSummary = {};
+	userTerminatedTest = false;
+
+	programChoices.targetViewports = [];
+	programChoices.targetEndpointTitles = [];
+	
+	endpointTestResults.passing = [];
+	endpointTestResults.failing = [];
+	endpointTestResults.skipped = [];
+	endpointTestResults.unchanged = [];
 }
 
-export const startWebTest = (ws: WebSocket, progChoices: ProgramChoices, conf?: ConfigurationSettings) => {
+export const startWebTest = async (ws: WebSocket, progChoices: Partial<ProgramChoices>, conf?: ConfigurationSettings) => {
+	if (!progChoices.suite || !progChoices.testType) {
+		return;
+	}
+
+	resetPreviousTest();
+
 	programChoices.suite = progChoices.suite;
 	programChoices.testType = progChoices.testType;
 	programChoices.webTesting = true;
 
-	visregConfig = conf || visregConfig;	
+	visregConfig = conf || visregConfig;
 
-	if (programChoices.testType === 'full-test') {
-		fullWebRegressionTest(ws);
-		return;
-	}
-
-	if (programChoices.testType === 'diffs-only') {
-		diffsOnly();
-		return;
-	}
-	
 	if (programChoices.testType === 'targetted') {
-		targettedTest();
-		return;
-	}
-}
-
-const fullWebRegressionTest = async (ws: WebSocket) => {
-	if (pathExists(DIFF_DIR())) {
-		fs.rmSync(DIFF_DIR(), { recursive: true });
-	}
-	
-	if (pathExists(RECEIVED_DIR())) {
-		fs.rmSync(RECEIVED_DIR(), { recursive: true });
+		programChoices.targetViewports = progChoices.targetViewports || [];
+		programChoices.targetEndpointTitles = progChoices.targetEndpointTitles || [];
 	}
 
-	await runWebCypressTest(ws);
-}
-
-const fullRegressionTest = async () => {
-	if (pathExists(DIFF_DIR())) {
-		fs.rmSync(DIFF_DIR(), { recursive: true });
-	}
-	
-	if (pathExists(RECEIVED_DIR())) {
-		fs.rmSync(RECEIVED_DIR(), { recursive: true });
-	}
-
-	await runCypressTest();
-	assessExistingDiffImages();
-}
-
-const diffsOnly = async () => {
-	exitIfNoDIffs();
-
-    const diffList = createTemporaryDiffList();
-    backupDiffs();
-    backupReceived();
-	await runCypressTest(diffList);
-    assessExistingDiffImages();
-}
-
-const assessExistingDiffs = () => {
-    assessExistingDiffImages();
-}
-
-const targettedTest = async () => {
 	const diffList = createTemporaryDiffList();
+
 	backupDiffs();
 	backupReceived();
-	await runCypressTest(diffList);
-    assessExistingDiffImages();
-}
+	await runWebCypressTest(ws, diffList);
+};
 
 const backupDiffs = () => {
 	const dir = DIFF_DIR();
 	const backupDir = BACKUP_DIFF_DIR();
 
-    if (pathExists(dir) && hasFiles(dir)) {
+	if (pathExists(dir) && hasFiles(dir)) {
 		if (!pathExists(backupDir)) {
 			fs.mkdirSync(backupDir);
 		}
@@ -638,14 +759,14 @@ const backupDiffs = () => {
 		files.forEach(file => {
 			fs.renameSync(path.join(dir, file), path.join(backupDir, file));
 		});
-    }
-}
+	}
+};
 
 const backupReceived = () => {
 	const dir = RECEIVED_DIR();
 	const backupDir = BACKUP_RECEIVED_DIR();
 
-    if (pathExists(dir) && hasFiles(dir)) {
+	if (pathExists(dir) && hasFiles(dir)) {
 		if (!pathExists(backupDir)) {
 			fs.mkdirSync(backupDir);
 		}
@@ -654,26 +775,26 @@ const backupReceived = () => {
 		files.forEach(file => {
 			fs.renameSync(path.join(dir, file), path.join(backupDir, file));
 		});
-    }
-}
+	}
+};
 
 const createTemporaryDiffList = () => {
 	if (!pathExists(DIFF_DIR())) return [];
 	return fs.readdirSync(DIFF_DIR()).filter(file => file.endsWith('.diff.png'));
-}
+};
 
 const selectWhereToAssess = async () => {
 	console.log(`Press SPACE to assess diffs in the browser`);
 	console.log('...or ENTER to continue in the terminal\n');
 
-    const rl = readline.createInterface({
-        input: process.stdin,
-    });
+	const rl = readline.createInterface({
+		input: process.stdin,
+	});
 
 	let answer;
 
 	while (true) {
-        answer = await new Promise(resolve => {
+		answer = await new Promise(resolve => {
 			// Enable raw mode to get individual keypresses
 			readline.emitKeypressEvents(process.stdin);
 			if (process.stdin.isTTY) process.stdin.setRawMode(true);
@@ -692,7 +813,7 @@ const selectWhereToAssess = async () => {
 				}
 			});
 		});
-		
+
 		if (answer === 'web' || answer === 'cli') {
 			break;
 		}
@@ -702,29 +823,48 @@ const selectWhereToAssess = async () => {
 	rl.close();
 
 	return answer;
-}
+};
 
-const assessExistingDiffImages = async () => {
-	exitIfNoDIffs();
-	let files = getDiffingFiles();
+const getTargetText = () => {
+	if (!programChoices.targetViewports.length && !programChoices.targetEndpointTitles.length) {
+		return '';
+	}
+
+	let targetText = ' from test (limited to ';
+
+	targetText += programChoices.targetEndpointTitles.length
+		? `"${programChoices.targetEndpointTitles.join(', ')}"`
+		: '';
+
+	targetText += programChoices.targetViewports.length
+		? ' @ ' + programChoices.targetViewports.join(', ')
+		: '';
+
+	targetText += ')';
+
+	return targetText;
+};
+
+const assessExistingDiffImages = async (files: string[]) => {
+	if (programChoices.testType === 'lab') {
+		process.exit();
+	}
 
 	if (files.length === 0) {
-		summarizeResultsAndQuit([], [], failed, duration);
+		summarizeResultsAndQuit([], [], failed);
+		process.exit();
 	}
 
 	console.log('\n\n');
 
-	const targetText = programChoices.viewport || programChoices.endpointTitle
-		? ` (scoped to ${programChoices.endpointTitle ? `"${programChoices.endpointTitle}"` : ''}${programChoices.viewport ? `@${programChoices.viewport}` : ''})`
-		: '';
-
+	const targetText = getTargetText();
 
 	printColorText(`🚨 Detected ${files.length} diffs${targetText}\n`, '33');
 
 	const answer = await selectWhereToAssess();
 
 	if (answer === 'web') {
-		assessInWeb({files, duration, failed});
+		assessInWeb({ files, failed });
 		return;
 	}
 
@@ -733,17 +873,14 @@ const assessExistingDiffImages = async () => {
 		return;
 	}
 
-	assessInCLI({files, targetText, duration, failed, visregConfig});
-}
+	assessInCLI({ files, targetText, failed, visregConfig });
+};
 
 
 process.on('SIGINT', () => {
-	if (programChoices.testType !== 'diffs-only') {
-		process.exit();
-	};
-
-	console.log('\n\nTerminated by user, restoring backups\n');
-	restoreFromBackup();
+	console.log('\n\nTerminated by user');
+	console.log('Restoring backups\n');
+	restoreBackups();
 	process.exit();
 });
 

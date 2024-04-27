@@ -1,5 +1,4 @@
 import { Card, CardActionArea, CardContent } from '@mui/material';
-import { style } from './helper-styles';
 import x from '@stylexjs/stylex';
 
 const s = x.create({
@@ -36,7 +35,7 @@ type ActionCardProps = {
 
 export const ActionCard = (props: ActionCardProps) => {
     return (
-        <Card elevation={7} {...x.props(style.br1)}>
+        <Card elevation={7} sx={{ borderRadius: '1rem' }}>
             <CardActionArea onClick={() => props.onClick()}>
                 <CardContent {...x.props(s.card)}>
                     {props.children}

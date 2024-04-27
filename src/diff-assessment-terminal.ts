@@ -13,13 +13,12 @@ let visregConfig: ConfigurationSettings;
 type CliAssessmentArgs = {
 	files: string[];
 	targetText: string;
-	duration: number;
 	failed: boolean;
 	visregConfig: ConfigurationSettings;
 }
 
 export const assessInCLI = async (args: CliAssessmentArgs) => {
-	const { files, duration, failed, visregConfig: config } = args;
+	const { files, failed, visregConfig: config } = args;
 
 	visregConfig = config;
 
@@ -46,7 +45,7 @@ export const assessInCLI = async (args: CliAssessmentArgs) => {
         }
     }
 
-	summarizeResultsAndQuit(approvedFiles, rejectedFiles, failed, duration);
+	summarizeResultsAndQuit(approvedFiles, rejectedFiles, failed);
 }
 
 const processImage = async (imageFile: string, index: number, total: number) => {
@@ -104,7 +103,7 @@ const processImage = async (imageFile: string, index: number, total: number) => 
         } else if (answer === 'reopen') {
             openImage(imageFile);
         } else if (answer === 'reject') {
-            rejectedFiles.push(imageName);
+			rejectedFiles.push(imageName);
 			console.log('❌');
 			
             break;

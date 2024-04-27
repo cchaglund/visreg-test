@@ -1,5 +1,5 @@
 import { getDiffsForWeb } from '../../../visreg';
-import { DiffObject, Summary } from '../../../diff-assessment-web';
+import { DiffObject, Summary, processImageViaWeb } from '../../../diff-assessment-web';
 import { cleanUp } from '../../../utils';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -12,7 +12,6 @@ const summary: Summary = {
     suiteSlug: '',
     approvedFiles: [],
     rejectedFiles: [],
-    duration: 0,
     failed: false,
 }
 
@@ -51,8 +50,9 @@ router.post('/reject', (req: any, res: any) => {
     }
 });
 
-router.post('/diffs-data', (req: any, res: any) => {
-    const suiteSlug = req.body.suiteSlug || req.programChoices.suite;
+router.post('/diffs-data', (req: any, res: any) => {    
+    const suiteSlug = req.body.suiteSlug || req.local.programChoices.suite;
+    const { diffListSubset } = req.body;
 
     if (!suiteSlug) {
         return res.send({ error: 'No suite slug provided' });
@@ -61,7 +61,15 @@ router.post('/diffs-data', (req: any, res: any) => {
     summary.suiteSlug = suiteSlug;
 
     try {
-        const diffs = getDiffsForWeb(suiteSlug);
+        let diffs = [];
+
+        if (diffListSubset) {            
+            diffs = diffListSubset.map((file: string, index: number) => {
+                return processImageViaWeb(file, index, diffListSubset.length, suiteSlug);
+            });
+        } else {
+           diffs = getDiffsForWeb(suiteSlug);
+        }        
         
         res.send({ 
             suiteSlug: suiteSlug,
@@ -83,7 +91,6 @@ router.get('/summary', (req: any, res: any) => {
         summary.suiteSlug = '';
         summary.approvedFiles = [];
         summary.rejectedFiles = [];
-        summary.duration = 0;
         summary.failed = false;
         
         res.send(summaryCopy);

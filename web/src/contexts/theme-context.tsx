@@ -31,7 +31,7 @@ export function ThemeContext(props: { children: React.ReactNode; }) {
                     mode,
                     text: {
                         primary: mode === 'light' ? '#272727' : '#FCF7F8',
-                        secondary: mode === 'light' ? '#0B2027' : '#FBF2EF',
+                        secondary: mode === 'light' ? '#7D7D7D' : '#FBF2EF',
                         disabled: mode === 'light' ? 'rgba(0, 0, 0, 0.26)' : 'rgba(255, 255, 255, 0.3)',
                     },
                     background: {

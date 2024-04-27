@@ -1,7 +1,6 @@
-import React from 'react';
 import { ColorModeContext } from '../../contexts/theme-context';
 import { useTheme } from '@mui/material/styles';
-import { AppBar, Button, IconButton, Toolbar } from '@mui/material';
+import { AppBar, Button, IconButton, Toolbar, Typography } from '@mui/material';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import Menu from './menu';
@@ -9,6 +8,8 @@ import stylex from '@stylexjs/stylex';
 import { AppContext } from '../../contexts/app-context';
 import { Link, useLocation } from 'react-router-dom';
 import BreadcrumbsComponent from './breadcrumbs';
+import { style } from '../ui/helper-styles';
+import { useContext } from 'react';
 
 const s = stylex.create({
     menuContainer: {
@@ -28,8 +29,8 @@ const s = stylex.create({
 
 const Header = () => {
     const theme = useTheme();
-    const colorMode = React.useContext(ColorModeContext);
-    const { currentDiffIndex } = React.useContext(AppContext);
+    const colorMode = useContext(ColorModeContext);
+    const { currentDiffIndex, setCurrentDiffIndex, suiteName } = useContext(AppContext);
     const location = useLocation();
 
     return (
@@ -43,11 +44,22 @@ const Header = () => {
                 </div>
 
                 {!location.pathname.includes('/assessment') && currentDiffIndex !== null && (
-                    <Link to='/assessment' {...stylex.props(s.backToAssessment)}>
-                        <Button variant="contained" color="error">
-                            Back to ongoing assessment
+                    <div {...stylex.props(style.flex, style.gap1, s.backToAssessment, style.alignCenter)}>
+                        <Typography variant="h6" color="text.primary">
+                            Ongoing assessment
+                        </Typography>
+
+                        <Link to={'/assessment/' + suiteName}>
+                            <Button variant="contained" color="primary">
+                                Continue
+                            </Button>
+                        </Link>
+
+                        <Button variant="outlined" color="secondary" onClick={() => setCurrentDiffIndex(null)}>
+                            Abandon
                         </Button>
-                    </Link>
+
+                    </div>
                 )}
                 <IconButton
                     sx={{ ml: 1 }}

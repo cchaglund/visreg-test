@@ -11,6 +11,15 @@ let fileName = '';
 
 const suiteConfigCache = new Map<string, TestConfig>();
 
+export const bustSuiteConfigCache = async (incomingSuiteSlug: string) => {
+	if (suiteConfigCache.has(incomingSuiteSlug)) {
+		suiteConfigCache.delete(incomingSuiteSlug);
+		return true;
+	}
+
+	return false;
+}
+
 const runSuiteConfig = async (): Promise<void> => {
 	if (!suiteSlug) {
 		printColorText('runSuiteConfig: No suite path - see README', '31');
@@ -27,8 +36,6 @@ const runSuiteConfig = async (): Promise<void> => {
 	return new Promise((resolve, reject) => {
 		let child;
 
-		// I think I can use this for both prod and dev, but pathToCypressContextWrapperSafe I definitely can
-		// const pathToCypressContextWrapperSafe = './node_modules/visreg-test/dist/server/services/run-snaps-in-cypress-context.js';
 		const pathToCypressContextWrapper = path.join(__dirname, 'run-snaps-in-cypress-context.js');
 
 		child = spawn(`npx tsx ${pathToCypressContextWrapper}`, {
@@ -67,7 +74,7 @@ export const setSuiteConfigCache = (testConfig: TestConfig) => {
 		suiteSlug,
 		directory: suiteConfigDir,
 		files: filesInDir,
-		fileEndpoint: `http://localhost:${serverPort}/files/${suiteSlug}/`,
+		fileEndpoint: `http://localhost:${serverPort}/api/files/${suiteSlug}/`,
 	};
 
 	suiteConfigCache.set(suiteSlug, parsedTestConfig);

@@ -1,13 +1,7 @@
 import { Typography } from '@mui/material';
 import x from '@stylexjs/stylex';
-import { TestTypeActions } from './test-type-actions';
-import { TestRunPanel } from './test-run-panel';
-
-export type SummaryPayload = {
-    failed: boolean;
-    duration: number;
-    diffList: string[];
-};
+import { TestSelection } from './selection/test-selection';
+import { TestPanel } from './panel/test-panel';
 
 const s = x.create({
     testPage: {
@@ -47,8 +41,8 @@ const TestPage = () => {
             </Typography>
 
             <div>
-                <TestTypeActions />
-                <TestRunPanel />
+                <TestSelection />
+                <TestPanel />
             </div>
 
         </div>

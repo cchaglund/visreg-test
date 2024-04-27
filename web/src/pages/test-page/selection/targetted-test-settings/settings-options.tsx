@@ -1,11 +1,11 @@
 
 import { Chip, Typography, CardContent, useTheme } from '@mui/material';
-import { ChipContainer } from '../../components/ui/chips-container';
-import CollapsibleSection from '../../components/ui/collapsible-section';
-import { style } from '../../components/ui/helper-styles';
+import { ChipContainer } from '../../../../components/ui/chips-container';
+import CollapsibleSection from '../../../../components/ui/collapsible-section';
+import { style } from '../../../../components/ui/helper-styles';
 import x from '@stylexjs/stylex';
-import { useContext, useState } from 'react';
-import { TestContext } from '../../contexts/test-context';
+import { useContext, useEffect, useState } from 'react';
+import { TestContext } from '../../../../contexts/test-context';
 
 const s = x.create({
     targettedSettingsHoverLight: {
@@ -31,11 +31,12 @@ export const SettingsOptions = () => {
     const theme = useTheme();
 
     const {
+        testStatus,
         suiteConfig,
-        changeName,
-        changeViewport,
-        selectedName,
-        selectedViewport,
+        addTargetEndpoint,
+        addTargetViewport,
+        selectedTargetEndpoints,
+        selectedTargetViewports,
     } = useContext(TestContext);
 
     const [ targettedSelectionOpen, setTargettedSelectionOpen ] = useState(false);
@@ -45,6 +46,12 @@ export const SettingsOptions = () => {
         return viewport;
     });
 
+    useEffect(() => {
+        if (testStatus === 'running' || testStatus === 'terminating') {
+            setTargettedSelectionOpen(false);
+        }
+    }, [testStatus]);
+        
 
     return (
         <div {...x.props(
@@ -75,8 +82,8 @@ export const SettingsOptions = () => {
                                 <Chip
                                     key={index}
                                     label={endpoint.title}
-                                    onClick={() => changeName(endpoint.title)}
-                                    variant={selectedName === endpoint.title ? 'filled' : 'outlined'}
+                                    onClick={() => addTargetEndpoint(endpoint.title)}
+                                    variant={selectedTargetEndpoints.find(name => name === endpoint.title) ? 'filled' : 'outlined'}
                                     clickable
                                     color='secondary'
                                 />
@@ -93,8 +100,8 @@ export const SettingsOptions = () => {
                                 <Chip
                                     key={index}
                                     label={viewport}
-                                    onClick={() => changeViewport(viewport)}
-                                    variant={selectedViewport === viewport ? 'filled' : 'outlined'}
+                                    onClick={() => addTargetViewport(viewport)}
+                                    variant={selectedTargetViewports.find(vp => vp === viewport)  ? 'filled' : 'outlined'}
                                     clickable
                                     color='secondary'
                                 />

@@ -9,7 +9,6 @@ export type Summary = {
 	suiteSlug: string;
 	approvedFiles: string[];
 	rejectedFiles: string[];
-	duration: number;
 	failed: boolean;	
 }
 
@@ -39,19 +38,17 @@ export type DiffObject = {
 let diffFilesForWeb: DiffObject[] = [];
 let approvedFiles: string[] = [];
 let rejectedFiles: string[] = [];
-let duration: number;
+
 let failed: boolean;
 
 export type WebAssessmentArgs = {
 	files: string[];
-	duration: number;
 	failed: boolean;
 }
 
 export const assessInWeb = (args: WebAssessmentArgs) => {
-	const { files, duration: durationArg, failed: failedArg } = args;
+	const { files, failed: failedArg } = args;
 
-	duration = durationArg;
 	failed = failedArg;
 
 	const diffFiles = files.map((file: string, index: number) => {
@@ -94,7 +91,6 @@ export const getSummary = () => {
 		suiteSlug: programChoices.suite || '',
 		approvedFiles,
 		rejectedFiles,
-		duration,
 		failed
 	}
 

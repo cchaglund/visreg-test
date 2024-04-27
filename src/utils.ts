@@ -1,7 +1,13 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { program, programChoices } from './cli';
-import { ConfigurationSettings } from './types';
+import { ConfigurationSettings, Endpoint, VisregViewport } from './types';
+import { EndpointTestResult, EndpointTestResultsGroup, SummaryObject } from './visreg';
+
+type AgendaType = {
+	viewportsToTest: VisregViewport[],
+	endpointsToTest: Endpoint[],
+};
 
 export const projectRoot = process.cwd();
 
@@ -35,7 +41,7 @@ export const pathExists = (dirPath: string) => {
 
 export const hasFiles = (dirPath: string) => fs.readdirSync(dirPath).length > 0;
 
-export const parsedViewport = (viewport?: string | number[]) => {	
+export const parseViewport = (viewport?: VisregViewport) => {
 	if (!viewport) {
 		return;
 	}
@@ -170,13 +176,19 @@ export const getFileNameWithoutExtension = (fileName: string) => {
 	return cleanName;
 }
 
-export const getDiffingFiles = () => {
+export const getAllDiffingFiles = () => {
+	const allFiles = getFilesInDir(DIFF_DIR());
+	const allDiffingFiles = allFiles.filter(file => file.endsWith('.diff.png'));
+	return allDiffingFiles;
+}
+
+export const getDiffingFilesFromTestResult = () => {
 	if (!pathExists(DIFF_DIR())) return [];
 	
 	return fs.readdirSync(DIFF_DIR())
 		.filter(file => {
-			if (isSpecifiedTest()) {
-				return includedInSpecification(file)
+			if (isTargettedTest()) {
+				return includedInTarget(file)
 			}
 
 			return true;
@@ -196,26 +208,141 @@ export const getFileType = (fileName: string) => {
 	return 'baseline';
 }
 
-export const isSpecifiedTest = () => !!(programChoices.viewport || programChoices.endpointTitle);
+export const isTargettedTest = () => !!(programChoices.targetViewports.length || programChoices.targetEndpointTitles.length);
 
-export const includedInSpecification = (fileName: string) => {
-	if (!programChoices.viewport && !programChoices.endpointTitle) {
-		return true;
-	}
-
+export const includedInTarget = (fileName: string) => {
 	let viewportScreeningPassed = true
 	let endpointScreeningPassed = true
 
-	if (programChoices.viewport) {
-		const viewportString = programChoices.viewport?.toString();
-		viewportScreeningPassed = fileName.includes(viewportString);
-	}
+	const { targetViewports, targetEndpointTitles } = programChoices;
 
-	if (programChoices.endpointTitle) {
-		const endpointLower = programChoices.endpointTitle.toLowerCase();
-		const fileNameLowerAndReplacedSpaces = fileName.toLowerCase().replace(/ /g, '-');
-		endpointScreeningPassed = fileNameLowerAndReplacedSpaces.includes(endpointLower);
+	if (targetViewports.length) {
+		viewportScreeningPassed = !!targetViewports.find(targetVp => {			
+			return fileName.includes(targetVp.toString())
+		});
+	}	
+
+	if (targetEndpointTitles.length) {
+		endpointScreeningPassed = !!targetEndpointTitles.find(targetEp => {
+			const lowercaseTargetEp = targetEp.toLowerCase().replace(/ /g, '-');
+			const filenameLowercaseAndReplacedSpaces = fileName.toLowerCase().replace(/ /g, '-');
+			
+			return filenameLowercaseAndReplacedSpaces.includes(lowercaseTargetEp);
+		});
 	}	
 	
 	return viewportScreeningPassed && endpointScreeningPassed;
 }
+
+export const parseCypressSummary = (data: string) => {
+	const summaryObject: SummaryObject = {}
+
+	data.split('\n').slice(1, -1).forEach((line: string) => {
+		const text = line.match(/[a-zA-Z]+/)?.[0];
+		const number = line.match(/\d+/)?.[0];
+
+		if (text && number) {
+			summaryObject[(text.toLowerCase() as keyof SummaryObject)] = parseInt(number);
+		}
+	});
+
+	return summaryObject
+};
+
+export const parseAgenda = (data: string) => {
+	const agendaData: AgendaType = JSON.parse(data);
+
+	return agendaData.endpointsToTest.map(endpoint => {
+		return agendaData.viewportsToTest.map(viewport => `${endpoint.title} @ ${viewport.toString()}`).join(', ');
+	});
+}
+
+export const getSkippedEndpoints = (endpointTestResults: EndpointTestResultsGroup, testAgenda: string[]) => {
+	const skipped = testAgenda
+		.filter(endpoint => {
+			const passed = endpointTestResults.passing.find(e => e.testTitle === endpoint);
+			const failed = endpointTestResults.failing.find(e => e.testTitle === endpoint);			
+			const tested = passed || failed;
+
+			if (!tested) return true;
+		})
+		.map(endpoint => {
+			const [ endpointTitle, viewport ] = endpoint.split(' @ ');
+
+			const skippedEndpoint: EndpointTestResult = {
+				testTitle: endpoint,
+				endpointTitle,
+				viewport,
+			};
+
+			return skippedEndpoint;
+		});
+
+	return skipped;
+};
+
+
+export const getUnchangedEndpoints = (endpointTestResults: EndpointTestResultsGroup) => {
+	const diffList = getDiffingFilesFromTestResult();
+
+    const unchanged = endpointTestResults.passing.filter(endpoint => {
+        return !diffList.some(diffTitle => {
+            return endpoint.testTitle === diffTitle.replace('.diff.png', '');
+        });
+    })
+
+	return unchanged;
+}
+
+export const createFailingEndpointTestResult = (payload: string, errorSignature: RegExp) => {
+	// E.g. "1) suiteSlug - endpointTitle @ viewport: error message"
+	const errorMessages: string[] = payload.split(errorSignature);
+
+	let userTerminated = false;
+	const failingEndpoints = [];
+
+	for (const [index, message] of errorMessages.entries()) {
+		if (index === 0 || index % 2 !== 0) continue;
+		
+		const splitIndex = message.indexOf(':');
+		const roughTestTitle = message.substring(0, splitIndex).trim();
+		const testTitle = roughTestTitle.substring(roughTestTitle.lastIndexOf('\n')).trim();
+
+		// This Cypress error message occurs when the user terminates the running test, so it's not a real error
+		if (testTitle.match(/"before each" hook/)) {
+			userTerminated = true;
+			return { userTerminated, failingEndpoints };
+		}
+		
+		const atSymbolIndex = testTitle.indexOf('@');
+		const endpointTitle = testTitle.substring(0, atSymbolIndex).trim();
+		const viewport = testTitle.substring(atSymbolIndex + 1).trim();
+		const errorMessage = message.substring(splitIndex + 1).trim();
+
+		const failedEndpoint: EndpointTestResult = {
+			testTitle,
+			errorMessage,
+			endpointTitle,
+			viewport,
+		};
+
+		failingEndpoints.push(failedEndpoint);
+	}
+
+	return { userTerminated, failingEndpoints };
+}
+
+export const createPassingEndpointTestResult = (payload: string) => {
+	// E.g. "✓ Start @ samsung-s10 (6090ms)"
+	const testTitle = payload.replace(/✓| \(\d+ms\)/g, '').trim();
+	const [ endpointTitle, viewport ] = testTitle.split(' @ ');
+
+	const passedEndpoint: EndpointTestResult = {
+		testTitle,
+		endpointTitle,
+		viewport,
+	};
+
+	return passedEndpoint;
+}
+

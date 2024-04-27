@@ -75,6 +75,7 @@ run_visreg_test() {
         -v "$PROJECT_ROOT"/container/volumes/cypress-cache:/root/.cache/Cypress \
         -v "$PROJECT_ROOT"/../dist:/temp \
         -p 3000:3000 \
+        -p 8080:8080 \
         visreg-test
     else
         pretty_log "Running container..."
@@ -89,6 +90,7 @@ run_visreg_test() {
         -v "$PROJECT_ROOT"/container/volumes/app:/app \
         -v "$PROJECT_ROOT"/container/volumes/cypress-cache:/root/.cache/Cypress \
         -p 3000:3000 \
+        -p 8080:8080 \
         visreg-test
     fi
 }
@@ -114,8 +116,9 @@ do
 done
 
 
-# Join all container-args with a + (plus sign)
-RUNARGS=$(printf "+%s" "${container_args[@]}")
+# Join all container-args with a "=" (equals sign) - the plus sign is already 
+# used as a separator for visreg-test arguments (e.g. --viewports=desktop+tablet+mobile)
+RUNARGS=$(printf "=%s" "${container_args[@]}")
 
 run_visreg_test $env $RUNARGS
 

@@ -6,6 +6,8 @@ import FileOpenTwoToneIcon from '@mui/icons-material/FileOpenTwoTone';
 import { useContext } from 'react';
 import { SuiteContext } from '../suite-page';
 import { style } from '../../../components/ui/helper-styles';
+import CachedTwoToneIcon from '@mui/icons-material/CachedTwoTone';
+import { bustSuiteConfigCache } from '../../../loaders-and-fetchers';
 
 const s = x.create({
     leftAreaSection: {
@@ -27,15 +29,14 @@ const s = x.create({
 const SuiteDetailsSidebar = () => {
     const { suiteConfig } = useContext(SuiteContext);
 
-    const LeftArea = (props: { children: React.ReactNode; }) => (
-        <div {...x.props(s.leftArea)}>
-            {props.children}
-        </div>
-    );
+    const reloadSuiteData = async () => {
+        const res = await bustSuiteConfigCache(suiteConfig!.suiteSlug);
+        if (!res) return;
+        window.location.reload();
+    }
 
     return (
-        <LeftArea>
-
+        <div {...x.props(s.leftArea)}>
             {suiteConfig?.files.length && (
                 <div {...x.props(s.leftAreaSection)}>
                     <Typography variant="h6" mb={1} color='text.primary'>
@@ -87,7 +88,22 @@ const SuiteDetailsSidebar = () => {
                     </Typography>
                 </CollapsibleSection>
             </div>
-        </LeftArea>
+            <div {...x.props(style.mb2)}>
+                <CollapsibleSection heading={'Reload suite data'}>
+                    <Typography variant="body2" mb={1} color='text.primary'>
+                        Suite data is cached for optimization. Click below to force-reload suite data.
+                    </Typography>
+                    <Button
+                        variant='outlined' color="secondary"
+                        size='small'
+                        startIcon={<CachedTwoToneIcon />}
+                        onClick={() => reloadSuiteData()}
+                    >
+                        Reload
+                    </Button>                
+                </CollapsibleSection>
+            </div>
+        </div>
     );
 };
 

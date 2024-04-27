@@ -1,6 +1,6 @@
-import { TerminalWrapper } from '../../components/terminal/terminal-wrapper';
-import { TestResults } from './test-results';
+import { TestResults } from './results/test-results';
 import x from '@stylexjs/stylex';
+import { TerminalWrapper } from './terminal/terminal-wrapper';
 
 const s = x.create({
     testrunPanel: {
@@ -12,7 +12,7 @@ const s = x.create({
 });
 
 
-export const TestRunPanel = () => {
+export const TestPanel = () => {
     return (
         <div {...x.props(s.testrunPanel)}>
             <TerminalWrapper />

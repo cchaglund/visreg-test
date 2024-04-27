@@ -3,7 +3,7 @@ import ImageComponent from './image';
 import InformationTable from './information-table';
 import stylex from '@stylexjs/stylex';
 import PreviewHeader from './viewer-header';
-import { Accordion, AccordionDetails, AccordionSummary } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Typography } from '@mui/material';
 import { ExpandMore } from '@mui/icons-material';
 import EndpointsTable from '../endpoints-info-table/endpoints-table';
 import { Image } from '../../types';
@@ -11,18 +11,19 @@ import { Image } from '../../types';
 const s = stylex.create({
 	wrapper: {
 		maxHeight: '-webkit-fill-available',
+		width: '100%',
 	},
 	container: {
 		height: '100%',
 		width: 'auto',
 		maxWidth: '100vw',
 		margin: '0 auto',
-		padding: '2rem',
+		padding: '2rem 4rem',
 		alignItems: 'center',
 		justifyContent: 'space-between',
 		display: 'flex',
-		columnGap: '2rem',
-		'@media (max-width: 1000px)': {
+		columnGap: '4rem',
+		'@media (max-width: 1100px)': {
 			flexWrap: 'wrap',
 			justifyContent: 'center',
 			alignItems: 'space-between',
@@ -37,9 +38,7 @@ const s = stylex.create({
 		minWidth: '375px',
 	},
 	column2: {
-		maxWidth: '800px',
-		width: 'auto',
-		minWidth: '375px',
+		width: '535px',
 	},
 	accordion: {
 		'::before': {
@@ -86,7 +85,9 @@ const PreviewComponent = (props: { image: Image; children?: React.ReactNode; }) 
 								aria-controls="panel1-content"
 								id="panel1-header"
 							>
-								Endpoint configuration
+								<Typography variant='body1'>
+									Endpoint configuration
+								</Typography>
 							</AccordionSummary>
 							<AccordionDetails>
 								<EndpointsTable endpoints={[ image.endpoint ]} />

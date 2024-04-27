@@ -8,9 +8,9 @@ env=$ENV
 args=$ARGS
 
 # Split the args string into an array
-IFS='+' read -r -a parsedArgs <<< "$ARGS"
+IFS='=' read -r -a parsedArgs <<< "$ARGS"
 
-# If the mounted package.json has changed update dependencies
+# If the mounted package.json has changed, update dependencies
 if [[ ! -f prev-package.json ]] || [[ -f prev-package.json && ! -z "$(diff -q package.json prev-package.json)" ]]; then
     pretty_log "Running npm install..."
     echo ""
@@ -47,7 +47,7 @@ fi
 pretty_log "Running visreg-test package..."
 
 
-if [[ ! -z "$ARGS" && "$ARGS" != "+" ]]; then
+if [[ ! -z "$ARGS" && "$ARGS" != "=" ]]; then
     pretty_log "Arguments: ${parsedArgs[*]}"
 fi
 

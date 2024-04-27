@@ -20,13 +20,13 @@ export const style = x.create({
     justifyCenter: {
         justifyContent: 'center',
     },
-    gapS: {
+    gap05: {
         gap: '0.5rem',
     },
-    gapM: {
+    gap1: {
         gap: '1rem',
     },
-    gapL: {
+    gap2: {
         gap: '2rem',
     },
     gap4: {
@@ -40,6 +40,51 @@ export const style = x.create({
     },
     gap8: {
         gap: '8rem',
+    },
+    colgap05: {
+        columnGap: '0.5rem',
+    },
+    colgap1: {
+        columnGap: '1rem',
+    },
+    colgap2: {
+        columnGap: '2rem',
+    },
+    colgap4: {
+        columnGap: '4rem',
+    },
+    colgap6: {
+        columnGap: '6rem',
+    },
+    colgap7: {
+        columnGap: '7rem',
+    },
+    colgap8: {
+        columnGap: '8rem',
+    },
+    rowgap05: {
+        rowGap: '0.5rem',
+    },
+    rowgap1: {
+        rowGap: '1rem',
+    },
+    rowgap2: {
+        rowGap: '2rem',
+    },
+    rowgap3: {
+        rowGap: '3rem',
+    },
+    rowgap4: {
+        rowGap: '4rem',
+    },
+    rowgap6: {
+        rowGap: '6rem',
+    },
+    rowgap7: {
+        rowGap: '7rem',
+    },
+    rowgap8: {
+        rowGap: '8rem',
     },
     mt1: {
         marginTop: '1rem',
@@ -59,6 +104,9 @@ export const style = x.create({
     mb4: {
         marginBottom: '4rem',
     },
+    flexWrap: {
+        flexWrap: 'wrap',
+    },
     noWrapFlex: {
         flexWrap: 'nowrap',
     },
@@ -73,5 +121,11 @@ export const style = x.create({
     },
     br1: {
         borderRadius: '1rem',
+    },
+    widthMinContent: {
+        width: 'min-content',
+    },
+    widthMaxContent: {
+        width: 'max-content',
     },
 });

@@ -81,7 +81,7 @@ const startServer = (programChoices: ProgramChoices, diffFiles?: DiffObject[]) =
             origin: 'http://localhost:' + devPort
         }));
 
-        console.log('Development mode', process.env.NODE_ENV);
+        console.log('Development mode');
     } else {
         // Serve static files
         app.use(express.static(path.join(__dirname, 'app')));

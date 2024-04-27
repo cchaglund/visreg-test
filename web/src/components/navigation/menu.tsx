@@ -18,11 +18,6 @@ import {
 } from '@mui/material';
 
 const drawer = stylex.create({
-    closeDrawerContainer: {
-        width: '100%',
-        justifyContent: 'flex-start',
-        padding: '0',
-    },
     closeIcon: {
         marginLeft: '-0.5rem',
     },
@@ -65,7 +60,7 @@ export default function Menu() {
 
     const DrawerList = (
         <Box sx={{ width: 250 }} role="presentation" component={'nav'}>
-            <Button {...stylex.props(drawer.closeDrawerContainer)} onClick={toggleDrawer(false)}>
+            <Button sx={{ p: 0, width: '100%' }} onClick={toggleDrawer(false)}>
                 <AppBar position="static" color='transparent' sx={{ p: 1, width: '100%', zIndex: 2 }}>
                     <Toolbar>
                         <Close fontSize='large' {...stylex.props(drawer.closeIcon)} />

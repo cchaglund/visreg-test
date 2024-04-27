@@ -43,15 +43,12 @@ export default defineConfig({
 								{ 
 									showHidden: false,
 									depth: null,
-									colors: true
+									colors: false
 								})
-							: `\x1b[36m${message}\x1b[0m`;
+							: message;
 					});
 
-					console.log('\n--- Logs ---');
 					console.log(...sanitizeMessages);
-					console.log('\n');
-
 					return null;
 				}
 			})

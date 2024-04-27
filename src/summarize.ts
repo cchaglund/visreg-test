@@ -1,5 +1,5 @@
 import { programChoices } from './cli';
-import { getDiffingFiles, printColorText, cleanUp } from './utils';
+import { getDiffingFilesFromTestResult, printColorText, cleanUp } from './utils';
 
 let approvedFiles: string[] = [];
 let rejectedFiles: string[] = [];
@@ -13,25 +13,25 @@ export const summarizeTest = () => {
 	console.log(`\x1b[2mType: \x1b[0m\x1b[0m${programChoices.testType}\x1b[0m`)
 	console.log(`\x1b[2mSuite: \x1b[0m\x1b[0m${programChoices.suite}\x1b[0m`)
 
-	programChoices.endpointTitle && 
-		console.log(`\x1b[2mEndpoint: \x1b[0m\x1b[0m${programChoices.endpointTitle}\x1b[0m`)
+	programChoices.targetEndpointTitles.length && 
+		console.log(`\x1b[2mEndpoint: \x1b[0m\x1b[0m${programChoices.targetEndpointTitles.join(', ')}\x1b[0m`)
 
-	programChoices.viewport &&
-		console.log(`\x1b[2mViewport: \x1b[0m\x1b[0m${programChoices.viewport}\x1b[0m`)
+	programChoices.targetViewports.length &&
+		console.log(`\x1b[2mViewport: \x1b[0m\x1b[0m${programChoices.targetViewports.join(', ')}\x1b[0m`)
 
 	duration &&
 		console.log(`\x1b[2mDuration: \x1b[0m\x1b[0m${duration}s\x1b[0m`)
 }
 
 const summarizeAssessment = () => {
-	let files = getDiffingFiles();
+	let files = getDiffingFilesFromTestResult();
 
 	if (!files) {
 		printColorText('🎉  Visual regression passed! (No diffs found)', '32');
 		process.exit();
 	}
 		
-	printColorText(`Total diffs: ${approvedFiles.length + rejectedFiles.length}`, '2');
+	printColorText(`Total diffs assessed: ${approvedFiles.length + rejectedFiles.length}`, '2');
 
 	if (approvedFiles.length > 0) {
 		console.log(`\x1b[2mApproved: \x1b[0m\x1b[32m${approvedFiles.length}\x1b[0m`)
@@ -42,11 +42,10 @@ const summarizeAssessment = () => {
 	}
 }
 
-export const summarizeResultsAndQuit = (approvedFiles: string[], rejectedFiles: string[], failed: boolean, duration: number) => {
-    approvedFiles = approvedFiles;
-    rejectedFiles = rejectedFiles;
-    failed = failed;
-    duration = duration;
+export const summarizeResultsAndQuit = (approvedFilesArg: string[], rejectedFilesArg: string[], failedArg: boolean) => {
+    approvedFiles = approvedFilesArg;
+    rejectedFiles = rejectedFilesArg;
+    failed = failedArg;
     
 	printColorText('\n\nSummary', '4');
 

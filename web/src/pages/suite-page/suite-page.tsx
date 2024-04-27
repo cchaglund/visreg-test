@@ -19,7 +19,7 @@ const defaultValue: SuiteContextType = {
 
 export const SuiteContext = createContext(defaultValue);
 
-type ImagesList = {
+export type ImagesList = {
     baselineList: string[];
     diffList: string[];
     receivedList: string[];

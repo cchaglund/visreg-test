@@ -24,6 +24,7 @@ const sendSuiteConf = (props: TestConfig) => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
+
             return response.text();
         })
         .catch(error => {

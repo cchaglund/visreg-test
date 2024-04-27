@@ -1,7 +1,8 @@
 import Button from '@mui/material/Button';
-import { Typography, List, ListItem, Divider, /* CircularProgress, */ Box } from '@mui/material';
+import { Typography, List, ListItem, Divider, Box, Dialog, DialogContent } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import React, { useContext, useEffect } from 'react';
+import { api } from '../../shared'
 import {
     useLoaderData,
     useNavigate,
@@ -12,7 +13,6 @@ export type SummaryType = {
     suiteSlug: string;
     approvedFiles: string[];
     rejectedFiles: string[];
-    duration: number;
     failed: boolean;
 };
 
@@ -37,11 +37,22 @@ type SummaryData = {
 const AssessmentSummary = () => {
     const { setCurrentDiffIndex } = useContext(AppContext);
     const { summary } = useLoaderData() as SummaryData;
+    const [ appQuit, setAppQuit ] = React.useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
         setCurrentDiffIndex(null);
     }, [ setCurrentDiffIndex ]);
+
+    const quitApp = async () => {
+        try {
+            fetch(`${api}/terminate-process`, { method: 'POST' })
+        } catch (error) {
+            //
+        }
+
+        setAppQuit(true);
+    };
 
     const ImagesList = ({ files, title }: { files: string[]; title: string; }) => (
         <div>
@@ -69,7 +80,24 @@ const AssessmentSummary = () => {
     return (
         <Box id="summary-container" bgcolor={'background.default'} sx={summaryStyle}>
 
-            {/* {!summary && <CircularProgress />} */}
+            <Dialog open={appQuit}>
+                <DialogContent>
+                    <Box
+                        component="div"
+                        sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            m: 'auto',
+                            width: 'fit-content',
+                            p: 1,
+                        }}
+                    >
+                        <Typography variant="h6">
+                            App quit. You can now close this window
+                        </Typography>
+                    </Box>
+                </DialogContent>
+            </Dialog>
 
             {summary && (
                 <Grid container>
@@ -84,7 +112,7 @@ const AssessmentSummary = () => {
                     <Grid xs={6}>
                         <ImagesList title={'Rejected'} files={summary.rejectedFiles} />
                     </Grid>
-                    <Grid xs={12} sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}>
+                    <Grid xs={12} sx={{ display: 'flex', justifyContent: 'center', mt: 10, gap: '1rem' }}>
                         <Button
                             variant='contained'
                             color='primary'
@@ -92,6 +120,15 @@ const AssessmentSummary = () => {
                             onClick={() => navigate('/suite/' + summary.suiteSlug)}
                         >
                             Back to suite
+                        </Button>
+
+                        <Button
+                            variant='contained'
+                            color='secondary'
+                            size='large'
+                            onClick={() => quitApp()}
+                        >
+                            Quit
                         </Button>
                     </Grid>
                 </Grid>

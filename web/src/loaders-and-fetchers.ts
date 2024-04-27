@@ -11,11 +11,11 @@ export type GetSuiteImagesListParams = {
     suiteSlug: string;
 };
 
-export const getAssessmentData = async (suiteSlug?: string): Promise<AssessmentData> => {
+export const getAssessmentData = async (suiteSlug?: string, diffListSubset?: string[]): Promise<AssessmentData> => {    
     const response = await fetch(api + '/assessment/diffs-data', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ suiteSlug }),
+        body: JSON.stringify({ suiteSlug, diffListSubset}),
     });
 
     const data = await response.json();
@@ -65,6 +65,21 @@ export const getSuiteImagesList = async (suiteSlug?: string) => {
         receivedList
     };
 };
+
+export const bustSuiteConfigCache = async (suiteSlug: string) => {
+    try {
+        const response = await fetch(api + '/suite/bust-suite-config-cache', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ suiteSlug }),
+        });
+        
+        return await response.json();
+    } catch (error) {
+        console.error('error', error);
+        return false;
+    }
+}
 
 export const getImagesList = async (args: GetImagesListParams) => {
     const { suiteSlug, typeOfImage } = args;

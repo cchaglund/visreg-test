@@ -4,7 +4,7 @@ import Controls from './controls';
 import Progress from './progress';
 import { useLoaderData, useNavigate } from 'react-router-dom';
 import { AssessmentData, DiffObject } from './types';
-import { getImageDetails } from '../../loaders';
+import { getImageDetails } from '../../loaders-and-fetchers';
 import PreviewComponent from '../../components/image-viewer/preview-component';
 
 
@@ -53,7 +53,6 @@ const AssessmentPage = () => {
 		getFile();
 	}, [ assessmentData, currentDiff?.imageName, currentDiffIndex, setCurrentDiffIndex ]);
 
-
 	useEffect(() => {
 		setSuiteName(assessmentData?.suiteSlug);
 	}, [ assessmentData?.suiteSlug, setSuiteName ]);
@@ -71,11 +70,6 @@ const AssessmentPage = () => {
 
 	const doAssessAction = async (action: string) => {
 		if (!assessmentData) return;
-
-		// "/Users/christoferhaglund/Code/misc/visreg/repo/visual-regression/sandbox-project/suites/test-suite/snapshots/snaps/AI help @ samsung-s10.base.png"
-		// console.log('currdiff', currentDiff);
-		// return;
-		
 
 		await fetch(api + '/assessment/' + action, {
 			method: 'POST',
@@ -97,15 +91,14 @@ const AssessmentPage = () => {
 	if (!currentDiff) return null;
 
 	return (
-		<div>
+		<>
 			{imageDetails && (
 				<PreviewComponent image={imageDetails}>
 					<Controls doAssessAction={(action: string) => doAssessAction(action)} />
 					<Progress currentDiffIndex={currentDiffIndex} diffFiles={assessmentData.diffFiles} />
 				</PreviewComponent>
 			)}
-
-		</div>
+		</>
 	);
 };
 

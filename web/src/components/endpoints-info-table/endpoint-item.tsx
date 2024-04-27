@@ -15,6 +15,7 @@ import x from '@stylexjs/stylex';
 
 const s = x.create({
     chipsContainer: {
+        width: '100%',
         display: 'flex',
         flexWrap: 'wrap',
         gap: '0.5rem',
@@ -50,11 +51,13 @@ const EndpointListItem = (props: { row: Endpoint; }) => {
                 <TableCell>
                     {row.path}
                 </TableCell>
-                <TableCell {...x.props(s.chipsContainer)}>
-                    {Object.entries(row)
-                        .filter(([ key ]) => key !== 'title' && key !== 'path')
-                        .map(([ key ]) => <Chip key={key} label={key} variant='filled' />
-                    )}
+                <TableCell>
+                    <div {...x.props(s.chipsContainer)}>
+                        {Object.entries(row)
+                            .filter(([ key ]) => key !== 'title' && key !== 'path')
+                            .map(([ key ]) => <Chip key={key} label={key} variant='filled' />
+                        )}
+                    </div>
                 </TableCell>
             </TableRow>
             {Object.keys(row).length > 2 && (
@@ -77,7 +80,7 @@ const EndpointListItem = (props: { row: Endpoint; }) => {
                                                             <TableCell>{
                                                                 // Stringify values
                                                                 !Array.isArray(value) && typeof value === 'object'
-                                                                    ? JSON.stringify(value)
+                                                                    ? JSON.stringify(value).replace(/:/g, ': ').replace(/,/g, ', ')
                                                                     : value.toString()
                                                             }</TableCell>
                                                         </TableRow>

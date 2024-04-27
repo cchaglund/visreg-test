@@ -1,6 +1,6 @@
 import { Command } from 'commander';
-import { ProgramChoices } from './types';
-import { createScaffold, parsedViewport } from './utils';
+import { CliProgramChoices, ProgramChoices, TestTypeSlug, VisregViewport } from './types';
+import { createScaffold, parseViewport } from './utils';
 
 export const initialCwd = process.cwd();
 
@@ -8,8 +8,8 @@ export const program = new Command();
 
 program
 	.option('-s, --suite <char>')
-	.option('-e, --endpoint-title <char>')
-	.option('-v, --viewport <char>')
+	.option('-e, --endpoint-titles <char>')
+	.option('-v, --viewports <char>')
 	.option('-f, --full-test [specs]')
 	.option('-d, --diffs-only [specs]')
 	.option('-a, --assess-existing-diffs [specs]')
@@ -25,7 +25,7 @@ program
 program.parse();
 
 const extractProgramChoices = () => {
-	const opts: ProgramChoices = program.opts();
+	const opts: CliProgramChoices = program.opts();
 
 	if (opts.scaffold || opts.scaffoldTs) {
 		createScaffold();
@@ -56,13 +56,25 @@ const extractProgramChoices = () => {
 			testType = 'targetted';
 			specificationShorthand = opts.targetted;
 			break;
-	}
+	}	
+
+	const targetViewportList = opts.viewports 
+		? opts.viewports.split('+') as VisregViewport[]
+		: [];
+
+	const targetViewports = targetViewportList
+		.map((vp) => parseViewport(vp))
+		.filter((vp) => vp) as VisregViewport[];
 	
+	const targetEndpointTitles = opts.endpointTitles
+		? opts.endpointTitles.split('+')
+		: [];	
+		
     const args: ProgramChoices = {
 		suite: opts?.suite,
-		endpointTitle: opts?.endpointTitle,
-        viewport: parsedViewport(opts?.viewport),
-		testType,
+		targetEndpointTitles,
+        targetViewports,
+		testType: (testType as TestTypeSlug),
 		gui: opts?.gui,
 		snap: opts?.snap,
 		containerized: opts?.containerized,
@@ -82,26 +94,38 @@ const extractSpecificationShorthand = (args: ProgramChoices, specificationShorth
     const atPosition = shortSpec.indexOf('@') === -1 ? shortSpec.length : shortSpec.indexOf('@');	
 
     let suite = '';
-    let endpointTitle = '';
+    let endpointTitles = '';
 
     if (colonPosition > 0) {
         suite = shortSpec.substring(0, colonPosition);
-        endpointTitle = shortSpec.substring(colonPosition + 1, atPosition);
+        endpointTitles = shortSpec.substring(colonPosition + 1, atPosition);
     } else if (colonPosition === -1) {
 		suite = shortSpec.substring(0, atPosition);
     } else {		
-        endpointTitle = shortSpec.substring(1, atPosition);
+        endpointTitles = shortSpec.substring(1, atPosition);
     }
 
-    const viewport = parsedViewport(shortSpec.substring(atPosition + 1, shortSpec.length));
+	const endpointTitlesList = endpointTitles ? endpointTitles.split('+') : [];
 
-    const updatedArgs = {
+	const viewportsString = shortSpec.substring(atPosition + 1, shortSpec.length);
+	const viewports = viewportsString 
+		? viewportsString.split('+') as VisregViewport[]
+		: [];
+
+	const viewportsList = viewports
+		.map((vp) => parseViewport(vp))
+		.filter((vp) => vp) as VisregViewport[];
+	
+	const specifiedTargetEndpoint = endpointTitlesList;
+	const specifiedViewport = viewportsList;
+
+    const updatedArgs: ProgramChoices = {
 		...args,
 		suite: args.suite || suite,
-        endpointTitle : args.endpointTitle || endpointTitle,
-        viewport : args.viewport || viewport,
+        targetEndpointTitles : args.targetEndpointTitles.length ? args.targetEndpointTitles : specifiedTargetEndpoint,
+		targetViewports : args.targetViewports.length ? args.targetViewports : specifiedViewport as VisregViewport[],
     }
-
+	
     return updatedArgs;
 }
 
