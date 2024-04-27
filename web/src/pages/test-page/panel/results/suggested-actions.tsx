@@ -10,6 +10,7 @@ import { TestContext } from '../../../../contexts/test-context';
 import ImageTwoToneIcon from '@mui/icons-material/ImageTwoTone';
 import SkipNextTwoToneIcon from '@mui/icons-material/SkipNextTwoTone';
 import ErrorTwoToneIcon from '@mui/icons-material/ErrorTwoTone';
+// import GpsFixedTwoToneIcon from '@mui/icons-material/GpsFixedTwoTone';
 import { ResultsColumn } from './results-column';
 
 export const SuggestedActions = () => {

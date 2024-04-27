@@ -295,7 +295,6 @@ export const getUnchangedEndpoints = (endpointTestResults: EndpointTestResultsGr
 }
 
 export const createFailingEndpointTestResult = (payload: string, errorSignature: RegExp) => {
-	// E.g. "1) suiteSlug - endpointTitle @ viewport: error message"
 	const errorMessages: string[] = payload.split(errorSignature);
 
 	let userTerminated = false;

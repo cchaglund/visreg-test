@@ -514,17 +514,17 @@ const onDataOut = (data: Buffer, ws: WebSocket, diffList?: string[]) => {
 		return;
 	} 
 
-	const failedRegexp = new RegExp(`(\\d+\\)\\s*${programChoices.suite})`, 'g'); // e.g. 1) suiteSlug
-	if (dataString.match(failedRegexp)) {		
+	const failedRegexp = new RegExp(`(\\d+\\)\\s*Suite: "${programChoices.suite}")`, 'g'); // e.g. 1) Suite: "suiteSlug"
+	if (dataString.match(failedRegexp)) {
 		const { userTerminated, failingEndpoints } = createFailingEndpointTestResult(dataString, failedRegexp);
 		userTerminatedTest = userTerminated;
 		endpointTestResults.failing = [...endpointTestResults.failing, ...failingEndpoints];
 		return;
 	}
 
-	const failedInline = new RegExp(`(\\d+\\)\\s*[\\w\\s-]+\\s*\\@\\s*[\\w\\s-]+)`, 'g'); // e.g. 1) Start page @ samsung-s10
+	const failedInline = /^\s*(\d+\)\s*[\w\s-]+\s*\@\s*[\w\s-]+)/; // e.g. 1) Start page @ samsung-s10
 	if (dataString.match(failedInline)) {
-		dataPackage.color = '#c81d25';
+		dataPackage.color = '#FE4A49';
 
 		ws.send(JSON.stringify(dataPackage));
 		return;
@@ -544,6 +544,10 @@ const onDataOut = (data: Buffer, ws: WebSocket, diffList?: string[]) => {
 	
 	if (dataString.includes('Spec Ran')) {
 		cypressSummary = parseCypressSummary(dataString);
+		return;
+	}
+
+	if (dataString.match(/(Results)/)) {
 		return;
 	}
 
@@ -587,6 +591,7 @@ const onCypressClose = (ws: WebSocket, resolve: () => void) => {
 		}
 	});
 
+	printColorText(`Test complete\n`, '2');
 	ws.send(summary);
 	resolve();
 	return;

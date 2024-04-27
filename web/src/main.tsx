@@ -12,7 +12,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import AssessmentPage from './pages/assessment-page/assessment-page.tsx';
 import AssessmentSummary from './pages/assessment-page/assessment-summary.tsx';
 import Home from './pages/home-page/home-page.tsx';
-import { getAssessmentData, getImageDetails, GetFileDetailsParams, getImagesList, GetImagesListParams, getProjectInformation, getSuiteConfig, getSuiteImagesList, getSummary } from './loaders-and-fetchers.ts';
+import { getAssessmentData, getImageDetails, GetFileDetailsParams, getImagesList, GetImagesListParams, getProjectInformation, getSuiteConfig, getSuiteImagesList, getSummary, getDocs } from './loaders-and-fetchers.ts';
 import SuitePage from './pages/suite-page/suite-page.tsx';
 import PreviewPage from './pages/view-image-page/preview-page.tsx';
 import ImageList from './pages/suite-page/image-list.tsx';
@@ -21,6 +21,7 @@ import ImagesOverview from './pages/suite-page/images-overview.tsx';
 // import { AssessmentData } from './pages/assessment-page/types';
 import TestPage from './pages/test-page/test-page.tsx';
 import { TestContextWrapper } from './contexts/test-context.tsx';
+import DocsPage from './pages/docs-page/docs-page.tsx';
 
 const router = createBrowserRouter([
 	{
@@ -45,6 +46,23 @@ const router = createBrowserRouter([
 						return [ {
 							path: '/',
 							slug: 'Home',
+						} ];
+					},
+				},
+			},
+			{
+				path: "/docs",
+				element: <DocsPage />,
+				index: true,
+				loader: async () => {					
+					const docs = await getDocs();
+					return { docs };
+				},
+				handle: {
+					crumb: () => {
+						return [ {
+							path: '/docs',
+							slug: 'Docs',
 						} ];
 					},
 				},

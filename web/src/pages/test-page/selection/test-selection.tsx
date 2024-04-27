@@ -37,7 +37,7 @@ export const TestSelection = () => {
 
             <TestOption
                 title='Targetted'
-                description='Run a test of a specific endpoint and/or viewport'
+                description='Test specific endpoints and/or viewports'
                 testType='targetted'
             >
                 <TargettedTestSettings />

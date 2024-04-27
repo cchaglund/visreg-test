@@ -220,10 +220,10 @@ export const runTest = (props: TestConfig): void => {
         })
     });
 
-    describe(`${suiteName}`, () => {
+    describe(`Suite: "${suiteName}"`, () => {
 
         if (testType === 'lab') {
-            describe('Lab' + limitText, () => {
+            describe('Lab mode' + limitText, () => {
                 /**
                  * Lab tests require a viewport and endpoint to be specified.
                  * Viewport can be anything in lab mode, but endpoint must still be a valid endpoint.
@@ -235,7 +235,7 @@ export const runTest = (props: TestConfig): void => {
         }
 
         if (testType === 'full-test') {
-            describe('Full visual regression test' + limitText, () => {
+            describe('Full test' + limitText, () => {
                 viewportsToTest.forEach((vp) => {
                     endpointsToTest.forEach((ep) => {
                         takeSnaps(props, vp, ep, noSnap);
@@ -245,7 +245,7 @@ export const runTest = (props: TestConfig): void => {
         }
 
         if (testType === 'targetted') {
-            describe('Targetted test' + limitText, () => {                
+            describe('Targetted' + limitText, () => {                
                 viewportsToTest.forEach((vp) => {
                     endpointsToTest.forEach((ep) => {
                         takeSnaps(props, vp, ep, noSnap);
@@ -255,7 +255,7 @@ export const runTest = (props: TestConfig): void => {
         }
 
         if (testType === 'diffs-only') {
-            describe('Retesting diffing snapshots only' + limitText, () => {
+            describe('Diffs only' + limitText, () => {
                 if (!diffList) return;
 
                 diffList.forEach(diffSnapName => {

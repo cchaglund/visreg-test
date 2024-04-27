@@ -34,6 +34,11 @@ export const getProjectInformation = async () => {
     return projectInformation;
 };
 
+export const getDocs = async () => {
+    const response = await fetch(api + '/docs');
+    return await response.text();
+};
+
 export const getSuiteConfig = async (suiteSlug?: string): Promise<TestConfig> => {
     const response = await fetch(api + '/suite/get-suite-config', {
         method: 'POST',

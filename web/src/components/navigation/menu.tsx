@@ -156,7 +156,20 @@ export default function Menu() {
                         </Collapse>
                     </div>
                 ))}
+
+                <ListItem key={'docs'} disablePadding>
+                    <ListItemButton
+                        onClick={() => navigateTo('/docs')}
+                        selected={location.pathname === '/docs'}
+                    >
+                        <ListItemText
+                            primary={'Documentation'}
+                            primaryTypographyProps={{ color: 'text.primary' }}
+                        />
+                    </ListItemButton>
+                </ListItem>
             </List>
+
         </Box>
     );
 

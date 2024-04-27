@@ -9,6 +9,7 @@ import getSuiteConfig from './suite/get-suite-config';
 import deliverSuiteConfig from './suite/deliver-suite-config';
 import runTest from './run-test/run-test';
 import bustSuiteConfigCache from './suite/bust-suite-config-cache';
+import docs from './general/docs';
 
 const express = require('express');
 const router = express.Router();
@@ -27,6 +28,7 @@ router.use('/api/files', file);
 // General
 router.use('/api/', projectInformation);
 router.use('/api/', terminateProcess);
+router.use('/api/', docs);
 
 // Suite
 router.use('/api/suite', getSuiteConfig);

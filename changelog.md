@@ -1,3 +1,8 @@
+5.0.0
+- Can now run tests in the web gui
+- You can now specify multiple endpoints and viewports in a single flag or shorthand.
+- Added documentation to the web interface
+
 4.0.8
 - Web interfece: all files in suite config can now be opened as files
 - Styling

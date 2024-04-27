@@ -104,6 +104,15 @@ export const style = x.create({
     mb4: {
         marginBottom: '4rem',
     },
+    p1: {
+        padding: '1rem',
+    },
+    p2: {
+        padding: '2rem',
+    },
+    p3: {
+        padding: '3rem',
+    },
     flexWrap: {
         flexWrap: 'wrap',
     },
@@ -127,5 +136,14 @@ export const style = x.create({
     },
     widthMaxContent: {
         width: 'max-content',
+    },
+    width100: {
+        width: '100%',
+    },
+    lightText: {
+        color: '#FCF7F8',
+    },
+    darkText: {
+        color: '#272727',
     },
 });

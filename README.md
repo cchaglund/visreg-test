@@ -6,10 +6,14 @@
 
 ## Release notes
 
+**Can now run tests in the [web interface](#web-interface) in v5.0.0!**
 
-**Added a [web interface](#web-interface) in v4.0.0!**
+>❗<u>Breaking change updating to 5.0.0</u>:
+> - Changes to a couple of flags: `--endpoint-title` is now `--endpoint-titles`, and `--viewport` is now `--viewports`, because you can now specify multiple endpoints and viewports in a single flag (read more in the [flags](#flags) section).
 
-**Added [docker support](#docker) in v3.0.0!**
+**Added a [web interface](#web-interface) in v4.0.0**
+
+**Added [docker support](#docker) in v3.0.0**
 
 >❗<u>Breaking change updating to 3.0.0</u>:
 > - Your suites directories will need to be moved into a [directory called "suites"](#folder-structure) in the root of your project (this is to make it easier to find the tests when running the containerized version of the test runner).
@@ -68,7 +72,7 @@
   - [Developing with the container](#developing-with-the-container)
   - [Testing the package before publishing](#testing-the-package-before-publishing)
   - [Web interface](#web-interface-1)
-- [Web inteface - from the container](#web-inteface---from-the-container)
+  - [Web inteface - from the container](#web-inteface---from-the-container)
 - [Optional Configuration](#optional-configuration)
 - [Notes](#notes)
 - [Credits](#credits)
@@ -487,11 +491,11 @@ Flags just allow you to skip the UI and run specific tests. The complete list is
 # <suite name> is the directory name of the suite to run
 -s, --suite <suite name>
 
-# <endpoint title> is the title, but where any spaces must be replaced by dashes, e.g. "Getting Started" becomes "Getting-Started" (or "getting-started" as it's case insensitive)
--e, --endpoint-title <endpoint title> 
+# <endpoint titles> is string of titles but where any spaces must be replaced by dashes, e.g. "Getting Started" becomes "Getting-Started" (or "getting-started" as it's case insensitive). To test multiple endpoints, separate them with a "+", e.g. "Home+Getting-Started"
+-e, --endpoint-titles <endpoint titles> 
 
-# <viewport> is a string, e.g. "iphone-6" or "1920,1080"
--v, --viewport <viewport>
+# <viewports> is a string of viewports, e.g. "iphone-6" or "1920,1080". To test multiple viewports, separate them with a "+", e.g. "iphone-6+1920,1080"
+-v, --viewports <viewports>
 
 # scaffolds a test suite for you to get started with
 -sc, --scaffold
@@ -524,7 +528,7 @@ The shorthand specification format is:
 suite:endpoint-title@viewport
 ```
 
-If you only have one suite, you can omit the suite name. Endpoint is prefaced with `:`, viewport is prefaced with  `@`. All are optional. Non-string viewport values should be separated by a comma, e.g. `360,1400`.
+If you only have one suite, you can omit the suite name. Endpoint is prefaced with `:`, viewport is prefaced with  `@`. All are optional. Non-string viewport values should be separated by a comma, e.g. `360,1400`. To test multiple endpoints or viewports, separate them with a `+`, e.g. `test-suite:home-page+another-endpoint@samsung-s10+1920,1080`.
 
 
 **Examples:**
@@ -675,7 +679,8 @@ Want to contribute? Great! Here's how to get started
 
 - Clone this repo and run `npm install` to install the dependencies, e.g. into a directory called `visreg/repo`.
 - Create a directory for testing the module elsewhere (e.g. `visreg/dev-testing-grounds`) and set up the tests according to the instructions above.
-- After installing the npm visreg-test package you should now have a dist directory at `visreg/dev-testing-grounds/node_modules/visreg-test/dist` directory. Delete it.
+- After installing the npm visreg-test package you should now have a dist directory at `visreg/dev-testing-grounds/node_modules/visreg-test/dist` directory. 
+- Delete it.
 - From `visreg/repo` run `npm run create-symlink -- [Absolute path]` where the absolute path should be your newly created testing directory (i.e. using the examples above it should be something like `npm run create-symlink -- /Users/.../dev-testing-grounds`). Please note that the path should not end with a slash, because we append some stuff to it.
 - This will create a symlink between the `dist` directory in the repo and the `node_modules/visreg-test` directory in your testing directory.
 
@@ -706,7 +711,14 @@ npx visreg-test --run-container --full-test --env=dev
 npx visreg-test -r -f --env=dev
 ```
 
-Now you can develop both the package and the container at the same time. 
+You will still need to manually run `npm run build` if you're working on the container shell scripts. This is done in order to move the script files to the dist dir (will be fixed by using nodemon to watch non-typescript files in the future). 
+
+You will need to manually change something in the sandbox-project's package.json so that the container notices a change and rebuilds the image. Then when you run `npx visreg-test -run-container` (or `-build-container`) you will be forced to give execute permissions to the `.bin/visreg-test` file again (every time).
+
+If you've added a new dependency to the package, you will need to add it to the sandbox-project's package.json. You need to do this only if the published package does not yet include it. The replacing of the dist dir of the visreg-test package in the container with the one from the repo does just that, so things like new dependencies are not automatically added to the container.
+<!-- When you run `npx visreg-test -run-container` (or `-build-container`) you will be forced to give execute permissions to the `.bin/visreg-test` file again (every time). The container's files will NOT reflect the latest code of the package, only the code as it was when you built the image the first time (since they persist in the mounted volume). You'll need to manually copy/paste the dist dir into the volume (/container/volumes/app/node_modules). Again, this is not intended for development -->
+
+
 
 ## Testing the package before publishing
 
@@ -735,8 +747,6 @@ npx visreg-test --run-container
 ```
 
 This is just intended for last-minute verification in a way which is as close to a published package as possible (without the extra symlinking and mounting which is done when you run `scaffold-dev-container` and work inside the `sandbox-project`). 
-
-<!-- TODO:  you will still need to manually run "npm run build" if you're working on the container shell scripts. This is done in order to move the script files to the dist dir (will be fixed by using nodemon to watch non-typescript files). When you run "npx visreg-test -run-container" (or "-build-container") you will be forced to give execute permissions to the ".bin/visreg-test" file again (every time). The container's files will NOT reflect the latest code of the package, only the code as it was when you built the image the first time (since they persist in the mounted volume). You'll need to manually copy/past the dist dir into the volume (/container/volumes/app/node_modules). Again, this is not intended for development -->
 
 Remember to unlink the package from your project and globally when you're done testing:
 
@@ -778,7 +788,7 @@ Note that using a **non-symlinked** project directory will **not** allow you to 
 
 *Hot reloading of the server is not yet implemented, so you will need to restart the server manually if you make changes to the server code.*
 
-# Web inteface - from the container
+## Web inteface - from the container
 
 The react dev server isn't available in the container, so the closest you can get to developing the web interface in the container is to build the web interface and move it to the dist directory, then run the server in the container:
 

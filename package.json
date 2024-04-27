@@ -54,6 +54,7 @@
 		"cypress-set-device-pixel-ratio": "1.0.4",
 		"express": "^4.19.2",
 		"local-cypress": "1.2.6",
+		"marked": "^12.0.2",
 		"open": "6.4.0",
 		"tsx": "4.7.1",
 		"ws": "^8.16.0"
