@@ -5,7 +5,7 @@ import { ResultsColumn } from './results-column';
 import { style } from '../../../../components/ui/helper-styles';
 import x from '@stylexjs/stylex';
 
-export const TestFailures = () => {
+export const FailedList = () => {
     const { failingEndpoints } = useContext(TestContext);
 
     if (failingEndpoints.length === 0) return null;

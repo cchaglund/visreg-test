@@ -5,7 +5,7 @@ import { TestContext } from '../../../../contexts/test-context';
 import { ResultsColumn } from './results-column';
 import { Close } from '@mui/icons-material';
 
-export const FailedViewportsAndEndpointsTested = () => {
+export const FailedChips = () => {
     const { failingEndpoints } = useContext(TestContext);
 
     const failedUniqueEndpoints = new Set<string>();

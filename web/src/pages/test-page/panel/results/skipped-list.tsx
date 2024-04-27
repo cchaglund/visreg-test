@@ -3,7 +3,7 @@ import { useContext } from 'react';
 import { TestContext } from '../../../../contexts/test-context';
 import { ResultsColumn } from './results-column';
 
-export const TestsSkipped = () => {
+export const SkippedList = () => {
     const { skippedEndpoints } = useContext(TestContext);
 
     if (skippedEndpoints.length === 0) return null;

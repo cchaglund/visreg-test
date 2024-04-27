@@ -3,7 +3,7 @@ import { useContext } from 'react';
 import { TestContext } from '../../../../contexts/test-context';
 import { ResultsColumn } from './results-column';
 
-export const TestResultTotalDiffs = () => {
+export const TestDiffsList = () => {
     const { visregSummary } = useContext(TestContext);
 
     if (!visregSummary?.testDiffList.length) return null;

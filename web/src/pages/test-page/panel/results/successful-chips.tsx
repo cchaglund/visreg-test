@@ -6,7 +6,7 @@ import { useContext } from 'react';
 import { TestContext } from '../../../../contexts/test-context';
 import { ResultsColumn } from './results-column';
 
-export const ViewportsAndEndpointsTested = () => {
+export const SuccessfulChips = () => {
     const { visregSummary } = useContext(TestContext);
 
     const noTestsPerformed = (

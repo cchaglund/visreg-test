@@ -3,7 +3,7 @@ import { useContext } from 'react';
 import { TestContext } from '../../../../contexts/test-context';
 import { ResultsColumn } from './results-column';
 
-export const TestsWithoutDiffs = () => {
+export const UnchangedList = () => {
     const { visregSummary } = useContext(TestContext);
 
     if (visregSummary?.endpointTestResults.unchanged.length === 0) return null;

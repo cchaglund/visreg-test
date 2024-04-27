@@ -10,7 +10,7 @@ import { useContext } from 'react';
 import { TestContext } from '../../../../contexts/test-context';
 import { ResultsColumn } from './results-column';
 
-export const TestSummary = () => {
+export const VisregSummary = () => {
     const { cypressSummaryState, visregSummary } = useContext(TestContext);
 
     if (!cypressSummaryState || !visregSummary) return null;

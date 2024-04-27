@@ -3,15 +3,15 @@ import x from '@stylexjs/stylex';
 import { style } from '../../../../components/ui/helper-styles';
 import { useContext } from 'react';
 import { TestContext } from '../../../../contexts/test-context';
-import { ViewportsAndEndpointsTested } from './viewports-and-endpoints-tested';
-import { FailedViewportsAndEndpointsTested } from './failed-viewports-and-endpoints-tested';
-import { TestSummary } from './test-summary';
+import { SuccessfulChips } from './successful-chips';
+import { FailedChips } from './failed-chips';
+import { VisregSummary } from './visreg-summary';
 import { SuggestedActions } from './suggested-actions';
-import { TestFailures } from './tests-failed';
-import { TestResultTotalDiffs } from './tests-total-diffs';
+import { FailedList } from './failed-list';
+import { TestDiffsList } from './test-diffs-list';
 import CheckCircleTwoToneIcon from '@mui/icons-material/CheckCircleTwoTone';
-import { TestsSkipped } from './tests-skipped';
-import { TestsWithoutDiffs } from './test-without-diffs';
+import { SkippedList } from './skipped-list';
+import { UnchangedList } from './unchanged-list';
 
 const s = x.create({
     resultsContainer: {
@@ -80,19 +80,19 @@ export const TestResults = () => {
             </div>
 
             <div {...x.props(s.resultsSection, s.marginBottom)}>
-                <TestSummary/>
+                <VisregSummary/>
                 {visregSummary.testType === 'targetted' && (
-                    <ViewportsAndEndpointsTested/>
+                    <SuccessfulChips/>
                 )}
-                <FailedViewportsAndEndpointsTested/>
+                <FailedChips/>
                 <SuggestedActions/>
             </div>
 
             <div {...x.props(s.resultsSection)}>
-                <TestsWithoutDiffs/>
-                <TestResultTotalDiffs/>
-                <TestFailures/>
-                <TestsSkipped />
+                <UnchangedList/>
+                <TestDiffsList/>
+                <FailedList/>
+                <SkippedList />
             </div>
         </div>
     );
