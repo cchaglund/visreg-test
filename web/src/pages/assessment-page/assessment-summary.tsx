@@ -42,7 +42,8 @@ const AssessmentSummary = () => {
 
     useEffect(() => {
         setCurrentDiffIndex(null);
-    }, [ setCurrentDiffIndex ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const quitApp = async () => {
         try {

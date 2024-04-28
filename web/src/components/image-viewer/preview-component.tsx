@@ -7,18 +7,18 @@ import { Accordion, AccordionDetails, AccordionSummary, Typography } from '@mui/
 import { ExpandMore } from '@mui/icons-material';
 import EndpointsTable from '../endpoints-info-table/endpoints-table';
 import { Image } from '../../types';
+import { style } from '../ui/helper-styles';
 
 const s = stylex.create({
 	wrapper: {
 		maxHeight: '-webkit-fill-available',
 		width: '100%',
+		padding: '2rem',
 	},
 	container: {
 		height: '100%',
-		width: 'auto',
 		maxWidth: '100vw',
 		margin: '0 auto',
-		padding: '2rem 4rem',
 		alignItems: 'center',
 		justifyContent: 'space-between',
 		display: 'flex',
@@ -27,18 +27,21 @@ const s = stylex.create({
 			flexWrap: 'wrap',
 			justifyContent: 'center',
 			alignItems: 'space-between',
+			rowGap: '1rem',
 		}
 	},
 	column: {
 		width: 'auto'
 	},
 	column1: {
-		paddingInline: '2rem',
 		margin: '0 auto',
 		minWidth: '375px',
+		flexGrow: 1,
 	},
 	column2: {
-		width: '535px',
+		width: '570px',
+		minWidth: '570px',
+		flexShrink: 5,
 	},
 	accordion: {
 		'::before': {
@@ -65,7 +68,7 @@ const PreviewComponent = (props: { image: Image; children?: React.ReactNode; }) 
 
 			<div {...stylex.props(s.container)}>
 				<div {...stylex.props(s.column, s.column1)}>
-					<div>
+					<div {...stylex.props(style.flex, style.justifyCenter)}>
 						<ImageComponent
 							toggleZoom={() => toggleZoom()}
 							zoomedIn={zoomedIn}

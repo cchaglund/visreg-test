@@ -86,6 +86,9 @@ export const style = x.create({
     rowgap8: {
         rowGap: '8rem',
     },
+    mlAuto: {
+        marginLeft: 'auto',
+    },
     mt1: {
         marginTop: '1rem',
     },

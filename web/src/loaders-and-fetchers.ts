@@ -1,5 +1,5 @@
 import { AssessmentData } from './pages/assessment-page/types';
-import { TestConfig } from './types';
+import { Image, TestConfig } from './types';
 import { api } from './shared';
 
 export type GetImagesListParams = {
@@ -105,7 +105,7 @@ export const getImageDetails = async (args: GetFileDetailsParams) => {
     const { suiteSlug, fileName } = args;
     const url = `${api}/images/image/${suiteSlug}/${fileName}`;
     const response = await fetch(url);
-    const image = await response.json();
+    const image: Image = await response.json();
 
     return image;
 };

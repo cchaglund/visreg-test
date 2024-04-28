@@ -24,16 +24,17 @@ const imageStyles = stylex.create({
         '@media (min-width: 1536px)': {
             maxHeight: 'auto'
         },
+        '@media (max-width: 1000px)': {
+            maxHeight: 'auto',
+        },
     },
 });
 
 const paperStyles = stylex.create({
     paperStyle: {
-        marginBottom: '1rem',
         cursor: 'zoom-in',
         backgroundColor: 'rgba(0,0,0,0.08)',
         width: 'fit-content',
-        marginInline: 'auto',
         textAlign: 'center',
     },
     paperStyleZoomedIn: {

@@ -3,20 +3,19 @@ import { AppContext } from '../../contexts/app-context';
 import Controls from './controls';
 import Progress from './progress';
 import { useLoaderData, useNavigate } from 'react-router-dom';
-import { AssessmentData, DiffObject } from './types';
+import { AssessmentData } from './types';
 import { getImageDetails } from '../../loaders-and-fetchers';
 import PreviewComponent from '../../components/image-viewer/preview-component';
+import { Image } from '../../types';
 
 
 const AssessmentPage = () => {
-	const [ imageDetails, setImageDetails ] = useState(null);
-	const [ currentDiff, setCurrentDiff ] = useState<DiffObject>();
+	const [ fetchedImagesDetails, setFetchedImagesDetails ] = useState<Image[]>([]);
 	const { api, setSuiteName, setCurrentDiffIndex, currentDiffIndex } = useContext(AppContext);
 	const { assessmentData } = useLoaderData() as { assessmentData: AssessmentData; };
 	const navigate = useNavigate();
 
 	useEffect(() => {
-		// TODO: This is way too reactive
 		if (!assessmentData) return;
 
 		const diffFiles = assessmentData?.diffFiles;
@@ -26,32 +25,25 @@ const AssessmentPage = () => {
 			return;
 		}
 
-		const newCurrentDiffIndex = currentDiffIndex === null ? 0 : currentDiffIndex;
 		if (currentDiffIndex === null) {
-			setCurrentDiffIndex(newCurrentDiffIndex);
+			setCurrentDiffIndex(0);
 		}
 
-		const diff = assessmentData.diffFiles[ newCurrentDiffIndex ];
-
-		if (!diff) {
-			setCurrentDiffIndex(null);
-			return;
-		}
-
-		const getFile = async () => {
-			const image = await getImageDetails({
-				suiteSlug: assessmentData.suiteSlug,
-				fileName: diff?.imageName + '.diff.png',
+		const getImages = async () => {
+			const allImages = diffFiles.map((diff) => {
+				return getImageDetails({
+					suiteSlug: assessmentData.suiteSlug,
+					fileName: diff.imageName + '.diff.png',
+				});
 			});
 
-			if (!image?.error) {
-				setImageDetails(image);
-				setCurrentDiff(diff);
-			}
+			const images = await Promise.all(allImages)
+			setFetchedImagesDetails(images);
 		};
 
-		getFile();
-	}, [ assessmentData, currentDiff?.imageName, currentDiffIndex, setCurrentDiffIndex ]);
+		getImages();
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	useEffect(() => {
 		setSuiteName(assessmentData?.suiteSlug);
@@ -74,11 +66,10 @@ const AssessmentPage = () => {
 		await fetch(api + '/assessment/' + action, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ diffImage: currentDiff }),
+			body: JSON.stringify({ diffImage: assessmentData.diffFiles[currentDiffIndex!] }),
 		});
 
 		if (currentDiffIndex === assessmentData.diffFiles.length - 1) {
-			setCurrentDiffIndex(null);
 			navigate('/summary');
 			return;
 		}
@@ -86,14 +77,12 @@ const AssessmentPage = () => {
 		if (currentDiffIndex !== null) {
 			setCurrentDiffIndex(currentDiffIndex + 1);
 		}
-	};
-
-	if (!currentDiff) return null;
+	};		
 
 	return (
 		<>
-			{imageDetails && (
-				<PreviewComponent image={imageDetails}>
+			{currentDiffIndex !== null && fetchedImagesDetails[currentDiffIndex] && (
+				<PreviewComponent image={fetchedImagesDetails[currentDiffIndex]}>
 					<Controls doAssessAction={(action: string) => doAssessAction(action)} />
 					<Progress currentDiffIndex={currentDiffIndex} diffFiles={assessmentData.diffFiles} />
 				</PreviewComponent>

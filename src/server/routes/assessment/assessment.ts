@@ -15,42 +15,56 @@ const summary: Summary = {
     failed: false,
 }
 
+type TemporaryAssessmentData = {
+    approvedFiles: DiffObject[];
+    rejectedFiles: DiffObject[];
+};
+
+const temporaryAssessmentData: TemporaryAssessmentData = {
+    approvedFiles: [],
+    rejectedFiles: [],
+};
+
+
 router.post('/approve', (req: any, res: any) => {
     const diffImage: DiffObject = req.body.diffImage;
 
-    const { imageName, files, suite} = diffImage;
-    const { baseline, received, diff } = files;
-    const { baselines, diffs, receivedImages } = getSuiteImageDirectories(suite, req);
-
-    try {
-        fs.unlinkSync(path.join(baselines, baseline.fileName));
-        fs.renameSync(path.join(receivedImages, received.fileName), path.join(baselines, baseline.fileName));
-        fs.unlinkSync(path.join(diffs, diff.fileName));
+    try {        
+        temporaryAssessmentData.approvedFiles.push(diffImage);
     
-        summary.approvedFiles.push(imageName);
-
         res.send({ success: true });
     } catch (error) {
-        console.error('Error approving file: ', error);
-        res.send({ error: 'Error approving file' });
+        console.error('Error temporarily approving file: ', error);
+        res.send({ error: 'Error temporarily approving file' });
     }
 });
 
 router.post('/reject', (req: any, res: any) => {
     const diffImage: DiffObject = req.body.diffImage;
-    const { imageName } = diffImage;
 
     try {
-        summary.rejectedFiles.push(imageName);
+        temporaryAssessmentData.rejectedFiles.push(diffImage);
     
         res.send({ success: true });
     } catch (error) {
-        console.error('Error rejecting file: ', error);
-        res.send({ error: 'Error rejecting file' });
+        console.error('Error temporarily rejecting file: ', error);
+        res.send({ error: 'Error temporarily rejecting file' });
     }
 });
 
-router.post('/diffs-data', (req: any, res: any) => {    
+
+const resetSummary = () => {
+    summary.suiteSlug = '';
+    summary.approvedFiles = [];
+    summary.rejectedFiles = [];
+    summary.failed = false;
+
+    temporaryAssessmentData.approvedFiles = [];
+    temporaryAssessmentData.rejectedFiles = [];
+}
+
+router.post('/diffs-data', (req: any, res: any) => {
+    resetSummary();
     const suiteSlug = req.body.suiteSlug || req.local.programChoices.suite;
     const { diffListSubset } = req.body;
 
@@ -68,7 +82,7 @@ router.post('/diffs-data', (req: any, res: any) => {
                 return processImageViaWeb(file, index, diffListSubset.length, suiteSlug);
             });
         } else {
-           diffs = getDiffsForWeb(suiteSlug);
+            diffs = getDiffsForWeb(suiteSlug);
         }        
         
         res.send({ 
@@ -81,9 +95,39 @@ router.post('/diffs-data', (req: any, res: any) => {
     }
 });
 
+const finalizeAssessment = async (suitesDirectory: string) => {    
+    return new Promise<void>((resolve) => {
+        const { approvedFiles, rejectedFiles } = temporaryAssessmentData;
+     
+        rejectedFiles.forEach((diffImage) => {
+            const { imageName } = diffImage;
+            summary.rejectedFiles.push(imageName);
+        });
 
-router.get('/summary', (req: any, res: any) => {
+        approvedFiles.forEach((diffImage) => {
+            const { imageName, files, suite } = diffImage;
+            const { baseline, received, diff } = files;
+            const { baselines, diffs, receivedImages } = getSuiteImageDirectories(suite, suitesDirectory);
+
+            try {
+                fs.unlinkSync(path.join(baselines, baseline.fileName));
+                fs.renameSync(path.join(receivedImages, received.fileName), path.join(baselines, baseline.fileName));
+                fs.unlinkSync(path.join(diffs, diff.fileName));
+
+                summary.approvedFiles.push(imageName);
+            } catch (error) {
+                console.error('Error approving file: ', error);
+            }
+        });
+
+        resolve();
+    });
+};
+
+
+router.get('/summary', async (req: any, res: any) => {
     try {
+        await finalizeAssessment(req.local.suitesDirectory);
         cleanUp();
     
         const summaryCopy = { ...summary };
