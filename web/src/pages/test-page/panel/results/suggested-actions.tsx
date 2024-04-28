@@ -40,7 +40,7 @@ export const SuggestedActions = () => {
                     <ActionCard onClick={() => {
                         const searchParams = new URLSearchParams();
                         searchParams.append("diff-list-subset", JSON.stringify(visregSummary.testDiffList));
-                        navigate('/assessment/' + suiteConfig.suiteSlug + '?' + searchParams.toString());
+                        navigate(`/suite/${suiteConfig.suiteSlug}/assessment/?${searchParams.toString()}`);
                     }}>
                         <Badge badgeContent={diffsCount} color={'primary'}>
                             <ViewWeekTwoToneIcon fontSize='large' color='primary' />

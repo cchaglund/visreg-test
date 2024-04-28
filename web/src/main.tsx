@@ -90,36 +90,6 @@ const router = createBrowserRouter([
 				},
 			},
 			{
-				path: "/assessment/:suiteSlug?",
-				element: <AssessmentPage />,
-				loader: async ({ params, request }) => {
-					const url = new URL(request.url);
-					const diffList = url.searchParams.get('diff-list-subset');
-					const diffListSubset = diffList ? JSON.parse(diffList) : null;
-				
-					const assessmentData = await getAssessmentData(params.suiteSlug, diffListSubset);
-					return { assessmentData };
-				},
-				handle: {
-					crumb: () => {
-						return [
-							{
-								path: '/',
-								slug: 'Home',
-							},
-							// {
-							// 	path: `/suite/${assessmentData?.suiteSlug}`,
-							// 	slug: assessmentData?.suiteSlug,
-							// },
-							{
-								path: '/assessment',
-								slug: 'Assessment',
-							}
-						];
-					},
-				},
-			},
-			{
 				path: "/suite/:suiteSlug",
 				element: <SuitePage />,
 				loader: async ({ params }) => {
@@ -169,6 +139,28 @@ const router = createBrowserRouter([
 									}
 								];
 							}
+						},
+					},
+					{
+						path: "/suite/:suiteSlug/assessment",
+						element: <AssessmentPage />,
+						loader: async ({ params, request }) => {							
+							const url = new URL(request.url);
+							const diffList = url.searchParams.get('diff-list-subset');
+							const diffListSubset = diffList ? JSON.parse(diffList) : null;
+						
+							const assessmentData = await getAssessmentData(params.suiteSlug, diffListSubset);
+							return { assessmentData };
+						},
+						handle: {
+							crumb: ({ suiteSlug }: { suiteSlug: string; }) => {
+								return [
+									{
+										path: `/suite/${suiteSlug}/assessment`,
+										slug: 'Assessment',
+									}
+								];
+							},
 						},
 					},
 					{

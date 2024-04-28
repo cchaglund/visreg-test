@@ -41,7 +41,7 @@ const Actions = ({ suiteSlug }: { suiteSlug: string }) => {
     return (
         <div {...x.props(s.actions)}>
             <Card elevation={imagesList?.diffList?.length ? 7 : 0} sx={{ borderRadius: '1rem'}}>
-                <CardActionArea onClick={() => navigate('/assessment/' + suiteSlug)} disabled={!imagesList?.diffList?.length}>
+                <CardActionArea onClick={() => navigate(`/suite/${suiteSlug}/assessment`)} disabled={!imagesList?.diffList?.length}>
                     <CardContent {...x.props(s.card)}>
                         <Badge badgeContent={imagesList?.diffList.length} color={imagesList?.diffList?.length ? 'primary' : 'secondary'}>
                             <ViewWeekTwoToneIcon fontSize='large' color={imagesList?.diffList?.length ? 'primary' : 'disabled'} />

@@ -72,6 +72,7 @@ const FilterSidebar = (props: SidebarProps) => {
         location.pathname.includes('.png')
         || location.pathname === `/suite/${suiteSlug}`
         || location.pathname === `/suite/${suiteSlug}/run-test`
+        || location.pathname.includes(`/suite/${suiteSlug}/assessment`)
     ) {
         return <div></div>;
     }

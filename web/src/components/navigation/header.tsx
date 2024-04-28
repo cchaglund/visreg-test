@@ -127,7 +127,7 @@ const Header = () => {
                 {currentDiffIndex !== null && (
                     <div {...x.props(style.flex, style.gap1, s.backToAssessment, style.alignCenter)}>
                         <Typography variant="body1" color="text.primary">
-                            {`Ongoing assessment of "${suiteName}":`}
+                            Assessment in progress:
                         </Typography>
 
                         {!location.pathname.includes('/assessment') && (
