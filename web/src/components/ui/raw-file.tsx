@@ -25,7 +25,8 @@ const RawFilePanel = ({ url, path }: { url?: string; path?: string; }) => {
 
             {path && (
                 <Button
-                    variant='outlined' color="secondary"
+                    variant='outlined'
+                    color="secondary"
                     size='small'
                     startIcon={<ContentCopyIcon />}
                     onClick={() => {

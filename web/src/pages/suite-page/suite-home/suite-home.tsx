@@ -25,11 +25,12 @@ const s = x.create({
         display: 'flex',
         flexWrap: 'wrap',
         columnGap: '3rem',
-        maxWidth: '1400px',
+        maxWidth: '1300px',
         margin: '0 auto',
     },
     endpointsSection: {
         flexGrow: 1,
+        maxWidth: '800px',
     },
     mt1: {
         marginTop: '1rem',

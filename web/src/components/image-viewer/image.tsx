@@ -1,6 +1,5 @@
 import { Paper } from '@mui/material';
 import * as stylex from '@stylexjs/stylex';
-import { useState } from 'react';
 import { Image } from '../../types';
 
 const imageStyles = stylex.create({
@@ -11,20 +10,21 @@ const imageStyles = stylex.create({
     regular: {
         maxWidth: '100%',
         maxHeight: '80vh',
-        '@media (max-width: 1000px)': {
-            maxHeight: '56vh',
+        '@media (max-width: 1100px)': {
+            maxHeight: '45vh',
         },
     },
     zoomedIn: {
         maxHeight: 'auto',
         maxWidth: 'auto',
+        // This is all here for css specificity reasons
         '@media (max-width: 1536px)': {
             maxHeight: 'auto'
         },
         '@media (min-width: 1536px)': {
             maxHeight: 'auto'
         },
-        '@media (max-width: 1000px)': {
+        '@media (max-width: 1100px)': {
             maxHeight: 'auto',
         },
     },
@@ -50,20 +50,15 @@ const paperStyles = stylex.create({
 });
 
 type ImagePreviewProps = {
-    toggleZoom: () => void;
     zoomedIn: boolean;
     image: Image;
+    hovering: boolean;
 };
 
-const ImageComponent = ({ toggleZoom, zoomedIn, image }: ImagePreviewProps) => {
-    const [ imgElevation, setImgElevation ] = useState(4);
-
+const ImageComponent = ({ zoomedIn, image, hovering }: ImagePreviewProps) => {
     return (
         <Paper
-            onMouseEnter={() => setImgElevation(16)}
-            onMouseLeave={() => setImgElevation(6)}
-            onClick={() => toggleZoom()}
-            elevation={imgElevation}
+            elevation={hovering ? 16 : 6}
             sx={{ color: 'text.primary' }}
             {...stylex.props(
                 paperStyles.paperStyle,

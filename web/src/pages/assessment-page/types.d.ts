@@ -11,6 +11,7 @@ export type DiffObject = {
 	baselineModified: Date;
 	index: number;
 	total: number;
+	assessedAs?: 'approved' | 'rejected';
 	files: {
 		baseline: {
 			location: string;

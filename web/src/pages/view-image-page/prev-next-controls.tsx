@@ -1,11 +1,9 @@
 import { useContext, useEffect, useState } from 'react';
 import { useLoaderData, useNavigate, } from 'react-router-dom';
 import { ImagesListType, SuiteContext } from '../suite-page/suite-page';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import x from '@stylexjs/stylex';
-import { Link, Typography } from '@mui/material';
 import { Image } from '../../types';
+import { PrevNextButton } from '../../components/ui/prev-next-button';
 
 const s = x.create({
     controlsContainer: {
@@ -69,37 +67,27 @@ const PrevNextControls = () => {
         </div>
     );
 
-    const PrevNextBlock = (props: { direction: string; }) => {
-        const name = props.direction === 'prev' ? previousImageName : nextImageName;
-        const icon = props.direction === 'prev' ? <ArrowBackIcon /> : <ArrowForwardIcon />;
-
-        if (name && name.includes(image.name)) return null;
-
-        return (
-            <Link
-                {...x.props(s.link)}
-                component="button"
-                onClick={() => {
-                    navigate(`/suite/${image.suiteName}/images/${image.type}/${name}`);
-                }}
-            >
-                <div {...x.props(s.prevNextBlock, props.direction === 'next' && s.nextBlock)}>
-                    {icon}
-                    <Typography
-                        {...x.props(s.text)}
-                        variant="body1"
-                    >
-                        {name}
-                    </Typography>
-                </div>
-            </Link>
-        );
-    };
-
     return (
         <ControlsContainer>
-            <PrevNextBlock direction="prev" />
-            <PrevNextBlock direction="next" />
+            {previousImageName && !previousImageName.includes(image.name) && (
+                <PrevNextButton
+                    direction="prev"
+                    title={previousImageName}
+                    clickHandler={() => {
+                        navigate(`/suite/${image.suiteName}/images/${image.type}/${name}`);
+                    }}
+                />
+            )}
+
+            {nextImageName && !nextImageName.includes(image.name) && (
+                <PrevNextButton
+                    direction="next"
+                    title={nextImageName}
+                    clickHandler={() => {
+                        navigate(`/suite/${image.suiteName}/images/${image.type}/${name}`);
+                    }}
+                />
+            )}
         </ControlsContainer>
     );
 };

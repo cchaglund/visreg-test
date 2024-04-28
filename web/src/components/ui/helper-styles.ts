@@ -4,12 +4,21 @@ export const style = x.create({
     cursorPointer: {
         cursor: 'pointer',
     },
+    cursorZoom: {
+        cursor: 'zoom-in',
+    },
     flex: {
         display: 'flex',
     },
     flexColumn: {
         display: 'flex',
         flexDirection: 'column',
+    },
+    posRel: {
+        position: 'relative',
+    },
+    posAbs: {
+        position: 'absolute',
     },
     alignStart: {
         alignItems: 'start',

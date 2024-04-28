@@ -1,6 +1,7 @@
 import { Chip, Link, Typography } from '@mui/material';
 import stylex from '@stylexjs/stylex';
 import { Image } from '../../types';
+import { style } from '../ui/helper-styles';
 
 const s = stylex.create({
     chipContainer: {
@@ -8,18 +9,18 @@ const s = stylex.create({
         display: 'flex',
         alignItems: 'center',
         marginInline: '2rem',
-        marginBlock: '0.5rem',
         gap: '0.5rem',
         justifyContent: 'center',
         flexWrap: 'wrap',
     },
-    flex: {
+    viewerHeader: {
         display: 'flex',
         flexWrap: 'wrap',
         justifyContent: 'center',
         alignItems: 'center',
         width: 'fit-content',
         margin: '0 auto',
+        marginBottom: '1rem',
     },
 });
 
@@ -31,9 +32,9 @@ const ViewerHeader = (props: { image: Image; }) => {
             case 'baseline':
                 return 'success';
             case 'diff':
-                return 'error';
-            case 'received':
                 return 'warning';
+            case 'received':
+                return 'info';
             default:
                 return 'default';
         }
@@ -44,11 +45,11 @@ const ViewerHeader = (props: { image: Image; }) => {
     }
 
     return (
-        <div {...stylex.props(s.flex)}>
-            <Typography color='text.primary' variant='h4' sx={{ textAlign: 'center', mb: 1, width: '100%' }}>
+        <div {...stylex.props(s.viewerHeader, style.gap1)}>
+            <Typography color='text.primary' variant='h5' sx={{ textAlign: 'center', width: '100%' }}>
                 {image.fileName}
             </Typography>
-            <Typography color='text.secondary' variant='h6' sx={{ textAlign: 'center', mb: 1, width: '100%' }}>
+            <Typography color='text.secondary' variant='h6' sx={{ textAlign: 'center', width: '100%' }}>
                 <Link href={image.fullUrl} target='_blank' rel='noreferrer'>
                     {image.fullUrl}
                 </Link>

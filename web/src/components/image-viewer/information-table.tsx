@@ -4,13 +4,13 @@ import { useNavigate } from 'react-router-dom';
 import ImageTwoToneIcon from '@mui/icons-material/ImageTwoTone';
 import RawFilePanel from '../ui/raw-file';
 import { Image } from '../../types';
+import { useState } from 'react';
 
 const s = stylex.create({
     imageButtonsStyle: {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        marginBlock: '0.4rem',
         textTransform: 'capitalize'
     },
     sansMarginBlock: {
@@ -22,7 +22,6 @@ const s = stylex.create({
         alignItems: 'center',
         justifyContent: 'center',
         flexWrap: 'wrap',
-        marginBlock: '0.2rem',
     },
     imageButtons: {
         display: 'flex',
@@ -35,6 +34,8 @@ const s = stylex.create({
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
+        gap: '0.5rem',
+        marginBottom: '1rem',
     },
 });
 
@@ -44,6 +45,7 @@ type InformationTableProps = {
 
 const InformationTable = ({ image }: InformationTableProps) => {
     const navigate = useNavigate();
+    const [ filteredSiblingPaths ] = useState(image.siblingPaths.filter(sibling => sibling.type !== image.type));
 
     return (
         <div {...stylex.props(s.informationTable)}>
@@ -53,25 +55,22 @@ const InformationTable = ({ image }: InformationTableProps) => {
                 </div>
             </div>
 
-            <div {...stylex.props(s.imageButtonsContainer)}>
-                <ButtonGroup variant="text" aria-label="Basic button group">
-                    {image.siblingPaths
-                        .filter(sibling => sibling.type !== image.type)
-                        .map((sibling, index) => {
-                            return (
-                                <Button
-                                    key={index}
-                                    onClick={() => navigate(sibling.previewUrl)}
-                                    variant='text'
-                                    startIcon={<ImageTwoToneIcon />}
-                                >
-                                    {sibling.type}
-                                </Button>
-                            );
-                        })
-                    }
-                </ButtonGroup>
-            </div>
+            {filteredSiblingPaths.length > 0 && (
+                <div {...stylex.props(s.imageButtonsContainer)}>
+                    <ButtonGroup variant="text">
+                        {filteredSiblingPaths.map((sibling, index) => (
+                            <Button
+                                key={index}
+                                onClick={() => navigate(sibling.previewUrl)}
+                                variant='text'
+                                startIcon={<ImageTwoToneIcon />}
+                            >
+                                {sibling.type}
+                            </Button>
+                        ))}
+                    </ButtonGroup>
+                </div>
+            )}
         </div>
     );
 };
