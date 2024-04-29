@@ -88,7 +88,7 @@ export const assessInWeb = (args: WebAssessmentArgs) => {
 
 	import('open').then((module) => {
 		const port = process.env.NODE_ENV === 'development' ? devPort : serverPort;
-		module(`http://localhost:${port}/assessment`);
+		module(`http://localhost:${port}/suite/${programChoices.suite}/assessment`);
 	});
 }
 

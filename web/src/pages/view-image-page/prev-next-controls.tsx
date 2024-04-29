@@ -43,8 +43,8 @@ const s = x.create({
 const PrevNextControls = () => {
     const { image, imagesList } = useLoaderData() as { image: Image; imagesList: ImagesList; };
 
-    const [ previousImageName, setPreviousImageName ] = useState<string | null>(null);
-    const [ nextImageName, setNextImageName ] = useState<string | null>(null);
+    const [ priorFilename, setPreviousImageName ] = useState<string | null>(null);
+    const [ followingFilename, setNextImageName ] = useState<string | null>(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -69,22 +69,22 @@ const PrevNextControls = () => {
 
     return (
         <ControlsContainer>
-            {previousImageName && !previousImageName.includes(image.name) && (
+            {priorFilename && !priorFilename.includes(image.name) && (
                 <PrevNextButton
                     direction="prev"
-                    title={previousImageName}
+                    title={priorFilename}
                     clickHandler={() => {
-                        navigate(`/suite/${image.suiteName}/images/${image.type}/${image.fileName}`);
+                        navigate(`/suite/${image.suiteName}/images/${image.type}/${priorFilename}`);
                     }}
                 />
             )}
 
-            {nextImageName && !nextImageName.includes(image.name) && (
+            {followingFilename && !followingFilename.includes(image.name) && (
                 <PrevNextButton
                     direction="next"
-                    title={nextImageName}
+                    title={followingFilename}
                     clickHandler={() => {
-                        navigate(`/suite/${image.suiteName}/images/${image.type}/${image.fileName}`);
+                        navigate(`/suite/${image.suiteName}/images/${image.type}/${followingFilename}`);
                     }}
                 />
             )}

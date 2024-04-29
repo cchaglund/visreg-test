@@ -45,10 +45,6 @@
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-- [visreg-test](#visreg-test)
-  - [Release notes](#release-notes)
-  - [Features](#features)
-- [Table of contents](#table-of-contents)
 - [About](#about)
 - [Setup](#setup)
   - [Quick start](#quick-start)

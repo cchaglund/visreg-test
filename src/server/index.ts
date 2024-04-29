@@ -107,7 +107,7 @@ const startServer = (programChoices: ProgramChoices, diffFiles?: DiffObject[]) =
         const webInterfacePort = process.env.NODE_ENV === 'development' ? devPort : serverPort;
 
         const baseUrl = `http://localhost:${webInterfacePort}`;
-        const url = diffFiles ? `${baseUrl}/assessment` : baseUrl;
+        const url = diffFiles ? `${baseUrl}/suite/${programChoices.suite}/assessment` : baseUrl;
 
         if (diffFiles) {
             console.log(`Assessment is running at ${url}`);
