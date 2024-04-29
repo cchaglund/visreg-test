@@ -14,6 +14,9 @@ const s = x.create({
 		maxHeight: '-webkit-fill-available',
 		width: '100%',
 		padding: '2rem',
+		'@media (max-width: 1100px)': {
+			padding: '1rem',
+		},
 	},
 	container: {
 		height: '100%',

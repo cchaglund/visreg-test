@@ -15,6 +15,7 @@ import {
     ListItemIcon,
     ListItemText,
     Toolbar,
+    Typography,
 } from '@mui/material';
 
 const drawer = stylex.create({
@@ -30,6 +31,7 @@ const drawer = stylex.create({
 export type ProjectInformationData = {
     projectInformation: {
         suites: string[];
+        version: string;
     };
 };
 
@@ -59,7 +61,16 @@ export default function Menu() {
     };
 
     const DrawerList = (
-        <Box sx={{ width: 250 }} role="presentation" component={'nav'}>
+        <Box 
+            sx={{ 
+                width: 250,
+                height: '-webkit-fill-available',
+                display: 'flex',
+                flexDirection: 'column',
+            }}
+            role="presentation"
+            component={'nav'}
+        >
             <Button sx={{ p: 0, width: '100%' }} onClick={toggleDrawer(false)}>
                 <AppBar position="static" color='transparent' sx={{ p: 1, width: '100%', zIndex: 2 }}>
                     <Toolbar>
@@ -156,7 +167,9 @@ export default function Menu() {
                         </Collapse>
                     </div>
                 ))}
+            </List>
 
+            <List sx={{ mt: 'auto'}}>
                 <ListItem key={'docs'} disablePadding>
                     <ListItemButton
                         onClick={() => navigateTo('/docs')}
@@ -167,6 +180,15 @@ export default function Menu() {
                             primaryTypographyProps={{ color: 'text.primary' }}
                         />
                     </ListItemButton>
+                </ListItem>
+                <ListItem key={'version'}>
+                    {projectInformation?.version && (
+                        <ListItemText disableTypography>
+                            <Typography variant='subtitle2' color={'text.secondary'}>
+                                {`v${projectInformation?.version}`}
+                            </Typography>
+                        </ListItemText>
+                    )}
                 </ListItem>
             </List>
 

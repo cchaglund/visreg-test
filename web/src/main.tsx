@@ -93,11 +93,9 @@ const router = createBrowserRouter([
 				path: "/suite/:suiteSlug",
 				element: <SuitePage />,
 				loader: async ({ params }) => {
-					const imagesList = await getSuiteImagesList(params.suiteSlug);
 					const suiteConfig = await getSuiteConfig(params.suiteSlug);
 
 					return {
-						imagesList,
 						suiteSlug: params.suiteSlug,
 						suiteConfig,
 					};
@@ -121,7 +119,14 @@ const router = createBrowserRouter([
 						path: "/suite/:suiteSlug",
 						index: true,
 						element: (<SuiteHome />),
-						loader: ({ params }) => ({ suiteSlug: params.suiteSlug })
+						loader: async ({ params }) => {
+							const imagesList = await getSuiteImagesList(params.suiteSlug);
+
+							return { 
+								suiteSlug: params.suiteSlug,
+								imagesList,
+							}
+						}
 					},
 					{
 						path: "/suite/:suiteSlug/images",
@@ -146,10 +151,12 @@ const router = createBrowserRouter([
 						element: <AssessmentPage />,
 						loader: async ({ params, request }) => {							
 							const url = new URL(request.url);
+
 							const diffList = url.searchParams.get('diff-list-subset');
 							const diffListSubset = diffList ? JSON.parse(diffList) : null;
-						
-							const assessmentData = await getAssessmentData(params.suiteSlug, diffListSubset);
+							const resume = url.searchParams.get('resume') === 'true';
+
+							const assessmentData = await getAssessmentData(params.suiteSlug, diffListSubset, resume);
 							return { assessmentData };
 						},
 						handle: {
@@ -219,8 +226,11 @@ const router = createBrowserRouter([
 						element: <PreviewPage />,
 						loader: async ({ params }) => {
 							const image = await getImageDetails(params as GetFileDetailsParams);
+							const imagesList = await getSuiteImagesList(params.suiteSlug);
+
 							return {
 								image,
+								imagesList,
 								suiteSlug: params.suiteSlug,
 								fileName: params.fileName,
 								typeOfImage: params.typeOfImage,

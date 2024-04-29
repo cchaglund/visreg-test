@@ -1,5 +1,8 @@
 5.0.0
 - Can now run tests in the web gui
+- Ability to terminate assessments early
+- Ability to resume assessments
+- Ability to assess diffs individually
 - You can now specify multiple endpoints and viewports in a single flag or shorthand.
 - Added documentation to the web interface
 

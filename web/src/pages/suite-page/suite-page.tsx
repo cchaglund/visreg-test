@@ -9,7 +9,6 @@ export type SuiteContextType = {
     selectedViewport: string;
     suiteConfig?: TestConfig;
     parsedViewports?: string[];
-    imagesList?: ImagesList;
 };
 
 const defaultValue: SuiteContextType = {
@@ -34,7 +33,6 @@ export type ImagesListType = keyof ImagesList;
 
 export type SuitePageData = {
     suiteSlug: string;
-    imagesList: ImagesList,
     suiteConfig: TestConfig;
 };
 
@@ -58,7 +56,7 @@ const s = stylex.create({
 });
 
 const SuitePage = () => {
-    const { suiteSlug, imagesList, suiteConfig } = useLoaderData() as SuitePageData;
+    const { suiteSlug, suiteConfig } = useLoaderData() as SuitePageData;
     const [ parsedViewports, setParsedViewports ] = useState<string[]>([]);
     const endpointState = useState<string>('');
     const viewportState = useState<string>('');
@@ -93,7 +91,6 @@ const SuitePage = () => {
                     selectedViewport,
                     suiteConfig,
                     parsedViewports,
-                    imagesList,
                 }}>
                     <Outlet />
                 </SuiteContext.Provider>

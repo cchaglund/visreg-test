@@ -49,7 +49,7 @@ const DocsPage = () => {
 
     const hydrateHeadingsWithIds = (html: string) => {
         // Add ids to headings to enable linking to them
-        const hydrated = html.replace(/<h([1-6])>([^<]+)<\/h[1-6]>/g, (match, p1, p2) => {
+        const hydrated = html.replace(/<h([1-6])>([^<]+)<\/h[1-6]>/g, (_match, p1, p2) => {
             return `<h${p1} id="${p2.toLowerCase().replace(/\s/g, '-')}">${p2}</h${p1}>`;
         });
 

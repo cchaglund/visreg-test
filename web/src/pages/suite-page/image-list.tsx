@@ -48,9 +48,8 @@ const ImageList = () => {
                     {imageNames
                         .filter(image => image.includes(selectedEndpoint) && image.includes(selectedViewport))
                         .map((image, index) => (
-                            <li>
+                            <li key={index}>
                                 <Button
-                                    key={index}
                                     onClick={() => navigate(`/suite/${suiteName}/images/${typeOfImage}/${image}`)}
                                     startIcon={<ImageTwoToneIcon />}
                                 >

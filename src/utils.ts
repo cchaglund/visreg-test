@@ -205,7 +205,11 @@ export const getFileType = (fileName: string) => {
 		return 'received';
 	}
 
-	return 'baseline';
+	if (fileName.endsWith('.base.png')) {
+		return 'baseline';
+	}
+
+	throw new Error('Unknown file type');
 }
 
 export const isTargettedTest = () => !!(programChoices.targetViewports.length || programChoices.targetEndpointTitles.length);

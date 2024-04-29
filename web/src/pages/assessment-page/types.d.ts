@@ -3,6 +3,7 @@ export type DiffFilesType = DiffObject[] | [];
 export type AssessmentData = {
 	suiteSlug: string;
 	diffFiles: DiffFilesType;
+	temporaryAssessmentResults: DiffFilesType;
 };
 
 export type DiffObject = {

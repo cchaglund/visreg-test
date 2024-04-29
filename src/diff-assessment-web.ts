@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import startServer from './server';
 import { devPort, serverPort } from './server/config';
+import { Endpoint } from './types';
 
 export type Summary = {
 	suiteSlug: string;
@@ -12,6 +13,28 @@ export type Summary = {
 	failed: boolean;	
 }
 
+export type SiblingPath = {
+    type: 'baseline' | 'received' | 'diff';
+    previewUrl: string;
+};
+
+export type Image = {
+    name: string;
+    fileName: string;
+    createdAt: Date;
+    modifiedAt: Date;
+    type: string;
+    suiteName: string;
+    sizeString: string;
+    url: string;
+    siblingPaths: SiblingPath[];
+    fileUrl: string;
+    baseUrl?: string;
+    endpoint?: Endpoint;
+    fullUrl?: string;
+    path: string;
+};
+
 export type DiffObject = {
 	imageName: string;
 	recievedSizeString: string;
@@ -19,6 +42,7 @@ export type DiffObject = {
 	suite: string;
 	index: number;
 	total: number;
+	assessedAs?: string;
 	files: {
 		baseline: {
 			location: string;
@@ -98,6 +122,8 @@ export const getSummary = () => {
 }
 
 export const processImageViaWeb = (diffImageFile: string, index: number, total: number, suiteSlug?: string) => {
+	programChoices.suite = suiteSlug;
+	
 	const imageName = diffImageFile.replace('.diff.png', '');
 	const receivedImageFile = imageName + '-received.png';
 	const baseImageFile = imageName + '.base.png';

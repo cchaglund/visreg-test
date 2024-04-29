@@ -5,9 +5,9 @@ const express = require('express');
 const router = express.Router();
 
 router.get('/docs', (req: any, res: any) => {
-    const projectRoot = process.cwd();
+    const readmePath = path.join(req.local.rootDirectory, 'node_modules', 'visreg-test', 'README.md');
 
-    const readme = fs.readFileSync(path.join(projectRoot, 'node_modules', 'visreg-test', 'README.md'), 'utf8');    
+    const readme = fs.readFileSync(readmePath, 'utf8');    
     const readmeHTML = marked(readme);
 
     res.send(readmeHTML);

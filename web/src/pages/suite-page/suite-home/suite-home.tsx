@@ -72,7 +72,7 @@ const SuiteHome = () => {
                 </Link>
             </Typography>
 
-            <Actions suiteSlug={suiteSlug} />
+            <Actions />
 
             <div {...x.props(s.infoArea)}>
                 <SuiteDetailsSidebar />

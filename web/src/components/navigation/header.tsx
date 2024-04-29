@@ -131,9 +131,9 @@ const Header = () => {
                         </Typography>
 
                         {!location.pathname.includes('/assessment') && (
-                            <Link to={`/suite/${suiteName}/assessment`}>
+                            <Link to={`/suite/${suiteName}/assessment/?resume=true`}>
                                 <Button variant="contained" color="primary">
-                                    Return
+                                    Resume
                                 </Button>
                             </Link>
                         )}

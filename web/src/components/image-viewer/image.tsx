@@ -11,7 +11,7 @@ const imageStyles = stylex.create({
         maxWidth: '100%',
         maxHeight: '80vh',
         '@media (max-width: 1100px)': {
-            maxHeight: '45vh',
+            maxHeight: '40vh',
         },
     },
     zoomedIn: {

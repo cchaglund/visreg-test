@@ -11,11 +11,15 @@ export type GetSuiteImagesListParams = {
     suiteSlug: string;
 };
 
-export const getAssessmentData = async (suiteSlug?: string, diffListSubset?: string[]): Promise<AssessmentData> => {    
+export const getAssessmentData = async (suiteSlug?: string, diffListSubset?: string[], resume?: boolean): Promise<AssessmentData> => {
     const response = await fetch(api + '/assessment/diffs-data', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ suiteSlug, diffListSubset}),
+        body: JSON.stringify({ 
+            suiteSlug, 
+            diffListSubset,
+            resume,
+        }),
     });
 
     const data = await response.json();

@@ -65,10 +65,10 @@ const startServer = (programChoices: ProgramChoices, diffFiles?: DiffObject[]) =
         req.local.programChoices = programChoices;
         req.local.diffFiles = diffFiles;
 
-        req.local.suitesDirectory = path.join(
-            programChoices?.containerized ? '/app' : initialCwd,
-            '/suites'
-        )
+        const rootDirectory = programChoices?.containerized ? '/app' : initialCwd
+
+        req.local.rootDirectory = rootDirectory;
+        req.local.suitesDirectory = path.join(rootDirectory, '/suites');
 
         next();
     });

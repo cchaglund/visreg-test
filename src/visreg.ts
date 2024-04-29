@@ -93,7 +93,7 @@ const typesList: TestType[] = [
 	},
 ];
 
-const getVersion = () => {
+export const getVersion = () => {
 	// Read the "version" field from package.json and print it out:
 	const packageJsonPath = path.join(__dirname, '..', 'package.json');
 	const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8') || '{}');

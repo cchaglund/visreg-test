@@ -1,6 +1,6 @@
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLoaderData, useNavigate, } from 'react-router-dom';
-import { ImagesListType, SuiteContext } from '../suite-page/suite-page';
+import { ImagesList, ImagesListType } from '../suite-page/suite-page';
 import x from '@stylexjs/stylex';
 import { Image } from '../../types';
 import { PrevNextButton } from '../../components/ui/prev-next-button';
@@ -11,7 +11,7 @@ const s = x.create({
         display: 'flex',
         textOverflow: 'ellipsis',
         justifyContent: 'space-between',
-        gap: '1rem',
+        gap: '2.5rem',
         maxWidth: '650px',
         margin: '0 auto',
         marginBlock: '1rem',
@@ -41,8 +41,8 @@ const s = x.create({
 
 
 const PrevNextControls = () => {
-    const { image } = useLoaderData() as { image: Image; };
-    const { imagesList } = useContext(SuiteContext);
+    const { image, imagesList } = useLoaderData() as { image: Image; imagesList: ImagesList; };
+
     const [ previousImageName, setPreviousImageName ] = useState<string | null>(null);
     const [ nextImageName, setNextImageName ] = useState<string | null>(null);
     const navigate = useNavigate();
@@ -74,7 +74,7 @@ const PrevNextControls = () => {
                     direction="prev"
                     title={previousImageName}
                     clickHandler={() => {
-                        navigate(`/suite/${image.suiteName}/images/${image.type}/${name}`);
+                        navigate(`/suite/${image.suiteName}/images/${image.type}/${image.fileName}`);
                     }}
                 />
             )}
@@ -84,7 +84,7 @@ const PrevNextControls = () => {
                     direction="next"
                     title={nextImageName}
                     clickHandler={() => {
-                        navigate(`/suite/${image.suiteName}/images/${image.type}/${name}`);
+                        navigate(`/suite/${image.suiteName}/images/${image.type}/${image.fileName}`);
                     }}
                 />
             )}

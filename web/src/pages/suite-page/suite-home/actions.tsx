@@ -1,11 +1,12 @@
 import { Badge, Card, CardActionArea, CardContent, Typography } from '@mui/material';
 import x from '@stylexjs/stylex';
-import { useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { SuiteContext } from '../suite-page';
+import { useLoaderData, useNavigate } from 'react-router-dom';
+import { ImagesList } from '../suite-page';
 import ImageTwoToneIcon from '@mui/icons-material/ImageTwoTone';
 import RollerSkatingTwoToneIcon from '@mui/icons-material/RollerSkatingTwoTone';
 import ViewWeekTwoToneIcon from '@mui/icons-material/ViewWeekTwoTone';
+import { useContext } from 'react';
+import { AppContext } from '../../../contexts/app-context';
 
 const s = x.create({
     actions: {
@@ -34,30 +35,75 @@ const s = x.create({
     },
 });
 
-const Actions = ({ suiteSlug }: { suiteSlug: string }) => {
-    const { imagesList } = useContext(SuiteContext);
+const Actions = () => {
+    const { currentDiffIndex } = useContext(AppContext);
+    const { suiteSlug, imagesList } = useLoaderData() as { suiteSlug: string; imagesList: ImagesList};
     const navigate = useNavigate();
+
+    const assessmentsDisabled = imagesList?.diffList?.length === 0;
+    const ongoingAssessment = currentDiffIndex !== null;        
 
     return (
         <div {...x.props(s.actions)}>
-            <Card elevation={imagesList?.diffList?.length ? 7 : 0} sx={{ borderRadius: '1rem'}}>
-                <CardActionArea onClick={() => navigate(`/suite/${suiteSlug}/assessment`)} disabled={!imagesList?.diffList?.length}>
+            <Card
+                elevation={assessmentsDisabled ? 0 : 7}
+                sx={{ borderRadius: '1rem'}}
+            >
+                <CardActionArea 
+                    onClick={() => {
+                        const url = ongoingAssessment
+                            ? `/suite/${suiteSlug}/assessment/?resume=true`
+                            : `/suite/${suiteSlug}/assessment`;
+
+                        navigate(url)
+                    }}
+                    disabled={assessmentsDisabled}
+                >
                     <CardContent {...x.props(s.card)}>
-                        <Badge badgeContent={imagesList?.diffList.length} color={imagesList?.diffList?.length ? 'primary' : 'secondary'}>
-                            <ViewWeekTwoToneIcon fontSize='large' color={imagesList?.diffList?.length ? 'primary' : 'disabled'} />
+                        <Badge 
+                            badgeContent={ongoingAssessment ? '?' : imagesList?.diffList.length} 
+                            color={assessmentsDisabled ? 'secondary' : 'primary'}
+
+                        >
+                            <ViewWeekTwoToneIcon 
+                                fontSize='large'
+                                color={assessmentsDisabled ? 'disabled' : 'primary'}
+                            />
                         </Badge>
-                        <Typography gutterBottom mt={2} variant="h6" color={imagesList?.diffList?.length ? 'primary' : 'text.disabled'}>
-                            Assess all diffs
+                        <Typography 
+                            gutterBottom 
+                            mt={2}
+                            variant={ongoingAssessment ? 'body1' : 'h6'}
+                            color={assessmentsDisabled ? 'text.disabled' : 'primary'}
+                        >
+                            {ongoingAssessment
+                                ? 'Resume ongoing assessment'
+                                : 'Assess all diffs'
+                            }
                         </Typography>
                     </CardContent>
                 </CardActionArea>
             </Card>
 
-            <Card elevation={7} sx={{ borderRadius: '1rem'}}>
-                <CardActionArea onClick={() => navigate(`/suite/${suiteSlug}/run-test`)}>
+            <Card
+                elevation={ongoingAssessment ? 0 : 7}
+                sx={{ borderRadius: '1rem'}}
+            >
+                <CardActionArea
+                    onClick={() => navigate(`/suite/${suiteSlug}/run-test`)}
+                    disabled={ongoingAssessment}
+                >
                     <CardContent {...x.props(s.card)}>
-                        <RollerSkatingTwoToneIcon fontSize='large' color='primary' />
-                        <Typography gutterBottom mt={2} variant="h6" color='primary'>
+                        <RollerSkatingTwoToneIcon
+                            fontSize='large'
+                            color={ongoingAssessment ? 'disabled' : 'primary'}
+                        />
+                        <Typography 
+                            gutterBottom 
+                            mt={2}
+                            variant='h6'
+                            color={ongoingAssessment ? 'text.disabled' : 'primary'}
+                        >
                             Run tests
                         </Typography>
                     </CardContent>
@@ -69,7 +115,7 @@ const Actions = ({ suiteSlug }: { suiteSlug: string }) => {
                     <CardContent {...x.props(s.card)}>
                         <ImageTwoToneIcon fontSize='large' color='primary' />
                         <Typography gutterBottom mt={2} variant="h6" color='primary'>
-                            View images
+                            Gallery
                         </Typography>
                     </CardContent>
                 </CardActionArea>

@@ -1,5 +1,5 @@
 import { getDiffsForWeb } from '../../../visreg';
-import { DiffObject, Summary, processImageViaWeb } from '../../../diff-assessment-web';
+import { DiffObject, Image, Summary, processImageViaWeb } from '../../../diff-assessment-web';
 import { cleanUp } from '../../../utils';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -15,24 +15,35 @@ const summary: Summary = {
     failed: false,
 }
 
-type TemporaryAssessmentData = {
-    approvedFiles: DiffObject[];
-    rejectedFiles: DiffObject[];
-};
+type TemporaryAssessmentResults = DiffObject[];
 
-const temporaryAssessmentData: TemporaryAssessmentData = {
-    approvedFiles: [],
-    rejectedFiles: [],
-};
+let temporaryAssessmentResults: TemporaryAssessmentResults = [];
 
+router.post('/approve-instantly', async (req: any, res: any) => {
+    const { suiteSlug, fileName } = req.body
+
+    const diffImage = processImageViaWeb(fileName, 0, 1, suiteSlug);
+
+    try {        
+        approveImage(diffImage, req.local.suitesDirectory);
+        res.send({ success: true });
+    } catch (error) {
+        console.error('Error approving instantly: ', error);
+        res.send({ error: 'Error approving instantly' });
+    }
+});
 
 router.post('/approve', (req: any, res: any) => {
     const diffImage: DiffObject = req.body.diffImage;
 
-    try {        
-        temporaryAssessmentData.approvedFiles.push(diffImage);
-    
-        res.send({ success: true });
+    try {
+        const assessedImage = {
+            ...diffImage,
+            assessedAs: 'approved',
+        }
+
+        temporaryAssessmentResults[assessedImage.index] = assessedImage;
+        res.send(temporaryAssessmentResults);
     } catch (error) {
         console.error('Error temporarily approving file: ', error);
         res.send({ error: 'Error temporarily approving file' });
@@ -43,15 +54,18 @@ router.post('/reject', (req: any, res: any) => {
     const diffImage: DiffObject = req.body.diffImage;
 
     try {
-        temporaryAssessmentData.rejectedFiles.push(diffImage);
-    
-        res.send({ success: true });
+        const assessedImage = {
+            ...diffImage,
+            assessedAs: 'rejected',
+        }
+        
+        temporaryAssessmentResults[assessedImage.index] = assessedImage;
+        res.send(temporaryAssessmentResults);
     } catch (error) {
         console.error('Error temporarily rejecting file: ', error);
         res.send({ error: 'Error temporarily rejecting file' });
     }
-});
-
+})
 
 const resetSummary = () => {
     summary.suiteSlug = '';
@@ -59,20 +73,24 @@ const resetSummary = () => {
     summary.rejectedFiles = [];
     summary.failed = false;
 
-    temporaryAssessmentData.approvedFiles = [];
-    temporaryAssessmentData.rejectedFiles = [];
+    temporaryAssessmentResults = [];
 }
 
-router.post('/diffs-data', (req: any, res: any) => {
-    resetSummary();
-    const suiteSlug = req.body.suiteSlug || req.local.programChoices.suite;
-    const { diffListSubset } = req.body;
+router.post('/diffs-data', (req: any, res: any) => {    
+    const { suiteSlug, diffListSubset, resume } = req.body;
+    const suiteSlugToUse = suiteSlug || req.local.programChoices.suite;
+
+    
+    
+    if (!resume) {
+        resetSummary();
+    }
 
     if (!suiteSlug) {
         return res.send({ error: 'No suite slug provided' });
     }
 
-    summary.suiteSlug = suiteSlug;
+    summary.suiteSlug = suiteSlugToUse;
 
     try {
         let diffs = [];
@@ -87,7 +105,8 @@ router.post('/diffs-data', (req: any, res: any) => {
         
         res.send({ 
             suiteSlug: suiteSlug,
-            diffFiles: diffs
+            diffFiles: diffs,
+            temporaryAssessmentResults,
         });
     } catch (error) {
         console.error('Error getting diff files: ', error);
@@ -97,32 +116,38 @@ router.post('/diffs-data', (req: any, res: any) => {
 
 const finalizeAssessment = async (suitesDirectory: string) => {    
     return new Promise<void>((resolve) => {
-        const { approvedFiles, rejectedFiles } = temporaryAssessmentData;
-     
-        rejectedFiles.forEach((diffImage) => {
-            const { imageName } = diffImage;
-            summary.rejectedFiles.push(imageName);
-        });
-
-        approvedFiles.forEach((diffImage) => {
-            const { imageName, files, suite } = diffImage;
-            const { baseline, received, diff } = files;
-            const { baselines, diffs, receivedImages } = getSuiteImageDirectories(suite, suitesDirectory);
-
-            try {
-                fs.unlinkSync(path.join(baselines, baseline.fileName));
-                fs.renameSync(path.join(receivedImages, received.fileName), path.join(baselines, baseline.fileName));
-                fs.unlinkSync(path.join(diffs, diff.fileName));
-
-                summary.approvedFiles.push(imageName);
-            } catch (error) {
-                console.error('Error approving file: ', error);
-            }
-        });
+        temporaryAssessmentResults
+            .filter((diffImage) => diffImage.assessedAs === 'rejected')
+            .forEach((diffImage) => {
+                const { imageName } = diffImage;
+                summary.rejectedFiles.push(imageName);
+            });
+        
+        temporaryAssessmentResults
+            .filter((diffImage) => diffImage.assessedAs === 'approved')
+            .forEach((diffImage) => {
+                approveImage(diffImage, suitesDirectory)
+            });
 
         resolve();
     });
 };
+
+const approveImage = (diffImage: DiffObject, suitesDirectory: string) => {
+    try {
+        const { imageName, files, suite } = diffImage;
+        const { baseline, received, diff } = files;
+        const { baselines, diffs, receivedImages } = getSuiteImageDirectories(suite, suitesDirectory);
+
+        fs.unlinkSync(path.join(baselines, baseline.fileName));
+        fs.renameSync(path.join(receivedImages, received.fileName), path.join(baselines, baseline.fileName));
+        fs.unlinkSync(path.join(diffs, diff.fileName));
+
+        summary.approvedFiles.push(imageName);
+    } catch (error) {
+        console.error('Error approving file: ', error);
+    }
+}
 
 
 router.get('/summary', async (req: any, res: any) => {
