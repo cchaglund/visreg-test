@@ -9,10 +9,7 @@ export const SkippedList = () => {
     if (skippedEndpoints.length === 0) return null;
 
     return (
-        <ResultsColumn 
-            heading={`Skipped (${skippedEndpoints.length})`} 
-            // subheading='Due to user termination. Any previous diffs have been restored'
-        >
+        <ResultsColumn heading={`Skipped (${skippedEndpoints.length})`}>
             {skippedEndpoints.map((skipped, index) => (
                 <div key={index}>
                     <Typography variant='body1' color={'text.primary'}>

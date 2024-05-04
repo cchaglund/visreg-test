@@ -1,3 +1,9 @@
+5.0.1
+- Gallery no longer shows .DS_Store files
+- UI fixes
+- Fix for snaps being considered skipped
+- Targetted test on dimmentions like "1920,1080" now works
+
 5.0.0
 - Can now run tests in the web gui
 - Ability to terminate assessments early

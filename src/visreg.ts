@@ -740,7 +740,11 @@ export const startWebTest = async (ws: WebSocket, progChoices: Partial<ProgramCh
 	visregConfig = conf || visregConfig;
 
 	if (programChoices.testType === 'targetted') {
-		programChoices.targetViewports = progChoices.targetViewports || [];
+		const parsedViewports = progChoices.targetViewports
+			? progChoices.targetViewports?.map(vp => parseViewport(vp as VisregViewport))
+			: [];
+
+		programChoices.targetViewports = parsedViewports  || [];
 		programChoices.targetEndpointTitles = progChoices.targetEndpointTitles || [];
 	}
 
@@ -883,8 +887,8 @@ const assessExistingDiffImages = async (files: string[]) => {
 
 
 process.on('SIGINT', () => {
-	console.log('\n\nTerminated by user');
-	console.log('Restoring backups\n');
+	// console.log('\n\nTerminated by user');
+	// console.log('Restoring backups\n');
 	restoreBackups();
 	process.exit();
 });

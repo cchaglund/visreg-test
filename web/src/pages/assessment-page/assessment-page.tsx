@@ -37,7 +37,7 @@ const s = x.create({
 		borderRadius: '0.5rem',
 	},
 	assessmentPage: {
-
+		width: '100%',
 	},
 	controlsContainer: {
 	},

@@ -100,7 +100,7 @@ export type TestSettings = {
 export type ProgramChoices = {
 	suite?: string,
 	targetEndpointTitles: string[] | [],
-	targetViewports: VisregViewport[] | [],
+	targetViewports: (VisregViewport | [])[],
 	fullTest?: boolean | string,
 	diffsOnly?: boolean | string,
 	assessExistingDiffs?: boolean | string,

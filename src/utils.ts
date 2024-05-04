@@ -41,11 +41,7 @@ export const pathExists = (dirPath: string) => {
 
 export const hasFiles = (dirPath: string) => fs.readdirSync(dirPath).length > 0;
 
-export const parseViewport = (viewport?: VisregViewport) => {
-	if (!viewport) {
-		return;
-	}
-
+export const parseViewport = (viewport: VisregViewport) => {
 	const stringedViewport = viewport.toString();
 	if (!stringedViewport?.includes(',')) {
 		return viewport;
@@ -127,9 +123,11 @@ export const cleanUp = () => {
 
 export const getFilesInDir = (dirPath: string) => {
 	if (!fs.existsSync(dirPath)) return [];
-    return fs.readdirSync(dirPath).filter((item) => {
-        return fs.statSync(path.join(dirPath, item)).isFile();
-    });
+    return fs.readdirSync(dirPath)
+		.filter((item) => item !== '.DS_Store')
+		.filter((item) => {
+			return fs.statSync(path.join(dirPath, item)).isFile();
+		});
 }
 
 // Function to get directories
@@ -255,10 +253,15 @@ export const parseCypressSummary = (data: string) => {
 
 export const parseAgenda = (data: string) => {
 	const agendaData: AgendaType = JSON.parse(data);
+	const parsedAgenda: string[] = [];
 
-	return agendaData.endpointsToTest.map(endpoint => {
-		return agendaData.viewportsToTest.map(viewport => `${endpoint.title} @ ${viewport.toString()}`).join(', ');
+	agendaData.endpointsToTest.forEach(endpoint => {
+		agendaData.viewportsToTest.forEach(viewport => {
+			parsedAgenda.push(`${endpoint.title} @ ${viewport.toString()}`);
+		});
 	});
+
+	return parsedAgenda;
 }
 
 export const getSkippedEndpoints = (endpointTestResults: EndpointTestResultsGroup, testAgenda: string[]) => {

@@ -4,29 +4,25 @@ import { getFileNameWithoutExtension, getFileType, getFileInfo, pathExists, getH
 import { serverPort } from '../config';
 import { fetchSuiteConfig } from './fetch-suite-config';
 
-export const getImage = async (suiteSlug: string, fileName: string, suitesDirectory: string) => {
-    const suiteImagesDir = path.join(suitesDirectory, suiteSlug, 'snapshots/snaps');
+type FileInfo = {
+    filePath: string;
+    cleanName: string;
+    suiteImagesDir: string;
+    type: string;
+    suiteSlug: string;
+    fileName: string;
+};
 
-    const cleanName = getFileNameWithoutExtension(fileName);
-
-    const baselinePath = path.join(suiteImagesDir, cleanName + '.base.png');
-    const receivedPath = path.join(suiteImagesDir, '__received_output__', cleanName + '-received.png');
-    const diffPath = path.join(suiteImagesDir, '__diff_output__', cleanName + '.diff.png');
-
-    const type = getFileType(fileName);
-    let filePath = '';
-
-    if (type === 'diff') {
-        filePath = diffPath;
-    } else if (type === 'received') {
-        filePath = receivedPath;
-    } else {
-        filePath = baselinePath;
-    }
+export const getImage = async (fileInfo: FileInfo) => {
+    const { filePath, cleanName, suiteImagesDir, type, suiteSlug, fileName } = fileInfo;
 
     const { createdAt, modifiedAt } = getFileInfo(filePath);
 
     const siblingPaths = [];
+
+    const baselinePath = path.join(suiteImagesDir, cleanName + '.base.png');
+    const receivedPath = path.join(suiteImagesDir, '__received_output__', cleanName + '-received.png');
+    const diffPath = path.join(suiteImagesDir, '__diff_output__', cleanName + '.diff.png');
 
     if (pathExists(baselinePath)) {
         siblingPaths.push({

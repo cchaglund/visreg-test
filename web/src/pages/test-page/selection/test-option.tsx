@@ -5,8 +5,8 @@ import { TestContext, TestTypeSlug } from '../../../contexts/test-context';
 
 const s = x.create({
     cardSection: {
-        width: '100%',
-        maxWidth: '300px',
+        width: 'min-content',
+        minWidth: '300px',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',

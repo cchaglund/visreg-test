@@ -129,7 +129,7 @@ const AssessmentSummary = () => {
                             size='large'
                             onClick={() => quitApp()}
                         >
-                            Quit
+                            Quit Visreg
                         </Button>
                     </Grid>
                 </Grid>
