@@ -870,6 +870,8 @@ scrollDuration: 1000,
 | elementToMatch  | Capture a screenshot of a specific element on the page, rather than the whole page.                        | `'.my-element'`                                                                                  | `string`, *optional* |
 | excludeFromTest  | A function which returns a boolean. It gets passed the same arguments as the other endpoint functions                        | `(cy: cy, context: TestContext, context: TestContext ) => { return context.viewport === 'ipad-2' }`                                                    | `ExcludeFromTestFunction`, *optional* |
 | data  | Custom data of any type                          | -                                                    | `any`, *optional* |
+| requestOptions  | Headers and authentication passed when visiting url                          | `{ headers: { 'Accept-Language': 'en-US' } }`   | `RequestSettings`, *optional* |
+| visitOptions  | Options for when the url is visited                          | `{ devicePixelRatio: 2 }`   | `VisitSettings`, *optional* |
 | {...screenshotOptions} | The properties of CypressScreenshotOptions of the module configuration are all applicable here | E.g. `blackout: ['#sidebar', '.my-selector']`                                                            | `...CypressScreenshotOptions`, *optional* |
 | {...comparisonOptions} | The properties of JestMatchImageSnapshotOptions of the module configuration are all applicable here | E.g. `customDiffConfig: { threshold: 0.01 }`                                                            | `...JestMatchImageSnapshotOptions`, *optional* |
 
@@ -890,8 +892,36 @@ You can configure certain settings with a `visreg.config.json` file placed in th
 | maxViewport | Should have a higher value than the viewport you want to test. Default is `1920x1080` | `{ width?: number, height?: number }` |
 | imagePreviewProcess | This is for Linux users to specify the image preview program they are using and is used to automatically close the previewer at the end of diff assessment with a `pkill` command. By default visreg-test will attempt to close Gnome (i.e. 'pkill eog'). | `string` |
 | disableAutoPreviewClose | Prevent visreg-test from attempting to automatically close the image previewer at the end of diff assessment. Default is `false` | `boolean` |
+| requestOptions  | Headers and authentication passed when visiting url  | `RequestSettings`, *optional* |
+| visitOptions  | Options for when the url is visited | `VisitSettings`, *optional* |
 | screenshotOptions | Options to pass to Cypress when taking screenshots. | `CypressScreenshotOptions` |
 | comparisonOptions | Options to pass to the Jest comparison engine when comparing screenshots. | `JestMatchImageSnapshotOptions` |
+
+<br>
+<br>
+
+**Request options | RequestSettings | (*optional*)**  
+  
+<br>
+
+| Property | Description | Type |
+| --- | --- | --- |
+| headers | Any headers to be passed when visiting an endpoint | `{ [key: string]: string; }` |
+| auth | For basic auth | `{ username: string; password: string }` |
+
+<br>
+<br>
+
+**Visit options | VisitSettings | (*optional*)**  
+  
+<br>
+
+| Property | Description | Type |
+| --- | --- | --- |
+| waitForNetworkIdle | Wait for network requests to stop before taking a screenshot. Default is `true` | `boolean` |
+| devicePixelRatio | The pixel ratio to use when taking screenshots. Default is `1` | `number` |
+| scrollDuration | Scroll speed prior to capture. If not using IntersectionObserver you can probably set this to 0. Default is `1000` milliseconds.  | `number` |
+| failOnStatusCode | Whether Cypress should fail on a non-2xx response code from your server. Default is `true` | `boolean` |
 
 <br>
 <br>
@@ -908,16 +938,12 @@ Reference:
 
 | Property | Description | Type |
 | --- | --- | --- |
-| waitForNetworkIdle | Wait for network requests to stop before taking a screenshot. Default is `true` | `boolean` |
-| scrollDuration | Scroll speed prior to capture. If not using IntersectionObserver you can probably set this to 0. Default is `1000` milliseconds.  | `number` |
 | blackout | Array of string selectors used to match elements that should be blacked out when the screenshot is taken. Does not apply to element screenshot captures. | `string[]` |
 | capture | Valid values are viewport or fullPage. When fullPage, the application under test is captured in its entirety from top to bottom. This value is ignored for element screenshot captures. | `'fullPage' \| 'viewport'` |
 | disableTimersAndAnimations | When true, prevents JavaScript timers (setTimeout, setInterval, etc) and CSS animations from running while the screenshot is taken. Default is `false` | `boolean` |
 | clip | Position and dimensions (in pixels) used to crop the final screenshot image. | `{ x: number; y: number; width: number; height: number;	}` |
 | padding | Padding used to alter the dimensions of a screenshot of an element. It can either be a number, or an array of up to four numbers using CSS shorthand notation. This property is only applied for element screenshots and is ignored for all other types. | `number \| [ number ] \| [ number, number ] \| [ number, number, number ] \| [ number, number, number, number ]` |
 | timeouts | Time to wait for .screenshot() to resolve before timing out. See [cypress timeouts options](https://docs.cypress.io/guides/references/configuration.html#Timeouts)  | `{ defaultCommandTimeout?: 4000, execTimeout?: 60000, taskTimeout?: 60000, pageLoadTimeout?: 60000, requestTimeout?: 5000, responseTimeout?: 30000;	}` |
-| devicePixelRatio | The pixel ratio to use when taking screenshots. Default is `1` | `number` |
-| failOnStatusCode | Whether Cypress should fail on a non-2xx response code from your server. Default is `true` | `boolean` |
 
 <br>
 <br>

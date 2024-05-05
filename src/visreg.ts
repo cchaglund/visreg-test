@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { spawn } from 'child_process';
 import * as readline from 'readline';
-import { ConfigurationSettings, Endpoint, NonOverridableSettings, ProgramChoices, TestSettings, TestType, VisregViewport } from './types';
+import { ConfigurationSettings, CypressScreenshotOptions, JestMatchImageSnapshotOptions, NonOverridableSettings, ProgramChoices, RequestSettings, TestSettings, TestType, VisitSettings, VisregViewport } from './types';
 import { programChoices } from './cli';
 import startServer from './server';
 import { assessInWeb, processImageViaWeb } from './diff-assessment-web';
@@ -283,26 +283,37 @@ const prepareConfig = (diffList?: string[]) => {
 	const {
 		screenshotOptions,
 		comparisonOptions,
-		...conf
+		requestOptions,
+		visitOptions,
+		maxViewport,
+		browser,
 	} = visregConfig;
 
-	const snapshotSettings = {
+	const snapshotSettings: CypressScreenshotOptions & JestMatchImageSnapshotOptions = {
 		failureThreshold: 0.001,
 		failureThresholdType: 'percent',
 		capture: 'fullPage',
 		disableTimersAndAnimations: false,
-		scrollDuration: 750,
-		devicePixelRatio: 1,
-		disableAutoPreviewClose: false,
-		imagePreviewProcess: 'eog',
-		waitForNetworkIdle: true,
 		...screenshotOptions,
 		...comparisonOptions,
-		...conf,
 	};
 
-	process.env.CYPRESS_VISREG_OPTIONS = JSON.stringify(conf);
+	const visitSettings: VisitSettings = {
+		scrollDuration: 750,
+		devicePixelRatio: 1,
+		waitForNetworkIdle: true,
+		...visitOptions,
+	}
+
+	const requestSettings: RequestSettings = {
+		...requestOptions,
+	};
+
+	process.env.CYPRESS_VISREG_SETTINGS = JSON.stringify({ maxViewport });
 	process.env.CYPRESS_SNAPSHOT_SETTINGS = JSON.stringify(snapshotSettings);
+	process.env.CYPRESS_VISIT_SETTINGS = JSON.stringify(visitSettings);
+	process.env.CYPRESS_REQUEST_SETTINGS = JSON.stringify(requestSettings);
+
 	process.env.SEND_SUITE_CONF = 'false';
 
 	const specPath = getSuiteDirOrFail(programChoices.suite);
@@ -331,7 +342,7 @@ const prepareConfig = (diffList?: string[]) => {
 
 	return {
 		specPath,
-		browser: snapshotSettings.browser,
+		browser,
 	};
 };
 

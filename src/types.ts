@@ -46,6 +46,16 @@ export type TestContext = {
 export type EndpointHookFunction = (cy: typeof CypressCy, context: TestContext) => void;
 export type ExcludeFromTestFunction = (cy: typeof CypressCy, context: TestContext) => boolean;
 
+export type RequestSettings = {
+	headers?: {
+		[key: string]: string;
+	};
+	auth?: {
+		username: string;
+		password: string;
+	};
+};
+
 export type Endpoint = CypressScreenshotOptions & JestMatchImageSnapshotOptions & {
 	title: string;
 	path: string;
@@ -58,16 +68,58 @@ export type Endpoint = CypressScreenshotOptions & JestMatchImageSnapshotOptions 
 	onEndpointVisit?: EndpointHookFunction;
 	onCleanup?: EndpointHookFunction;
 	data?: any;
+	visitOptions?: VisitSettings;
+	requestOptions?: RequestSettings;
 };
 
 export type VisregViewport = Cypress.ViewportPreset | number[];
+
+export type VisitSettings = {
+	/**
+	 * Whether to wait for network traffic before taking a screenshot.
+	 * Uses https://github.com/bahmutov/cypress-network-idle
+	 * @type {boolean}
+	 * @default true
+	 */
+	waitForNetworkIdle?: boolean;
+
+	/**
+	 * Change the pixel density of the screenshot. 
+	 * Mobile devices often have a pixel density of 2, and retina displays have a pixel density of 2 or 3.
+	 * With the default value of 1, the screenshot will be the same size as the viewport.
+	 * They will be noticeably lower resolution than what you'd see on a mobile device or retina display.
+	 * Pros and cons of setting this to a higher value:
+	 * - Screenshots resemble what you'd see on a mobile device or retina display.
+	 * - Screenshot files sizes will be larger, and they will take longer to process and store
+	 * 
+	 * @type {number}
+	 * @default 1
+	 */
+	devicePixelRatio?: number;
+
+	/**
+	 * Amount of time, in milliseconds, to scroll the page prior to taking screenshots (1 second down, 1 second up)
+	 * When "capture" is set to "viewport", this time is halved.
+	 * @type {number}
+	 * @default 750
+	 */
+	scrollDuration?: number;
+
+	/**
+	 * Whether Cypress should fail on a non-2xx response code from your server.
+	 * @type {boolean}
+	 * @default true
+	 */
+	failOnStatusCode?: boolean;
+};
 
 export type PrepareForCaptureSettings = {
 	fullUrl: string;
 	viewport: VisregViewport;
 	onPageVisitFunctions?: ((EndpointHookFunction) | undefined)[];
 	fullPageCapture?: boolean;
-	options: CypressScreenshotOptions & JestMatchImageSnapshotOptions;
+	visitSettings: VisitSettings,
+	requestSettings?: RequestSettings;
 	context: TestContext;
 };
 
@@ -124,7 +176,20 @@ export type CliProgramChoices = ProgramChoices & {
 
 export type ConfigurationSettings = {
 	/**
+	 * Request options to be included in the request of every endpoint.
+	 * @type {Object}
+	 */
+	requestOptions?: RequestSettings;
+
+	/**
+	 * Visit options to be included in the visit of every endpoint.
+	 * @type {Object}
+	 */
+	visitOptions?: VisitSettings;
+
+	/**
 	* These will not be included in the selection of test suites.
+	* @type {string[]}
 	*/
 	ignoreDirectories?: string[];
 
@@ -132,6 +197,7 @@ export type ConfigurationSettings = {
 	 * maxViewport sets the maximum viewport dimensions that will be used for screenshots. 
 	 * If you define a viewport in your tests that is larger than these values, it will be cropped to these values.
 	 * I.e. the screenshot will not be the full viewport size.
+	 * @type {Object}
 	 */
 	maxViewport?: {
 		width?: number;
@@ -176,36 +242,6 @@ export type VisregOptions = CypressScreenshotOptions & JestMatchImageSnapshotOpt
 
 
 export type CypressScreenshotOptions = {
-	/**
-	 * Whether to wait for network traffic before taking a screenshot.
-	 * Uses https://github.com/bahmutov/cypress-network-idle
-	 * @type {boolean}
-	 * @default true
-	 */
-	waitForNetworkIdle?: boolean;
-
-	/**
-	 * Change the pixel density of the screenshot. 
-	 * Mobile devices often have a pixel density of 2, and retina displays have a pixel density of 2 or 3.
-	 * With the default value of 1, the screenshot will be the same size as the viewport.
-	 * They will be noticeably lower resolution than what you'd see on a mobile device or retina display.
-	 * Pros and cons of setting this to a higher value:
-	 * - Screenshots resemble what you'd see on a mobile device or retina display.
-	 * - Screenshot files sizes will be larger, and they will take longer to process and store
-	 * 
-	 * @type {number}
-	 * @default 1
-	 */
-	devicePixelRatio?: number;
-
-	/**
-	 * Amount of time, in milliseconds, to scroll the page prior to taking screenshots (1 second down, 1 second up)
-	 * When "capture" is set to "viewport", this time is halved.
-	 * @type {number}
-	 * @default 750
-	 */
-	scrollDuration?: number;
-
 	/**
 	 * Array of string selectors used to match elements that should be blacked out when the screenshot is taken.
 	 * Does not apply to element screenshot captures.
@@ -283,13 +319,6 @@ export type CypressScreenshotOptions = {
 		requestTimeout?: 5000,
 		responseTimeout?: 30000;
 	};
-
-	/**
-	 * Whether Cypress should fail on a non-2xx response code from your server.
-	 * @type {boolean}
-	 * @default true
-	 */
-	failOnStatusCode?: boolean;
 };
 
 

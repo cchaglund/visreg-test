@@ -1,7 +1,7 @@
 import '../support/commands';
 import { addMatchImageSnapshotCommand } from 'cypress-image-snapshot-fork-2/command';
 import { before, cy, Cypress, describe, it } from 'local-cypress';
-import { Endpoint, TestSettings, SnapConfig, TestConfig, VisregViewport } from '../../types';
+import { Endpoint, TestSettings, SnapConfig, TestConfig, VisregViewport, VisitSettings, RequestSettings } from '../../types';
 
 addMatchImageSnapshotCommand();
 
@@ -56,14 +56,26 @@ const takeSnaps = (props: TestConfig, viewport: VisregViewport, endpoint: Endpoi
         onBefore,
         onEndpointVisit,
         onCleanup,
+        requestOptions,
+        visitOptions,
         ...endpointOptions
     } = endpoint;
 
-    const options = {
+    const snapshotSettings = {
         ...Cypress.env('NON_OVERRIDABLE_SETTINGS'),
         ...Cypress.env('SNAPSHOT_SETTINGS'),
         ...endpointOptions,
     };
+
+    const visitSettings: VisitSettings = {
+        ...Cypress.env('VISIT_SETTINGS'),
+        ...visitOptions,
+    }
+
+    const requestSettings: RequestSettings = {
+        ...Cypress.env('REQUEST_SETTINGS'),
+        ...requestOptions,
+    }
 
     const snapName = `${title} @ ${viewport}`;
     const fullUrl = getFullUrl(props, path);
@@ -87,14 +99,15 @@ const takeSnaps = (props: TestConfig, viewport: VisregViewport, endpoint: Endpoi
             fullUrl,
             viewport,
             onPageVisitFunctions: [ onPageVisit, onEndpointVisit ],
-            fullPageCapture: !(elementToMatch || options.capture === 'viewport'),
+            fullPageCapture: !(elementToMatch || snapshotSettings.capture === 'viewport'),
             context,
-            options,
+            requestSettings,
+            visitSettings,
         });
 
         if (!noSnap) {
             const cyTarget = elementToMatch ? cy.get(elementToMatch) : cy;
-            cyTarget.matchImageSnapshot(snapName, options);
+            cyTarget.matchImageSnapshot(snapName, snapshotSettings);
         }
 
         if (onCleanup) {
@@ -211,13 +224,12 @@ export const runTest = (props: TestConfig): void => {
             return;
         }
 
-        cy.exec('curl http://localhost:3000/api/test/terminate-json', {failOnNonZeroExit: false}).then((result) => {
-            const parsed = JSON.parse(result.stdout);
-
-            if (parsed.terminate) {
-                throw new Error('Terminating tests');
-            }
-        })
+        cy.request('http://localhost:3000/api/test/terminate-json')
+            .then((response) => {
+                if (response.body.terminate) {
+                    throw new Error('Terminating tests');
+                }
+            });
     });
 
     describe(`Suite: "${suiteName}"`, () => {
