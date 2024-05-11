@@ -162,7 +162,20 @@ const startLabMode = async (programChoices: ProgramChoices) => {
 		}
 	}
 
-	runCypressTest();
+	await runCypressTest();
+
+	if (programChoices.gui) {
+		process.exit();
+	}
+
+	printColorText(`Lab mode summary\n`, '4');
+	printColorText(`Duration: ${cypressSummary.duration} seconds`, '2');
+	printColorText('GUI: off', '2');
+	printColorText(`Snapshots: ${programChoices.snap ? 'on' : 'off'}`, '2');
+
+	printColorText(`\n(Tip: use the GUI for hot-reloading!)\n`, '2');
+
+	process.exit();
 }
 
 const main = async (): Promise<void> => {
@@ -189,7 +202,10 @@ const main = async (): Promise<void> => {
 	backupDiffs();
 	backupReceived();
 	const testResultDiffs = await runCypressTest(allCurrentDiffs);
-	assessExistingDiffImages(testResultDiffs);
+
+	if (testResultDiffs) {
+		assessExistingDiffImages(testResultDiffs);
+	}
 
 	return;
 };
@@ -327,16 +343,18 @@ const prepareConfig = (diffList?: string[]) => {
 		noSnap: !programChoices.snap,
 	};
 
+	const labMode = programChoices.testType === 'lab';
+
 	const nonOverridableSettings: NonOverridableSettings = {
 		suitesDirectory,
 		useRelativeSnapshotsDir: true,
 		storeReceivedOnFailure: true,
-		snapFilenameExtension: '.base',
-		customSnapshotsDir: '',
+		snapFilenameExtension: labMode ? '.lab' : '.base',
+		customSnapshotsDir: labMode ? 'lab' : '',
 	};
 
 	process.env.CYPRESS_failOnSnapshotDiff = 'false';
-	process.env.CYPRESS_updateSnapshots = 'false';
+	process.env.CYPRESS_updateSnapshots = labMode ? 'true' : 'false';
 	process.env.CYPRESS_TEST_SETTINGS = Buffer.from(JSON.stringify(testSettings)).toString('base64');
 	process.env.CYPRESS_NON_OVERRIDABLE_SETTINGS = JSON.stringify(nonOverridableSettings);
 
@@ -361,7 +379,7 @@ const getInitMessage = (labModeOn: boolean, browser?: string) => {
 		: `Starting Cypress (${browser || 'electron'})`;
 }
 
-const runCypressTest = async (diffList?: string[]): Promise<string[]> => new Promise((resolve) => {
+const runCypressTest = async (diffList?: string[]): Promise<string[] | void> => new Promise((resolve) => {
 	const conf = prepareConfig(diffList);
 	process.chdir(__dirname);
 	const labModeOn = programChoices.testType === 'lab';
@@ -391,7 +409,10 @@ const runCypressTest = async (diffList?: string[]): Promise<string[]> => new Pro
 	child.stdout?.on('data', (data) => onTerminalDataOut(data, diffList));
 	child.on('error', (error) => console.error(`exec error: ${error}`));
 	child.on('close', (code) => {
-		if (labModeOn) return;
+		if (labModeOn) {
+			resolve();
+			return;
+		}
 	
 		const testDiffList = onTerminalCypressClose();
 		resolve(testDiffList);

@@ -157,7 +157,6 @@ export type ProgramChoices = {
 	diffsOnly?: boolean | string,
 	assessExistingDiffs?: boolean | string,
 	targetted?: boolean | string,
-	labMode?: boolean,
 	testType: TestTypeSlug,
 	gui?: boolean,
 	snap?: boolean,
@@ -171,6 +170,7 @@ export type ProgramChoices = {
 export type CliProgramChoices = ProgramChoices & {
 	viewports?: string;
 	endpointTitles?: string;
+	labMode?: boolean,
 }
 
 
