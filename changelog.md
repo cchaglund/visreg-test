@@ -1,3 +1,6 @@
+5.1.1
+- Fixed bug that caused issues with lab mode snapshot storing.
+
 5.1.0
 - Added a requestOptions object to the endpoint and configuration objects, which can be used to set headers, user-agent, etc. for the request.
 - User-agent will now be set to the appropriate device type if using a preset viewport. Can be overriden by the requestOptions object in the endpoint.

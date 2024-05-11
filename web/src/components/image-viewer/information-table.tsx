@@ -58,16 +58,19 @@ const InformationTable = ({ image }: InformationTableProps) => {
             {filteredSiblingPaths.length > 0 && (
                 <div {...stylex.props(s.imageButtonsContainer)}>
                     <ButtonGroup variant="text">
-                        {filteredSiblingPaths.map((sibling, index) => (
-                            <Button
-                                key={index}
-                                onClick={() => navigate(sibling.previewUrl)}
-                                variant='text'
-                                startIcon={<ImageTwoToneIcon />}
-                            >
-                                {sibling.type}
-                            </Button>
-                        ))}
+                        {image.siblingPaths
+                            .filter(sibling => sibling.type !== image.type)
+                            .map((sibling, index) => (
+                                <Button
+                                    key={index}
+                                    onClick={() => navigate(sibling.previewUrl)}
+                                    variant='text'
+                                    startIcon={<ImageTwoToneIcon />}
+                                >
+                                    {sibling.type}
+                                </Button>
+                            ))
+                        }
                     </ButtonGroup>
                 </div>
             )}
