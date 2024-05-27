@@ -30,16 +30,16 @@ const s = stylex.create({
 
 type SidebarProps = {
     parsedViewports: string[];
-    endpointState: [string, React.Dispatch<React.SetStateAction<string>>];
-    viewportState: [string, React.Dispatch<React.SetStateAction<string>>];
+    endpointsState: [string[], React.Dispatch<React.SetStateAction<string[]>>];
+    viewportsState: [string[], React.Dispatch<React.SetStateAction<string[]>>];
 };
 
 const FilterSidebar = (props: SidebarProps) => {
     const location = useLocation();
     const { suiteSlug, suiteConfig } = useLoaderData() as SuitePageData;
-    const { parsedViewports, endpointState, viewportState } = props;
-    const [ selectedName, setSelectedName ] = endpointState;
-    const [ selectedViewport, setSelectedViewport ] = viewportState;
+    const { parsedViewports, endpointsState, viewportsState } = props;
+    const [ selectedEndpoints, setSelectedEndpoints ] = endpointsState;
+    const [ selectedViewports, setSelectedViewports ] = viewportsState;
 
     const StyledSidebar = (props: { children: React.ReactNode; }) => (
         <div {...stylex.props(s.suitePageSidebar)}>
@@ -59,13 +59,21 @@ const FilterSidebar = (props: SidebarProps) => {
         </div>
     );
 
-    const changeName = (name: string) => {
-        setSelectedName(prev => prev === name ? '' : name);
+    const toggleEndpointSelection = (name: string) => {
+        setSelectedEndpoints(prev => {
+            return prev.includes(name) 
+                ? prev.filter(n => n !== name)
+                : [ ...prev, name ]
+        });
     };
 
-    const changeViewport = (viewport: string | number[]) => {
+    const toggleViewportsSelection = (viewport: string | number[]) => {
         const viewportString = Array.isArray(viewport) ? viewport.join(',') : viewport;
-        setSelectedViewport(prev => prev === viewportString ? '' : viewportString);
+        setSelectedViewports(prev => {
+            return prev.includes(viewportString) 
+                ? prev.filter(v => v !== viewportString)
+                : [ ...prev, viewportString ]
+        });
     };
 
     if (
@@ -91,9 +99,9 @@ const FilterSidebar = (props: SidebarProps) => {
                         <Chip
                             key={index}
                             label={endpoint.title}
-                            onClick={() => changeName(endpoint.title)}
+                            onClick={() => toggleEndpointSelection(endpoint.title)}
                             disabled={location.pathname === `/suite/${suiteSlug}`}
-                            variant={selectedName === endpoint.title ? 'filled' : 'outlined'}
+                            variant={selectedEndpoints.find(name => name === endpoint.title) ? 'filled' : 'outlined'}
                             clickable
                             color='secondary'
                         />
@@ -113,9 +121,9 @@ const FilterSidebar = (props: SidebarProps) => {
                         <Chip
                             key={index}
                             label={viewport}
-                            onClick={() => changeViewport(viewport)}
+                            onClick={() => toggleViewportsSelection(viewport)}
                             disabled={location.pathname === `/suite/${suiteSlug}`}
-                            variant={selectedViewport === viewport ? 'filled' : 'outlined'}
+                            variant={selectedViewports.find(vp => vp === viewport)  ? 'filled' : 'outlined'}
                             clickable
                             color='secondary'
                         />
@@ -123,21 +131,9 @@ const FilterSidebar = (props: SidebarProps) => {
                 </ChipContainer>
             </Section>
             <Section>
-                {/* <Typography
-                    variant="body2"
-                    mb={1}
-                    sx={{ cursor: 'pointer', }}
-                    color='text.primary'
-                    onClick={() => {
-                        setSelectedName('');
-                        setSelectedViewport('');
-                    }}
-                >
-                    Clear filter
-                </Typography> */}
                 <Button variant='text' size='small' color='secondary' onClick={() => {
-                    setSelectedName('');
-                    setSelectedViewport('');
+                    setSelectedEndpoints([]);
+                    setSelectedViewports([]);
                 }}>
                     Clear filter
                 </Button>

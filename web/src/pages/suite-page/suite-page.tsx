@@ -5,15 +5,15 @@ import FilterSidebar from './filter-sidebar';
 import { TestConfig } from '../../types';
 
 export type SuiteContextType = {
-    selectedEndpoint: string;
-    selectedViewport: string;
+    selectedEndpoints: string[];
+    selectedViewports: string[];
     suiteConfig?: TestConfig;
     parsedViewports?: string[];
 };
 
 const defaultValue: SuiteContextType = {
-    selectedEndpoint: '',
-    selectedViewport: '',
+    selectedEndpoints: [],
+    selectedViewports: [],
 };
 
 export const SuiteContext = createContext(defaultValue);
@@ -58,11 +58,11 @@ const s = stylex.create({
 const SuitePage = () => {
     const { suiteSlug, suiteConfig } = useLoaderData() as SuitePageData;
     const [ parsedViewports, setParsedViewports ] = useState<string[]>([]);
-    const endpointState = useState<string>('');
-    const viewportState = useState<string>('');
+    const endpointsState = useState<string[]>([]);
+    const viewportsState = useState<string[]>([]);
 
-    const [ selectedEndpoint ] = endpointState;
-    const [ selectedViewport ] = viewportState;
+    const [ selectedEndpoints ] = endpointsState;
+    const [ selectedViewports ] = viewportsState;
 
     useEffect(() => {
         if (suiteConfig?.viewports) {
@@ -81,14 +81,14 @@ const SuitePage = () => {
             <div {...stylex.props(s.suitePageContent)}>
 
                 <FilterSidebar
-                    endpointState={endpointState}
-                    viewportState={viewportState}
+                    endpointsState={endpointsState}
+                    viewportsState={viewportsState}
                     parsedViewports={parsedViewports}
                 />
 
                 <SuiteContext.Provider value={{
-                    selectedEndpoint,
-                    selectedViewport,
+                    selectedEndpoints,
+                    selectedViewports,
                     suiteConfig,
                     parsedViewports,
                 }}>

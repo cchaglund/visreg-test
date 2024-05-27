@@ -9,7 +9,7 @@ const s = x.create({
     terminalContainer: {
         display: 'flex',
         flexDirection: 'column',
-        width: '-webkit-fill-available',
+        width: x.firstThatWorks('-webkit-fill-available', 'moz-available', '100%'),
         margin: '0 auto',
         backgroundColor: '#0B2027',
         padding: '2rem',

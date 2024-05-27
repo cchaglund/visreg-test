@@ -29,6 +29,9 @@ export const style = x.create({
     justifyCenter: {
         justifyContent: 'center',
     },
+    justifyBetween: {
+        justifyContent: 'space-between',
+    },
     gap05: {
         gap: '0.5rem',
     },

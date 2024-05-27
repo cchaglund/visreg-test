@@ -94,7 +94,11 @@ export const SuggestedActions = () => {
                     </Typography>
                 </ActionCard>
 
-                <ActionCard onClick={() => navigate(`/suite/${suiteConfig.suiteSlug}/images`)}>
+                <ActionCard onClick={() => {
+                        const searchParams = new URLSearchParams();
+                        searchParams.append("gallery-subset", JSON.stringify(visregSummary.testAgenda));
+                        navigate(`/suite/${suiteConfig.suiteSlug}/images/?${searchParams.toString()}`);
+                    }}>
                     <ImageTwoToneIcon fontSize='large' color='primary' />
                     <Typography gutterBottom mt={2} variant="h6" color={'primary'}>
                         Gallery

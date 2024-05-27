@@ -131,9 +131,16 @@ const router = createBrowserRouter([
 					{
 						path: "/suite/:suiteSlug/images",
 						element: <ImagesOverview />,
-						loader: async ({ params }) => {
+						loader: async ({ params, request }) => {
+							const url = new URL(request.url);
+							const gallerySubset = url.searchParams.get('gallery-subset');
 							const imagesList = await getSuiteImagesList(params.suiteSlug);
-							return { imagesList, suiteSlug: params.suiteSlug};
+
+							return { 
+								imagesList, 
+								suiteSlug: params.suiteSlug,
+								gallerySubset: gallerySubset ? JSON.parse(gallerySubset) : null,
+							};
 						},
 						handle: {
 							crumb: ({ suiteSlug }: { suiteSlug: string; }) => {
