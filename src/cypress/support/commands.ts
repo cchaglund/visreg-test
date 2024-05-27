@@ -38,22 +38,23 @@ const getHeadersWithUserAgent = (viewport: VisregViewport, headers: Headers) => 
 }
 
 Cypress.Commands.add('prepareForCapture', (props: PrepareForCaptureSettings) => {
-    const { fullUrl, viewport, onPageVisitFunctions, fullPageCapture, context, visitSettings, requestSettings } = props;
+    const { context, onVisit, globalOnVisit } = props;
+    const { fullUrl, viewport, fullPageCapture, visitOptions, requestOptions } = context;
 
     if (Cypress.browser.name !== 'firefox') {
         // This is not supported in firefox (will always be 1)
-        cy.setDevicePixelRatio(visitSettings.devicePixelRatio || 1);
+        cy.setDevicePixelRatio(visitOptions.devicePixelRatio || 1);
     }
 
-    const visitOptions = {
-        failOnStatusCode: visitSettings.failOnStatusCode ?? true,
-        headers: getHeadersWithUserAgent(viewport, requestSettings?.headers || {}),
-        auth: requestSettings?.auth,
+    const visitSettings = {
+        failOnStatusCode: visitOptions.failOnStatusCode ?? true,
+        headers: getHeadersWithUserAgent(viewport, requestOptions?.headers || {}),
+        auth: requestOptions?.auth,
     }
 
     cy.setResolution(viewport);
 
-    cy.visit(fullUrl, visitOptions);
+    cy.visit(fullUrl, visitSettings);
 
     cy.get("html, body").invoke( // potentially alleviates some issues with scroll behavior
         "attr",
@@ -61,27 +62,30 @@ Cypress.Commands.add('prepareForCapture', (props: PrepareForCaptureSettings) => 
         "height: auto; scroll-behavior: auto;"
     );
 
-    onPageVisitFunctions?.forEach((fn) => fn && fn(cy, context));
+    // Endpoint hooks take precedence over global hooks (gets it passed as a parameter if user wants to call it)
+    onVisit
+        ? onVisit(cy, context, globalOnVisit)
+        : globalOnVisit(cy, context);
     
     const scrollSettings = {
-        duration: visitSettings.scrollDuration || 750,
+        duration: visitOptions.scrollDuration || 750,
         ensureScrollable: false,
     }
 
     if (fullPageCapture) {
         cy.scrollTo('bottom', scrollSettings);
         cy.scrollTo('top', scrollSettings);
-        if (visitSettings.waitForNetworkIdle) {
+        if (visitOptions.waitForNetworkIdle) {
             cy.waitForNetworkIdle(2000, { log: false })
         }
         return;
-    }     
+    }
 
     cy.window().then(win => {
         // We scroll a little even if capture is set to viewport, to trigger any lazy loading/interscetion observer.
         cy.scrollTo(0, win.innerHeight, scrollSettings);
         cy.scrollTo('top', scrollSettings);
-        if (visitSettings.waitForNetworkIdle) {
+        if (visitOptions.waitForNetworkIdle) {
             cy.waitForNetworkIdle(2000, { log: false })
         }
     });

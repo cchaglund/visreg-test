@@ -1,7 +1,7 @@
 import '../support/commands';
 import { addMatchImageSnapshotCommand } from 'cypress-image-snapshot-fork-2/command';
 import { before, cy, Cypress, describe, it } from 'local-cypress';
-import { Endpoint, TestSettings, SnapConfig, TestConfig, VisregViewport, VisitSettings, RequestSettings } from '../../types';
+import { Endpoint, TestSettings, SnapConfig, TestConfig, VisregViewport, VisitSettings, RequestSettings, NonOverridableSettings, CypressScreenshotOptions, JestMatchImageSnapshotOptions, TestContext } from '../../types';
 
 addMatchImageSnapshotCommand();
 
@@ -46,33 +46,37 @@ const getFullUrl = (props: TestConfig, path: string) => {
 };
 
 const takeSnaps = (props: TestConfig, viewport: VisregViewport, endpoint: Endpoint, noSnap?: boolean) => {
-    const { onPageVisit } = props;
+    const {
+        onBeforeVisit: beforeVisitGlobal,
+        onVisit: onVisitGlobal,
+        onAfterVisit: afterVisitGlobal,
+    } = props;
 
     const {
         path,
         title,
         elementToMatch,
         excludeFromTest,
-        onBefore,
-        onEndpointVisit,
-        onCleanup,
+        onBeforeVisit,
+        onVisit,
+        onAfterVisit,
         requestOptions,
         visitOptions,
         ...endpointOptions
     } = endpoint;
 
-    const snapshotSettings = {
+    const snapshotSettings: NonOverridableSettings & CypressScreenshotOptions & JestMatchImageSnapshotOptions & Partial<Endpoint> = {
         ...Cypress.env('NON_OVERRIDABLE_SETTINGS'),
         ...Cypress.env('SNAPSHOT_SETTINGS'),
         ...endpointOptions,
     };
 
-    const visitSettings: VisitSettings = {
+    const visitOptionsAggregate: VisitSettings = {
         ...Cypress.env('VISIT_SETTINGS'),
         ...visitOptions,
     }
 
-    const requestSettings: RequestSettings = {
+    const requestOptionsAggregate: RequestSettings = {
         ...Cypress.env('REQUEST_SETTINGS'),
         ...requestOptions,
     }
@@ -80,29 +84,33 @@ const takeSnaps = (props: TestConfig, viewport: VisregViewport, endpoint: Endpoi
     const snapName = `${title} @ ${viewport}`;
     const fullUrl = getFullUrl(props, path);
 
-    const context = {
+    const context: TestContext = {
         endpoint,
         viewport,
-        cypress: Cypress
+        cypress: Cypress,
+        fullUrl,
+        fullPageCapture: !(elementToMatch || snapshotSettings.capture === 'viewport'),
+        requestOptions: requestOptionsAggregate,
+        visitOptions: visitOptionsAggregate,
     };
 
-    it(snapName, () => {
-        if (excludeFromTest && excludeFromTest(cy, context)) {
-            return;
-        }
+    // Always have a callable global hook, to avoid errors when not defined
+    const globalBeforeVisit = beforeVisitGlobal || (() => {});
+    const globalOnVisit = onVisitGlobal || (() => {});
+    const globalAfterVisit = afterVisitGlobal || (() => {});
 
-        if (onBefore) {
-            onBefore(cy, context);
-        }
+    it(snapName, () => {
+        if (excludeFromTest && excludeFromTest(cy, context)) return;
+
+        // Endpoint hooks take precedence over global hooks (gets it passed as a parameter if user wants to call it)
+        onBeforeVisit 
+            ? onBeforeVisit(cy, context, globalBeforeVisit)
+            : globalBeforeVisit(cy, context);
 
         cy.prepareForCapture({
-            fullUrl,
-            viewport,
-            onPageVisitFunctions: [ onPageVisit, onEndpointVisit ],
-            fullPageCapture: !(elementToMatch || snapshotSettings.capture === 'viewport'),
             context,
-            requestSettings,
-            visitSettings,
+            onVisit,
+            globalOnVisit,
         });
 
         if (!noSnap) {
@@ -110,9 +118,10 @@ const takeSnaps = (props: TestConfig, viewport: VisregViewport, endpoint: Endpoi
             cyTarget.matchImageSnapshot(snapName, snapshotSettings);
         }
 
-        if (onCleanup) {
-            onCleanup(cy, context);
-        }
+        // Endpoint hooks take precedence over global hooks (gets it passed as a parameter if user wants to call it)
+        onAfterVisit
+            ? onAfterVisit(cy, context, globalAfterVisit)
+            : globalAfterVisit(cy, context);
     });
 };
 
@@ -257,7 +266,7 @@ export const runTest = (props: TestConfig): void => {
         }
 
         if (testType === 'targetted') {
-            describe('Targetted' + limitText, () => {                
+            describe('Targetted' + limitText, () => {
                 viewportsToTest.forEach((vp) => {
                     endpointsToTest.forEach((ep) => {
                         takeSnaps(props, vp, ep, noSnap);

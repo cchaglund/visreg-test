@@ -6,7 +6,7 @@ import { spawn } from 'child_process';
 import * as readline from 'readline';
 import { ConfigurationSettings, CypressScreenshotOptions, JestMatchImageSnapshotOptions, NonOverridableSettings, ProgramChoices, RequestSettings, TestSettings, TestType, VisitSettings, VisregViewport } from './types';
 import { programChoices } from './cli';
-import startServer from './server';
+import { startServer } from './server';
 import { assessInWeb, processImageViaWeb } from './diff-assessment-web';
 import { BACKUP_DIFF_DIR, BACKUP_RECEIVED_DIR, DIFF_DIR, RECEIVED_DIR, cleanUp, createFailingEndpointTestResult, createPassingEndpointTestResult, getAllDiffingFiles, getDiffingFilesFromTestResult, getSkippedEndpoints, getSuiteDirOrFail, getSuites, getUnchangedEndpoints, hasFiles, includedInTarget, isTargettedTest, parseAgenda, parseCypressSummary, parseViewport, pathExists, printColorText, projectRoot, removeBackups, suitesDirectory } from './utils';
 import { assessInCLI } from './diff-assessment-terminal';
@@ -117,7 +117,7 @@ const promptForEndpointTitle = async () => {
 	await new Promise<void>((resolve) => {
 		if (programChoices.targetEndpointTitles.length) resolve();
 
-		rl.question('Enter endpoint title: ', (endpointTitle) => {
+		rl.question('Enter endpoint title (replace spaces with "-"): ', (endpointTitle) => {
 			programChoices.targetEndpointTitles = [ endpointTitle ];
 			resolve();
 		});

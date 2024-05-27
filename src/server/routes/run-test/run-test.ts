@@ -1,11 +1,13 @@
 import { ProgramChoices } from '../../../types';
 import { startWebTest} from '../../../visreg';
 import { WebSocketServer } from 'ws';
+// import { getServer } from 'src/server';
 
 const express = require('express');
 const router = express.Router();
 
 const wss = new WebSocketServer({ port: 8080 });
+// const wss = new WebSocketServer({ server: getServer() });
 
 let ws: WebSocket;
 let terminate = false;

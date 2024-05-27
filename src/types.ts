@@ -41,9 +41,13 @@ export type TestContext = {
 	endpoint: Endpoint;
 	viewport: VisregViewport;
 	cypress: Cypress.Cypress;
+	fullUrl: string;
+	fullPageCapture?: boolean;
+	visitOptions: VisitSettings,
+	requestOptions?: RequestSettings;
 }
 
-export type EndpointHookFunction = (cy: typeof CypressCy, context: TestContext) => void;
+export type EndpointHookFunction = (cy: typeof CypressCy, context: TestContext, globalParentHook?: EndpointHookFunction) => void;
 export type ExcludeFromTestFunction = (cy: typeof CypressCy, context: TestContext) => boolean;
 
 export type RequestSettings = {
@@ -64,9 +68,9 @@ export type Endpoint = CypressScreenshotOptions & JestMatchImageSnapshotOptions 
 	padding?: Cypress.Padding;
 	capture?: 'viewport' | 'fullPage';
 	excludeFromTest?: ExcludeFromTestFunction;
-	onBefore?: EndpointHookFunction;
-	onEndpointVisit?: EndpointHookFunction;
-	onCleanup?: EndpointHookFunction;
+	onBeforeVisit?: EndpointHookFunction;
+	onVisit?: EndpointHookFunction;
+	onAfterVisit?: EndpointHookFunction;
 	data?: any;
 	visitOptions?: VisitSettings;
 	requestOptions?: RequestSettings;
@@ -114,12 +118,8 @@ export type VisitSettings = {
 };
 
 export type PrepareForCaptureSettings = {
-	fullUrl: string;
-	viewport: VisregViewport;
-	onPageVisitFunctions?: ((EndpointHookFunction) | undefined)[];
-	fullPageCapture?: boolean;
-	visitSettings: VisitSettings,
-	requestSettings?: RequestSettings;
+	onVisit?: (EndpointHookFunction) | undefined;
+	globalOnVisit: (EndpointHookFunction);
 	context: TestContext;
 };
 
@@ -129,7 +129,9 @@ export type TestConfig = {
 	endpoints: Endpoint[];
 	viewports?: VisregViewport[];
 	formatUrl?: (path: string) => string;
-	onPageVisit?: EndpointHookFunction;
+	onBeforeVisit?: EndpointHookFunction;
+	onVisit?: EndpointHookFunction;
+	onAfterVisit?: EndpointHookFunction;
 };
 
 export type TestTypeSlug = 'full-test' | 'diffs-only' | 'targetted' | 'lab' | 'assess-existing-diffs';

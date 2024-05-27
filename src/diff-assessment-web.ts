@@ -2,7 +2,7 @@ import { DIFF_DIR, RECEIVED_DIR, SUITE_SNAPS_DIR, cleanUp, getFileInfo, getHuman
 import { programChoices } from './cli';
 import * as fs from 'fs';
 import * as path from 'path';
-import startServer from './server';
+import { startServer } from './server';
 import { devPort, serverPort } from './server/config';
 import { Endpoint } from './types';
 

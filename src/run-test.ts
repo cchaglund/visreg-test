@@ -34,20 +34,20 @@ const sendSuiteConf = (props: TestConfig) => {
 
 const stringifyConfig = (props: TestConfig) => {
     const stringifiedEndpoints = props.endpoints.map(endpoint => {
-        const { onBefore, onEndpointVisit, onCleanup, ...rest } = endpoint;
+        const { onBeforeVisit, onVisit, onAfterVisit, ...rest } = endpoint;
 
         return {
             ...rest,
-            ...onBefore ? { onBefore: onBefore.toString() } : {},
-            ...onEndpointVisit ? { onEndpointVisit: onEndpointVisit.toString() } : {},
-            ...onCleanup ? { onCleanup: onCleanup.toString() } : {},
+            ...onBeforeVisit ? { onBeforeVisit: onBeforeVisit.toString() } : {},
+            ...onVisit ? { onVisit: onVisit.toString() } : {},
+            ...onAfterVisit ? { onAfterVisit: onAfterVisit.toString() } : {},
         };
     });
 
     const stringifiedConfig = {
         ...props,
         ...props.formatUrl ? { formatUrl: props.formatUrl.toString() } : {},
-        ...props.onPageVisit ? { onPageVisit: props.onPageVisit.toString() } : {},
+        ...props.onVisit ? { onVisit: props.onVisit.toString() } : {},
         endpoints: stringifiedEndpoints,
     };
 

@@ -6,8 +6,8 @@ import { DiffObject } from '../diff-assessment-web';
 import routes from './routes';
 import { devPort, serverPort } from './config';
 import * as readline from 'readline';
-
-const express = require('express');
+import express = require('express');
+import https = require('https');
 
 const enableSpaceToOpen = async (url: string) => {
 	console.log('\nPress SPACE to open');
@@ -51,7 +51,13 @@ const enableSpaceToOpen = async (url: string) => {
     }    
 }
 
-const startServer = (programChoices: ProgramChoices, diffFiles?: DiffObject[]) => {
+let server: https.Server;
+
+export const getServer = () => {
+    return server;
+}
+
+export const startServer = (programChoices: ProgramChoices, diffFiles?: DiffObject[]) => {
 
     const app = express();
 
@@ -78,7 +84,7 @@ const startServer = (programChoices: ProgramChoices, diffFiles?: DiffObject[]) =
     if (process.env.NODE_ENV === 'development') {
         // This is used when developing (when React is being served by its dev server as opposed to being built and served by the express server)
         app.use(cors({
-            origin: 'http://localhost:' + devPort
+            origin: ['http://localhost:' + devPort]
         }));
 
         console.log('Development mode');
@@ -120,8 +126,8 @@ const startServer = (programChoices: ProgramChoices, diffFiles?: DiffObject[]) =
         
         enableSpaceToOpen(url);
     });
-    
-}
 
-export default startServer;
+    // server = https.createServer(credentials, app);
+    // server.listen(8443);
+}
 
