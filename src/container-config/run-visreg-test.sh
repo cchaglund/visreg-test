@@ -14,7 +14,7 @@ run_visreg_test() {
 
     # If package.json has changed, we will need to rebuild the image
     if [[ ! -f $PREV_PACKAGEJSON ]] || [[ -f $PREV_PACKAGEJSON && ! -z "$(diff -q $PROJECT_ROOT/package.json $PREV_PACKAGEJSON 2>/dev/null)" ]]; then
-        pretty_log "Package.json has changed - image might be outdated"
+        pretty_log "Package.json has changed - image will be rebuilt"
         image_stale=true
     fi
 
@@ -65,6 +65,7 @@ run_visreg_test() {
         pretty_log "Running container (with mounted local dist folder)..."
 
         docker run --name visreg-test -it \
+        -u $(id -u):$(id -g) \
         -e ENV=dev \
         -e ARGS=$ARGS \
         -v "$PROJECT_ROOT"/suites:/app/suites \
@@ -81,6 +82,7 @@ run_visreg_test() {
         pretty_log "Running container..."
 
         docker run --name visreg-test -it \
+        -u $(id -u):$(id -g) \
         -e ENV=prod \
         -e ARGS=$ARGS \
         -v "$PROJECT_ROOT"/suites:/app/suites \
