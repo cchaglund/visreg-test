@@ -1,6 +1,6 @@
 import { ColorModeContext } from '../../contexts/theme-context';
 import { useTheme } from '@mui/material/styles';
-import { Alert, AppBar, Box, Button, Dialog, DialogContent, IconButton, Toolbar, Typography } from '@mui/material';
+import { Alert, AppBar, Box, Button, Dialog, DialogContent, IconButton, Toolbar, Tooltip, Typography } from '@mui/material';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import Menu from './menu';
@@ -132,19 +132,25 @@ const Header = () => {
 
                         {!location.pathname.includes('/assessment') && (
                             <Link to={`/suite/${suiteName}/assessment/?resume=true`}>
-                                <Button variant="contained" color="primary">
-                                    Resume
-                                </Button>
+                                <Tooltip title="Return to the ongoing assessment">
+                                    <Button variant="contained" color="primary">
+                                        Resume
+                                    </Button>
+                                </Tooltip>
                             </Link>
                         )}
 
-                        <Button variant="contained" color="secondary" onClick={() => endAssessment('finish')}>
-                            Finish
-                        </Button>
+                        <Tooltip title="Update baselines for any approved diffs (rejected diffs can be assessed later)">
+                            <Button variant="contained" color="secondary" onClick={() => endAssessment('finish')}>
+                                Finish
+                            </Button>
+                        </Tooltip>
 
-                        <Button variant="outlined" color="secondary" onClick={() => endAssessment('abandon')}>
-                            Abandon
-                        </Button>
+                        <Tooltip title="Discard any approved diffs and stop assessing">
+                            <Button variant="outlined" color="secondary" onClick={() => endAssessment('abandon')}>
+                                Abandon
+                            </Button>
+                        </Tooltip>
                     </div>
                 )}
                 <IconButton

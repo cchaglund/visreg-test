@@ -1,10 +1,11 @@
-import { Badge, Card, CardActionArea, CardContent, Typography } from '@mui/material';
+import { Badge, Card, CardActionArea, CardContent, Paper, Typography } from '@mui/material';
 import x from '@stylexjs/stylex';
 import { useLoaderData, useNavigate } from 'react-router-dom';
 import { ImagesList } from '../suite-page';
 import ImageTwoToneIcon from '@mui/icons-material/ImageTwoTone';
 import RollerSkatingTwoToneIcon from '@mui/icons-material/RollerSkatingTwoTone';
 import ViewWeekTwoToneIcon from '@mui/icons-material/ViewWeekTwoTone';
+import HistoryTwoToneIcon from '@mui/icons-material/HistoryTwoTone';
 import { useContext } from 'react';
 import { AppContext } from '../../../contexts/app-context';
 
@@ -45,7 +46,8 @@ const Actions = () => {
 
     return (
         <div {...x.props(s.actions)}>
-            <Card
+            <Card 
+                component={Paper} 
                 elevation={assessmentsDisabled ? 0 : 7}
                 sx={{ borderRadius: '1rem'}}
             >
@@ -78,17 +80,14 @@ const Actions = () => {
                         >
                             {ongoingAssessment
                                 ? 'Resume ongoing assessment'
-                                : 'Assess all diffs'
+                                : 'Assess diffs'
                             }
                         </Typography>
                     </CardContent>
                 </CardActionArea>
             </Card>
 
-            <Card
-                elevation={ongoingAssessment ? 0 : 7}
-                sx={{ borderRadius: '1rem'}}
-            >
+            <Card elevation={ongoingAssessment ? 0 : 7} sx={{ borderRadius: '1rem'}}>
                 <CardActionArea
                     onClick={() => navigate(`/suite/${suiteSlug}/run-test`)}
                     disabled={ongoingAssessment}
@@ -105,6 +104,17 @@ const Actions = () => {
                             color={ongoingAssessment ? 'text.disabled' : 'primary'}
                         >
                             Run tests
+                        </Typography>
+                    </CardContent>
+                </CardActionArea>
+            </Card>
+
+            <Card elevation={7} sx={{ borderRadius: '1rem'}}>
+                <CardActionArea onClick={() => navigate(`/suite/${suiteSlug}/history`)}>
+                    <CardContent {...x.props(s.card)}>
+                        <HistoryTwoToneIcon fontSize='large' color='primary' />
+                        <Typography gutterBottom mt={2} variant="h6" color='primary'>
+                            Test history
                         </Typography>
                     </CardContent>
                 </CardActionArea>

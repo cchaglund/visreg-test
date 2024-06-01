@@ -6,6 +6,7 @@ const s = x.create({
         display: 'flex',
         gap: '0.5rem',
         flexWrap: 'wrap',
+        cursor: 'default',
     },
 });
 

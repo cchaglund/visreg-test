@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { createContext, useMemo, useState } from 'react';
 import { api } from '../shared';
 import { TestConfig } from '../types';
 
@@ -10,6 +10,8 @@ type AppContextType = {
     setSuiteConfig: (config: TestConfig) => void;
     currentDiffIndex: number | null;
     setCurrentDiffIndex: (index: number | null) => void;
+    testHasBeenRunThisSession: boolean;
+    setTestHasBeenRunThisSession: (value: boolean) => void;
 };
 
 const defaultValue: AppContextType = {
@@ -19,21 +21,25 @@ const defaultValue: AppContextType = {
     setSuiteConfig: () => {},
     currentDiffIndex: 0,
     setCurrentDiffIndex: () => {},
+    testHasBeenRunThisSession: false,
+    setTestHasBeenRunThisSession: () => {},
 };
 
-export const AppContext = React.createContext(defaultValue);
+export const AppContext = createContext(defaultValue);
 
 export function AppContextWrapper(props: { children: React.ReactNode; }) {
-    const [ suiteName, setSuiteNameState ] = React.useState('');
-    const [ suiteConfig, setSuiteConfigState ] = React.useState<TestConfig>()
-    const [ currentDiffIndex, setCurrentDiffIndexState ] = React.useState<number | null>(null);
+    const [ suiteName, setSuiteNameState ] = useState('');
+    const [ suiteConfig, setSuiteConfigState ] = useState<TestConfig>()
+    const [ currentDiffIndex, setCurrentDiffIndexState ] = useState<number | null>(null);
+    const [ testHasBeenRunThisSession, setTestHasBeenRunThisSession ] = useState(false);
 
-    const appContext = React.useMemo(
+    const appContext = useMemo(
         () => ({
             api,
             suiteName,
             suiteConfig,
             currentDiffIndex,
+            testHasBeenRunThisSession,
             setSuiteName: (name: string) => {
                 setSuiteNameState(name);
             },
@@ -42,9 +48,12 @@ export function AppContextWrapper(props: { children: React.ReactNode; }) {
             },
             setCurrentDiffIndex: (index: number | null) => {
                 setCurrentDiffIndexState(index);
-            }
+            },
+            setTestHasBeenRunThisSession: (value: boolean) => {
+                setTestHasBeenRunThisSession(value);
+            },
         }),
-        [suiteName, suiteConfig, currentDiffIndex],
+        [suiteName, suiteConfig, currentDiffIndex, testHasBeenRunThisSession],
     );
 
     return (

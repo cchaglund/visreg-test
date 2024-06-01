@@ -6,6 +6,9 @@
 
 ## Release notes
 
+>❗<u>Breaking change updating to 6.0.0</u>:
+> - The naming of the endpoint visit hooks have been renamed to `onBeforeVisit`, `onVisit`, and `onAfterVisit`. You can also define these globally in the `snaps.js/ts` file, and they will be called during each endpoint visit. Setting them on the endpoint object will replace the global ones, but the global ones will be passed as an argument to the endpoint functions, so you can call them if you want to run both. Read more in the [full exampl](#full-example) section.
+
 **Can now run tests in the [web interface](#web-interface) in v5.0.0!**
 
 >❗<u>Breaking change updating to 5.0.0</u>:
@@ -278,14 +281,34 @@ const endpoints = [
       title: 'Start',
       path: '/',
       blackout: [ '#sidebar', '.my-selector', 'footer' ], // Blackout elements from the snapshot
-      onEndpointVisit: (cy, context) => {
-         // Place to manipulate the page specified in the endpoint before taking the snapshot.
+      onBeforeVisit: (cy, context, globalParentHook) => {
+         /**
+          * Code here will run BEFORE cypress has loaded the page.
+          * If defined here, it will replace this globally defined function.
+          * If you want to run both, you can call the global one here (remember to pass the cy object and context object).
+          */
+         globalParentHook(cy, context);
+         cy.setCookie('supplemental-cookie', 'cool-cookie');
+      },
+      onVisit: (cy, context, globalParentHook) => {
+         /**
+          * Code here will run ON the visit to the page (before the snapshot is taken).
+          * If defined here, it will replace this globally defined function.
+          * If you want to run both, you can call the global one here (remember to pass the cy object and context object).
+          */
          cy.get('button[id="expand-section"]').click();
 
          const mobile = context.viewport === 'ipad-2';
          if (mobile) {
             cy.get('.mobile-button').click();
          }
+      },
+      onAfterVisit: (cy, context, globalParentHook) => {
+         /**
+          * Code here will run AFTER cypress has taken the snapshot.
+          * If defined here, it will replace this globally defined function.
+          * If you want to run both, you can call the global one here (remember to pass the cy object and context object).
+          */
       },
    },
    {
@@ -300,10 +323,19 @@ const formatUrl = (path) => {
    return [ baseUrl, path, '?noexternal' ].join('');
 };
 
-const onPageVisit = (cy, context) => {
+const onBeforeVisit = (cy, context) => {
+   // Code here will run BEFORE cypress has loaded the page.
+   cy.setCookie('cookie-name', 'cookie-value');
+};
+
+const onVisit = (cy, context) => {
    // Code here will run when cypress has loaded the page but before it starts taking snapshots
    cy.get('header').invoke('css', 'opacity', 0);
    cy.get('body').invoke('css', 'height', 'auto');
+};
+
+const onAfterVisit = (cy, context) => {
+   // Code here will run AFTER cypress has taken the snapshot.
 };
 
 runVisreg({
@@ -313,7 +345,9 @@ runVisreg({
    // Don't forget to add the new options here
    suiteName,
    formatUrl,
-   onPageVisit,
+   onBeforeVisit,
+   onVisit,
+   onAfterVisit,
 });
 
 ```
@@ -325,7 +359,7 @@ runVisreg({
 <summary>Typescript</summary>
 
 ```typescript
-import { runVisreg, VisregViewport, Endpoint, TestConfig, FormatUrl, OnPageVisit } from 'visreg-test';
+import { runVisreg, VisregViewport, Endpoint, TestConfig, FormatUrl, EndpointHookFunction } from 'visreg-test';
 
 const suiteName: string = 'MDN'; // only used when displaying the test results in the terminal. Suite directory names are used by default.
 const baseUrl: string = 'https://developer.mozilla.org';
@@ -340,14 +374,34 @@ const endpoints: Endpoint[] = [
       title: 'Start',
       path: '/',
       blackout: [ '#sidebar', '.my-selector', 'footer' ], // Blackout elements from the snapshot
-      onEndpointVisit: (cy: cy, context: TestContext) => {
-         // Place to manipulate the page specified in the endpoint before taking the snapshot.
+      onBeforeVisit: (cy: cy, context: TestContext, globalParentHook?: EndpointHookFunction) => {
+         /**
+          * Code here will run BEFORE cypress has loaded the page.
+          * If defined here, it will replace this globally defined function.
+          * If you want to run both, you can call the global one here (remember to pass the cy object and context object).
+          */
+         globalParentHook(cy, context);
+         cy.setCookie('supplemental-cookie', 'cool-cookie');
+      },
+      onVisit: (cy: cy, context: TestContext, globalParentHook?: EndpointHookFunction) => {
+         /**
+          * Code here will run ON the visit to the page (before the snapshot is taken).
+          * If defined here, it will replace this globally defined function.
+          * If you want to run both, you can call the global one here (remember to pass the cy object and context object).
+          */
          cy.get('button[id="expand-section"]').click();
 
          const mobile = context.viewport === 'ipad-2';
          if (mobile) {
             cy.get('.mobile-button').click();
          }
+      },
+      onAfterVisit: (cy: cy, context: TestContext, globalParentHook?: EndpointHookFunction) => {
+         /**
+          * Code here will run AFTER cypress has taken the snapshot.
+          * If defined here, it will replace this globally defined function.
+          * If you want to run both, you can call the global one here (remember to pass the cy object and context object).
+          */
       },
    },
    {
@@ -361,10 +415,19 @@ const formatUrl: FormatUrl = (path) => {
    return [ baseUrl, path, '?noexternal' ].join('');
 };
 
-const onPageVisit: OnPageVisit = (cy: cy, context: TestContext) => {
-   // Code here will run when cypress has loaded the page but before it starts taking snapshots
+const onBeforeVisit: EndpointHookFunction = (cy: cy, context: TestContext) => {
+   // Code here will run BEFORE cypress has loaded the page.
+   cy.setCookie('cookie-name', 'cookie-value');
+};
+
+const onVisit: EndpointHookFunction = (cy: cy, context: TestContext) => {
+   // Code here will run ON the visit to the page (before the snapshot is taken).
    cy.get('header').invoke('css', 'opacity', 0);
    cy.get('body').invoke('css', 'height', 'auto');
+};
+
+const onAfterVisit: EndpointHookFunction = (cy: cy, context: TestContext) => {
+   // Code here will run AFTER cypress has taken the snapshot.
 };
 
 runVisreg({
@@ -374,7 +437,9 @@ runVisreg({
    // Don't forget to add the new options here
    suiteName,
    formatUrl,
-   onPageVisit,
+   onBeforeVisit,
+   onVisit,
+   onAfterVisit,
 } as TestConfig);
 
 ```
@@ -830,7 +895,9 @@ scrollDuration: 1000,
 | viewports       | An array of viewports to test.                                                                               | `['iphone-6', [1920, 1080]]`                                                           | `VisregViewport[]`, *optional* |
 | suiteName       | The name of the test suite. This is only used when displaying the test results in the terminal.             | `'MDN'`                                                                                         | `string`, *optional* |
 | formatUrl       | Apply some formatting to the url before a snapshot is taken, e.g. to add query params to the url.           | `(path) => [baseUrl, path, '?noexternal'].join('')`                                         | `(path: string) => string`, *optional* |
-| onPageVisit     | Code here will run when cypress has loaded the page but before it starts taking snapshots. Useful to prepare the page, e.g. by clicking to bypass cookie banners or hiding certain elements. See https://docs.cypress.io/api/table-of-contents#Commands. | `() => { cy.get('button').click() }` | `EndpointHookFunction`, *optional* |
+| onBeforeVisit | Fired before onVisit, useful if you e.g. need to set a cookie or configure something in the CMS before taking the snapshot. You could achieve the same thing with onVisit, but this becomes more partitioned and cleaner. If defined, will be fired for every endpoint. Gets overriden by an equivalently named function on the endpoint object (if defined).                       | `(cy: cy, context: TestContext) => { // change settings in CMS }`                                                    | `EndpointHookFunction`, *optional* |
+| onVisit     | Code here will run when cypress has loaded the page but before it starts taking snapshots. Useful to prepare the page, e.g. by clicking to bypass cookie banners or hiding certain elements. If defined, will be fired for every endpoint. Gets overriden by an equivalently named function on the endpoint object (if defined). See https://docs.cypress.io/api/table-of-contents#Commands. | `() => { cy.get('button').click() }` | `EndpointHookFunction`, *optional* |
+| onAfterVisit | Fired last, after the snapshot has been taken, useful to e.g. revert changes done in onBeforeVisit function. If defined, will be fired for every endpoint. Gets overriden by an equivalently named function on the endpoint object (if defined).                       | `(cy: cy, context: TestContext) => { // reset settings in CMS }`                                                    | `EndpointHookFunction`, *optional* |
 
 <br>
 <br>
@@ -840,7 +907,8 @@ scrollDuration: 1000,
 | Property        | Description                                                                                                 | Example                                                                                       | Type |
 |-----------------|-------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|---------|
 | cy              | The chainable cypress cy object to manipulate the page. See [Cypress API](https://docs.cypress.io/api/table-of-contents#Cypress-API)                                                                 | `cy.get('button').click()`                                                                     | `cy` |
-| context         | Contains information about the viewport, endpoint, as well as Cypress utilities and constants                                                                                         | -                                                | `TestContext` |
+| context         | Contains information about the viewport, endpoint, fullUrl, fullPageCapture, visitOptions, requestOptions, as well as Cypress utilities and constants                                                                                         | -                                                | `TestContext` |
+| globalParentHook         | The callable reference to the equivalently named global function in the snaps file                                                                                          | -                                                | `EndpointHookFunction` |
 
 
 <br>
@@ -853,7 +921,10 @@ scrollDuration: 1000,
 | viewport        | Viewport string currently being tested | `context.viewport === 'samsung-s10'`                                                                     | `VisregViewport` |
 | endpoint        | Endpoint object currently being tested | `context.endpoint.path.includes('.com')'`                                                                     | `Endpoint` |
 | context         | Holds bundled Cypress utilities and constants. See [Cypress API](https://docs.cypress.io/api/table-of-contents#Cypress-API)                                                                                         | `cypress.currentTest.title.includes('iphone-6')`                                                | `Cypress` |
-
+| fullUrl         | The full url of the endpoint being tested | `context.fullUrl === 'https://developer.mozilla.org/'`                                                | `string` |
+| fullPageCapture | Whether the endpoint is being captured in its entirety or just a specific element | `context.fullPageCapture`                                                | `boolean` |
+| visitOptions   | The settings for when the url is visited | `context.visitOptions.devicePixelRatio`                                                | `VisitSettings` |
+| requestOptions | The headers and authentication passed when visiting the url | `context.requestOptions.headers`                                                | `RequestSettings` |
 
 <br>
 <br>
@@ -864,9 +935,9 @@ scrollDuration: 1000,
 |-----------------|-------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|---------|
 | title           | The title of the endpoint.                                                                                  | `'Start'`                                                                                       | `string`, *required* |
 | path            | The path of the endpoint.                                                                                   | `'/start'`                                                                                      | `string`, *required*  |
-| onBefore | Fired before onEndpointVisit, useful if you e.g. need to configure something in the CMS before taking the snapshot. You could achieve the same thing with onEndpointVisit, but this becomes more partitioned and cleaner.                       | `(cy: cy, context: TestContext) => { // change settings in CMS }`                                                    | `EndpointHookFunction`, *optional* |
-| onEndpointVisit | Place to manipulate the page specified in the endpoint before taking the snapshot.                      | `(cy: cy, context: TestContext) => { cy.get('.cookie-consent').click(); }`                                                    | `EndpointHookFunction`, *optional* |
-| onCleanup | Fired last, after the snapshot has been taken, useful to e.g. revert changes done in onBefore function                      | `(cy: cy, context: TestContext) => { // reset settings in CMS }`                                                    | `EndpointHookFunction`, *optional* |
+| onBeforeVisit | Fired before onVisit, useful if you e.g. need to set a cookie or configure something in the CMS before taking the snapshot. You could achieve the same thing with onVisit, but this becomes more partitioned and cleaner.                       | `(cy: cy, context: TestContext, globalParentHook?: EndpointHookFunction) => { // change settings in CMS }`                                                    | `EndpointHookFunction`, *optional* |
+| onVisit | Place to manipulate the page specified in the endpoint before taking the snapshot.                      | `(cy: cy, context: TestContext, globalParentHook?: EndpointHookFunction) => { cy.get('.cookie-consent').click(); }`                                                    | `EndpointHookFunction`, *optional* |
+| onAfterVisit | Fired last, after the snapshot has been taken, useful to e.g. revert changes done in onBeforeVisit function                      | `(cy: cy, context: TestContext, globalParentHook?: EndpointHookFunction) => { // reset settings in CMS }`                                                    | `EndpointHookFunction`, *optional* |
 | elementToMatch  | Capture a screenshot of a specific element on the page, rather than the whole page.                        | `'.my-element'`                                                                                  | `string`, *optional* |
 | excludeFromTest  | A function which returns a boolean. It gets passed the same arguments as the other endpoint functions                        | `(cy: cy, context: TestContext, context: TestContext ) => { return context.viewport === 'ipad-2' }`                                                    | `ExcludeFromTestFunction`, *optional* |
 | data  | Custom data of any type                          | -                                                    | `any`, *optional* |

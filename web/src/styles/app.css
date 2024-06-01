@@ -13,3 +13,122 @@ button:focus {
 * {
 	box-sizing: border-box;
 }
+
+@keyframes openAnim {
+	0% {
+		box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12);
+		background-color: #FBF2EF;
+	}
+	50% {
+		box-shadow: rgba(0, 0, 0, 0.15) 0px 0px 0px 0px;
+	}
+	50.01% {
+		box-shadow: inset rgba(0, 0, 0, 0.2) 0px 0px 0px 0px;
+	}
+	100% {
+		box-shadow: inset rgba(0, 0, 0, 0.2) 0px 0px 10px 6px;
+		background-color: rgb(85, 91, 110, 0.025);
+	}
+}
+
+@keyframes openAnimDark {
+	0% {
+		box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12);
+		background-color: #0B2027;
+	}
+	50% {
+		box-shadow: rgba(0, 0, 0, 0.15) 0px 0px 0px 0px;
+	}
+	50.01% {
+		box-shadow: inset rgba(0, 0, 0, 0.2) 0px 0px 0px 0px;
+	}
+	100% {
+		box-shadow: inset rgba(0, 0, 0, 0.5) 0px 0px 10px 6px;
+		background-color: rgb(85, 91, 110, 0.025);
+	}
+}
+
+@keyframes closedAnim {
+	0% {
+		box-shadow: inset rgba(0, 0, 0, 0.2) 0px 0px 10px 6px;
+		background-color: rgb(85, 91, 110, 0.025);
+	}
+	50% {
+		box-shadow: inset rgba(0, 0, 0, 0.2) 0px 0px 0px 0px;
+	}
+	50.01% {
+		box-shadow: rgba(0, 0, 0, 0.15) 0px 0px 0px 0px;
+	}
+	100% {
+		box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12);
+		background-color: #FBF2EF;
+	}
+}
+
+@keyframes closedAnimDark {
+	0% {
+		box-shadow: inset rgba(0, 0, 0, 0.5) 0px 0px 10px 6px;
+		background-color: rgb(85, 91, 110, 0.025);
+	}
+	50% {
+		box-shadow: inset rgba(0, 0, 0, 0.2) 0px 0px 0px 0px;
+	}
+	50.01% {
+		box-shadow: rgba(0, 0, 0, 0.15) 0px 0px 0px 0px;
+	}
+	100% {
+		box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12);
+		background-color: #0B2027;
+	}
+}
+
+.old-results-section {
+	animation-duration: 0.2s;
+	padding: 2rem;
+	transition: background-color 0.2s;
+	animation-timing-function: linear;
+	border: 1px solid transparent;
+	border-radius: 1rem;
+
+	box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12);
+	background-color: #FBF2EF;
+	cursor: pointer;
+}
+
+.old-results-section.hovering {
+	background-color: #F2EBE8 !important;
+}
+.old-results-section.closed.hovering {
+	background-color: #F2EBE8 !important;
+}
+
+.old-results-section.dark.hovering {
+	background-color: #314148 !important;
+}
+.old-results-section.closed.dark.hovering {
+	background-color: #314148 !important;
+}
+
+.old-results-section.dark {
+	background-color: #0B2027;
+}
+
+.open {
+	animation-name: openAnim;
+	animation-fill-mode: forwards;
+	cursor: default;
+}
+
+.closed {
+	animation-name: closedAnim;
+	animation-fill-mode: forwards;
+	cursor: pointer;
+}
+
+.open.dark {
+	animation-name: openAnimDark;
+}
+
+.closed.dark {
+	animation-name: closedAnimDark;
+}

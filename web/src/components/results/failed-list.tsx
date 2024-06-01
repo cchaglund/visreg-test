@@ -1,12 +1,11 @@
-import { useContext } from 'react';
-import { TestContext } from '../../../../contexts/test-context';
+import { EndpointTestResult } from '../../contexts/test-context';
+import { style } from '../ui/helper-styles';
 import { FailedEndpointDetails } from './failed-endpoint-details';
 import { ResultsColumn } from './results-column';
-import { style } from '../../../../components/ui/helper-styles';
 import x from '@stylexjs/stylex';
 
-export const FailedList = () => {
-    const { failingEndpoints } = useContext(TestContext);
+export const FailedList = (props: { failingEndpoints: EndpointTestResult[] }) => {
+    const { failingEndpoints } = props;
 
     if (failingEndpoints.length === 0) return null;
 

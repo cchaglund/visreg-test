@@ -13,6 +13,7 @@ type CollapsibleSectionProps = {
     parentState?: boolean;
     duration?: number;
     overflowContentX?: boolean;
+    waitForExpandedToRender?: boolean;
 };
 
 const s = x.create({
@@ -22,7 +23,16 @@ const s = x.create({
 });
 
 const CollapsibleSection = (props: CollapsibleSectionProps) => {
-    const { heading, children, initialExpanded, parentToggle, parentState, duration, overflowContentX } = props;
+    const {
+        heading,
+        children,
+        initialExpanded,
+        parentToggle,
+        parentState,
+        duration,
+        overflowContentX,
+        waitForExpandedToRender,
+    } = props;
 
     const [ expanded, setExpanded ] = useState(parentState ? parentState : initialExpanded ?? false);
 
@@ -52,10 +62,16 @@ const CollapsibleSection = (props: CollapsibleSectionProps) => {
                 {expanded ? <ExpandLess color='primary' /> : <ExpandMore color='primary' />}
             </div>
             <div {...x.props(style.flex, style.gap1, style.alignCenter, overflowContentX && s.overflowXAuto)}>
-                <Collapse in={expanded} timeout={duration ?? 'auto'}>
-                    <div {...x.props(style.mt1)}>
-                        {children}
-                    </div>
+                <Collapse in={expanded} timeout={duration ?? 'auto'} sx={{ width: '-webkit-fill-available' }}>
+                    { !waitForExpandedToRender ? (
+                        <div {...x.props(style.mt1)}>
+                            {children}
+                        </div>
+                    ) : waitForExpandedToRender && expanded && (
+                        <div {...x.props(style.mt1)}>
+                            {children}
+                        </div>
+                    )}
                 </Collapse>
             </div>
         </div>

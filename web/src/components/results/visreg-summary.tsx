@@ -1,19 +1,21 @@
-import { Chip } from '@mui/material';
+import { Chip, Tooltip } from '@mui/material';
 import { Check, Close } from '@mui/icons-material';
 import AccessTimeTwoToneIcon from '@mui/icons-material/AccessTimeTwoTone';
 import NumbersTwoToneIcon from '@mui/icons-material/NumbersTwoTone';
 import SkipNextTwoToneIcon from '@mui/icons-material/SkipNextTwoTone';
 import ErrorTwoToneIcon from '@mui/icons-material/ErrorTwoTone';
 import BiotechTwoToneIcon from '@mui/icons-material/BiotechTwoTone';
-import { ChipContainer } from '../../../../components/ui/chips-container';
-import { useContext } from 'react';
-import { TestContext } from '../../../../contexts/test-context';
+import CalendarMonthTwoToneIcon from '@mui/icons-material/CalendarMonthTwoTone';
+import { SummaryPayload } from '../../contexts/test-context';
+import { ChipContainer } from '../ui/chips-container';
 import { ResultsColumn } from './results-column';
 
-export const VisregSummary = () => {
-    const { cypressSummaryState, visregSummary } = useContext(TestContext);
+export const VisregSummary = (props: { visregSummary: SummaryPayload}) => {
+    const { visregSummary } = props;
 
-    if (!cypressSummaryState || !visregSummary) return null;
+    if (!visregSummary) return null;
+
+    const { cypressSummary } = visregSummary;
 
     const diffsCount = visregSummary.testDiffList.length || 0;
 
@@ -24,16 +26,26 @@ export const VisregSummary = () => {
         <ResultsColumn heading={'Summary'}>
 
             <ChipContainer flexColumn>
-                <Chip icon={<BiotechTwoToneIcon />} label={
-                    `Test: ${visregSummary.testType}`
-                } />
+                <Tooltip title="Date & time when run" placement='top'>
+                    <Chip icon={<CalendarMonthTwoToneIcon />} label={
+                        `${new Date(visregSummary.createdAt).toLocaleString()}`
+                    } />
+                </Tooltip>
 
-                <Chip icon={<AccessTimeTwoToneIcon />} label={
-                    `Duration: ${cypressSummaryState.duration}s`
-                } />
+                <Tooltip title="Type of test" placement='top'>
+                    <Chip icon={<BiotechTwoToneIcon />} label={
+                        `"${visregSummary.testType}"`
+                    } />
+                </Tooltip>
+
+                <Tooltip title="Duration of test run" placement='top'>
+                    <Chip icon={<AccessTimeTwoToneIcon />} label={
+                        `${cypressSummary.duration}s`
+                    } />
+                </Tooltip>
 
                 <Chip icon={<NumbersTwoToneIcon />} label={
-                    `Total: ${cypressSummaryState.tests}`
+                    `Total: ${cypressSummary.tests}`
                 } />
 
                 {unchanged.length > 0 && (

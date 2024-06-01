@@ -491,6 +491,8 @@ const onTerminalCypressClose = () => {
 		programChoices,
 		cypressSummary,
 		testAgenda,
+		createdAt: new Date(),
+		terminated: userTerminatedTest
 	};
 
 	printColorText(`\nTest duration: ${cypressSummary.duration} seconds\n`, '2');
@@ -620,6 +622,8 @@ const onCypressClose = (ws: WebSocket, resolve: () => void) => {
 			programChoices,
 			cypressSummary,
 			testAgenda,
+			createdAt: new Date(),
+			terminated: userTerminatedTest,
 		}
 	});
 

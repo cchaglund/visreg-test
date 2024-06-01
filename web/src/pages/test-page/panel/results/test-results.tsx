@@ -3,15 +3,15 @@ import x from '@stylexjs/stylex';
 import { style } from '../../../../components/ui/helper-styles';
 import { useContext } from 'react';
 import { TestContext } from '../../../../contexts/test-context';
-import { SuccessfulChips } from './successful-chips';
-import { FailedChips } from './failed-chips';
-import { VisregSummary } from './visreg-summary';
 import { SuggestedActions } from './suggested-actions';
-import { FailedList } from './failed-list';
-import { TestDiffsList } from './test-diffs-list';
 import CheckCircleTwoToneIcon from '@mui/icons-material/CheckCircleTwoTone';
-import { SkippedList } from './skipped-list';
-import { UnchangedList } from './unchanged-list';
+import { VisregSummary } from '../../../../components/results/visreg-summary';
+import { SuccessfulChips } from '../../../../components/results/successful-chips';
+import { FailedChips } from '../../../../components/results/failed-chips';
+import { UnchangedList } from '../../../../components/results/unchanged-list';
+import { TestDiffsList } from '../../../../components/results/test-diffs-list';
+import { FailedList } from '../../../../components/results/failed-list';
+import { SkippedList } from '../../../../components/results/skipped-list';
 
 const s = x.create({
     resultsContainer: {
@@ -45,10 +45,9 @@ export const TestResults = () => {
         visregSummary,
         resultsRef,
         testStatus,
-        cypressSummaryState,
     } = useContext(TestContext);
 
-    if (!visregSummary || !cypressSummaryState) return null;
+    if (!visregSummary) return null;
 
     return (
         <div {...x.props(s.resultsContainer)} ref={resultsRef}>
@@ -69,7 +68,7 @@ export const TestResults = () => {
                     </Alert>
                 )}
 
-                {visregSummary.testDiffList?.length === 0 && !cypressSummaryState.failing && (
+                {visregSummary.testDiffList?.length === 0 && !visregSummary.cypressSummary.failing && (
                     <div {...x.props(style.flex, style.gap1, style.alignCenter, style.mb2)}>
                         <CheckCircleTwoToneIcon fontSize='medium' color='success' />
                         <Typography variant='h6' color='text.primary'>
@@ -80,19 +79,19 @@ export const TestResults = () => {
             </div>
 
             <div {...x.props(s.resultsSection, s.marginBottom)}>
-                <VisregSummary/>
+                <VisregSummary visregSummary={visregSummary} />
                 {visregSummary.testType === 'targetted' && (
-                    <SuccessfulChips/>
+                    <SuccessfulChips programChoices={visregSummary.programChoices} />
                 )}
-                <FailedChips/>
+                <FailedChips failingEndpoints={visregSummary.endpointTestResults.failing} />
                 <SuggestedActions/>
             </div>
 
             <div {...x.props(s.resultsSection)}>
-                <UnchangedList/>
-                <TestDiffsList/>
-                <FailedList/>
-                <SkippedList />
+                <UnchangedList unchanged={visregSummary.endpointTestResults.unchanged}/>
+                <TestDiffsList testDiffList={visregSummary.testDiffList}/>
+                <FailedList failingEndpoints={visregSummary.endpointTestResults.failing}/>
+                <SkippedList skippedEndpoints={visregSummary.endpointTestResults.skipped}/>
             </div>
         </div>
     );

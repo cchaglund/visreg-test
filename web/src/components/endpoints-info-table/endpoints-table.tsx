@@ -22,7 +22,7 @@ const EndpointsTable = (props: EndpointsListProps) => {
 
     return (
         <React.Fragment>
-            <TableContainer component={Paper} sx={{ width: '100%', minWidth: '400px', borderRadius: '12px' }}>
+            <TableContainer component={Paper} elevation={2} sx={{ width: '100%', minWidth: '400px', borderRadius: '0.75rem' }}>
                 <Table aria-label="collapsible table">
                     <TableHead>
                         <TableRow>

@@ -1,28 +1,27 @@
 import { ArticleTwoTone } from '@mui/icons-material';
 import VrpanoTwoToneIcon from '@mui/icons-material/VrpanoTwoTone';
 import { Typography, Chip } from '@mui/material';
-import { ChipContainer } from '../../../../components/ui/chips-container';
-import { useContext } from 'react';
-import { TestContext } from '../../../../contexts/test-context';
+import { ProgramChoices } from '../../contexts/test-context';
+import { ChipContainer } from '../ui/chips-container';
 import { ResultsColumn } from './results-column';
 
-export const SuccessfulChips = () => {
-    const { visregSummary } = useContext(TestContext);
+export const SuccessfulChips = (props: { programChoices: ProgramChoices}) => {
+    const { programChoices } = props;
 
     const noTestsPerformed = (
-        visregSummary?.programChoices.targetEndpointTitles.length === 0 &&
-        visregSummary?.programChoices.targetViewports.length === 0
+        programChoices.targetEndpointTitles.length === 0 &&
+        programChoices.targetViewports.length === 0
     );
 
     if (noTestsPerformed) {
         return null;
-    }
-
+    }        
+    
     return (
         <div>
             <ResultsColumn heading={'Tested parameters'}>
                 <div>
-                    {visregSummary?.programChoices.targetEndpointTitles.length !== 0 && (
+                    {programChoices.targetEndpointTitles.length !== 0 && (
                         <>
                             <Typography
                                 variant='body1'
@@ -33,7 +32,7 @@ export const SuccessfulChips = () => {
                             </Typography>
 
                             <ChipContainer>
-                                {visregSummary!.programChoices.targetEndpointTitles.map((endpoint, index) => (
+                                {programChoices.targetEndpointTitles.map((endpoint, index) => (
                                     <Chip
                                         key={index}
                                         label={endpoint}
@@ -45,7 +44,7 @@ export const SuccessfulChips = () => {
                         </>
                     )}
 
-                    {visregSummary?.programChoices.targetViewports.length !== 0 && (
+                    {programChoices.targetViewports.length !== 0 && (
                         <>
                             <Typography
                                 variant='body1'
@@ -57,10 +56,10 @@ export const SuccessfulChips = () => {
                             </Typography>
 
                             <ChipContainer>
-                                {visregSummary!.programChoices.targetViewports.map((viewport, index) => (
+                                {programChoices.targetViewports.map((viewport, index) => (
                                     <Chip
                                         key={index}
-                                        label={viewport}
+                                        label={typeof viewport === 'string' ? viewport : viewport.join(',')}
                                         color='secondary'
                                         icon={<VrpanoTwoToneIcon />}
                                     />

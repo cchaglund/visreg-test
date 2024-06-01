@@ -1,13 +1,11 @@
 import { Chip } from '@mui/material';
-import { ChipContainer } from '../../../../components/ui/chips-container';
-import { useContext } from 'react';
-import { TestContext } from '../../../../contexts/test-context';
-import { ResultsColumn } from './results-column';
 import { Close } from '@mui/icons-material';
+import { EndpointTestResult } from '../../contexts/test-context';
+import { ChipContainer } from '../ui/chips-container';
+import { ResultsColumn } from './results-column';
 
-export const FailedChips = () => {
-    const { failingEndpoints } = useContext(TestContext);
-
+export const FailedChips = (props: { failingEndpoints: EndpointTestResult[]}) => {
+    const { failingEndpoints } = props;
     const failedUniqueEndpoints = new Set<string>();
 
     failingEndpoints.forEach(endpoint => {

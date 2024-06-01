@@ -19,6 +19,7 @@ const s = x.create({
         maxWidth: '1100px',
     },
     terminalContainerHover: {
+        cursor: 'pointer',
         ':hover': {
             boxShadow: 'rgba(0, 0, 0, 0.6) 0px 7px 10px -3px',
         },
@@ -62,7 +63,6 @@ export const TerminalWrapper = () => {
         );
     };
 
-
     const TerminalHeading = () => {
         return (
             <Typography variant="h6" color={'#FCF7F8'}>
@@ -72,14 +72,20 @@ export const TerminalWrapper = () => {
     };
 
     return (
-        <div {...x.props(s.terminalContainer, !terminalViewOpen && s.terminalContainerHover)}>
+        <div 
+            {...x.props(
+                s.terminalContainer, 
+                !terminalViewOpen && s.terminalContainerHover,
+            )}
+            onClick={() => !terminalViewOpen ? toggleTerminalOpen() : null}
+        >
 
             <CollapsibleSection
                 heading={<TerminalHeading />}
                 duration={300}
                 initialExpanded={terminalViewOpen}
                 parentState={terminalViewOpen}
-                parentToggle={() => toggleTerminalOpen()}
+                parentToggle={() => !terminalViewOpen ? null : toggleTerminalOpen()}
                 overflowContentX={true}
             >
                 <Terminal />

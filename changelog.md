@@ -1,3 +1,11 @@
+6.0.0
+- Added history page to show previous test run results.
+- Endpoint hooks renamed from onBefore/onEndpointVisit/onCleanup to onBeforeVisit/onVisit/onAfterVisit to be more clear when they run.
+- Endpoint hooks now replace the global, similarly named hooks if present on the endpoint object (first parameter passed is the global function in case the user wants to run it also).
+- User correctly set inside the container (no longer root).
+- When going to the Gallery from the results page, the endpoints and viewports relevant to the test are preselected.
+- Added various tooltips.
+
 5.1.1
 - Fixed bug that caused issues with lab mode snapshot storing.
 

@@ -1,9 +1,8 @@
 import { Typography } from '@mui/material';
-import EndpointsTable from '../../../../components/endpoints-info-table/endpoints-table';
 import { useContext } from 'react';
-import { TestContext } from '../../../../contexts/test-context';
 import x from '@stylexjs/stylex';
-import { EndpointTestResult } from '../terminal/terminal';
+import { EndpointTestResult, TestContext } from '../../contexts/test-context';
+import EndpointsTable from '../endpoints-info-table/endpoints-table';
 
 const s = x.create({
     failedEndpointDetailsContainer: {

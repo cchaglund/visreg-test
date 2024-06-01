@@ -1,10 +1,9 @@
 import { Typography } from '@mui/material';
-import { useContext } from 'react';
-import { TestContext } from '../../../../contexts/test-context';
+import { EndpointTestResult } from '../../contexts/test-context';
 import { ResultsColumn } from './results-column';
 
-export const SkippedList = () => {
-    const { skippedEndpoints } = useContext(TestContext);
+export const SkippedList = (props: { skippedEndpoints: EndpointTestResult[] }) => {
+    const { skippedEndpoints } = props;
 
     if (skippedEndpoints.length === 0) return null;
 

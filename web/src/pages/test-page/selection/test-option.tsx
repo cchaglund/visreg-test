@@ -46,7 +46,7 @@ export const TestOption = (props: TestOptionProps) => {
 
     return (
         <Card
-            elevation={isDisabled ? 0 : 4}
+            elevation={isDisabled ? 0 : 3}
             sx={{ borderRadius: '1rem' }}
             {...x.props(
                 s.cardSection,

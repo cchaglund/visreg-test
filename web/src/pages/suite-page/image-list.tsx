@@ -57,6 +57,7 @@ const ImageList = () => {
                         .map((image, index) => (
                             <li key={index}>
                                 <Button
+                                // TODO: doesn't work if you go straight to image-list page, because then the suite isn't set for some reason (works on images-overview page though)
                                     onClick={() => navigate(`/suite/${suiteName}/images/${typeOfImage}/${image}`)}
                                     startIcon={<ImageTwoToneIcon />}
                                 >

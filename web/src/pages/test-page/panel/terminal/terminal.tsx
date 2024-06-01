@@ -1,6 +1,7 @@
 import { useContext, useEffect, useRef } from 'react';
 import x from '@stylexjs/stylex';
 import { TestTypeSlug, TestContext } from '../../../../contexts/test-context';
+import { terminalStyles } from '../../../../styles/terminal-style';
 
 export type WebSocketData = {
     type: 'command' | 'data' | 'error' | 'text';
@@ -22,46 +23,6 @@ type WebSocketStartTest = WebSocketCommand & {
         targetEndpointTitles?: string[];
         targetViewports?: (string | number[])[];
     };
-};
-
-const s = x.create({
-    terminal: {
-        backgroundColor: '#0B2027',
-        color: '#FCF7F8',
-        height: '700px',
-        overflowY: 'scroll',
-        overflowX: 'scroll',
-        fontFamily: 'monospace',
-        width: '100%',
-        maxWidth: '-webkit-fill-available',
-        margin: '0 auto',
-        marginBottom: '2rem',
-        '@media (max-width: 900px)': {
-            fontSize: '0.7rem',
-        },
-        '@media (max-width: 600px)': {
-            fontSize: '0.5rem',
-        },
-    },
-    log: {
-        margin: 0,
-    },
-});
-
-export type EndpointTestResult = {
-    testTitle: string;
-    errorMessage?: string;
-    endpointTitle: string;
-    viewport: string;
-};
-
-export type SummaryObject = {
-    tests?: number;
-    passing?: number;
-    failing?: number;
-    pending?: number;
-    skipped?: number;
-    duration?: number;
 };
 
 const Terminal = () => {
@@ -112,12 +73,11 @@ const Terminal = () => {
 
             if (data.type === 'data') {
                 if (data.payload.name === 'visreg-summary') {
-                    console.log('visreg-summary', data.payload);
-                    
                     ws.close();
                     onFinished(data.payload);
                     return;
                 }
+                return;
             }
 
             if (data.type === 'error') {
@@ -134,8 +94,8 @@ const Terminal = () => {
 
 
     return (
-        <div {...x.props(s.terminal)}>
-            {terminalOutput.map((item, i) => <pre {...x.props(s.log)} key={i}>{item}</pre>)}
+        <div {...x.props(terminalStyles.terminal)}>
+            {terminalOutput.map((item, i) => <pre {...x.props(terminalStyles.log)} key={i}>{item}</pre>)}
             <div ref={endRef} />
         </div>
     );

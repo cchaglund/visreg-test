@@ -1,9 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import { useLoaderData } from 'react-router-dom';
 import { TestConfig } from '../types';
 import { api } from '../shared';
 import { ImagesList } from '../pages/suite-page/suite-page';
-import { SummaryObject, EndpointTestResult, WebSocketCommand } from '../pages/test-page/panel/terminal/terminal';
+import { WebSocketCommand } from '../pages/test-page/panel/terminal/terminal';
+import { convertStringToElements } from '../helpers/convert-string-to-react-elements';
+import { AppContext } from './app-context';
 
 export type TestPageData = {
     suiteConfig: TestConfig;
@@ -44,6 +46,43 @@ export type SummaryPayload = {
     programChoices: ProgramChoices;
     cypressSummary: SummaryObject;
     testAgenda: string[];
+    createdAt: string;
+    terminated: boolean;
+};
+
+export type OldTestResults = {
+    createdAt: string;
+    visregSummary: SummaryPayload;
+    terminalOutput: (string | React.ReactElement)[];
+    index: number;
+};
+
+export type ComponentStringified = { 
+    type: string;
+    props: {
+        children: string;
+        style: {
+            color: string;
+        };
+    }
+};
+
+export type History = OldTestResults[];
+
+export type EndpointTestResult = {
+    testTitle: string;
+    errorMessage?: string;
+    endpointTitle: string;
+    viewport: string;
+};
+
+export type SummaryObject = {
+    tests?: number;
+    passing?: number;
+    failing?: number;
+    pending?: number;
+    skipped?: number;
+    duration?: number;
 };
 
 export type TestTypeSlug = 'full-test' | 'diffs-only' | 'targetted';
@@ -63,15 +102,15 @@ type TestContextType = {
     visregSummary: SummaryPayload | undefined;
     runningTest?: TestTypeSlug;
     terminalViewOpen: boolean;
-    cypressSummaryState: SummaryObject | undefined;
     passingEndpoints: EndpointTestResult[];
     failingEndpoints: EndpointTestResult[];
     skippedEndpoints: EndpointTestResult[];
     toggleTerminalOpen: () => void;
     onFinished: (visregSummary: SummaryPayload) => void;
-    terminalOutput: (string | React.ReactNode)[];
-    updateTerminalOutput: (output: string | React.ReactNode, color?: string) => void;
+    terminalOutput: (string | React.ReactElement)[];
+    updateTerminalOutput: (output: string | React.ReactElement, color?: string) => void;
     initiateTerminationOfTest: () => void;
+    history?: History;
 };
 
 const defaultValue: TestContextType = {
@@ -99,7 +138,6 @@ const defaultValue: TestContextType = {
     visregSummary: undefined,
     runningTest: undefined,
     terminalViewOpen: false,
-    cypressSummaryState: undefined,
     passingEndpoints: [],
     failingEndpoints: [],
     skippedEndpoints: [],
@@ -108,6 +146,7 @@ const defaultValue: TestContextType = {
     terminalOutput: [],
     updateTerminalOutput: () => {},
     initiateTerminationOfTest: () => {},
+    history: [],
 };
 
 export const TestContext = React.createContext(defaultValue);
@@ -115,22 +154,52 @@ export const TestContext = React.createContext(defaultValue);
 const ws = new WebSocket('ws://localhost:8080');
 
 export function TestContextWrapper(props: { children: React.ReactNode; }) {
+    const { testHasBeenRunThisSession, setTestHasBeenRunThisSession } = useContext(AppContext);
+    
+    const { suiteConfig, imagesList } = useLoaderData() as TestPageData;
+
     const resultsRef = useRef<HTMLDivElement>(null);
     const terminalRef = useRef<HTMLDivElement>(null);
-    const { suiteConfig, imagesList } = useLoaderData() as TestPageData;
+
     const [ testStatus, setTestStatus ] = useState<TestStatusType>('idle');
     const [ selectedTargetEndpoints, setSelectedTargetEndpoints ] = useState<string[]>([]);
-    const [ visregSummary, setVisregSummary ] = useState<SummaryPayload>();
     const [ runningTest, setRunningTest ] = useState<TestTypeSlug>();
     const [ terminalViewOpen, setTerminalViewOpen ] = useState<boolean>(false);
     const [ selectedTargetViewports, setSelectedViewport ] = useState<(string | number[])[]>([]);
-    const [ cypressSummaryState, setCypressSummaryState ] = useState<SummaryObject>();
-    const [ terminalOutput, setTerminalOutput ] = useState<(string | React.ReactNode)[]>([]);
     const [ passingEndpoints, setPassingEndpoints ] = useState<EndpointTestResult[]>([]);
     const [ failingEndpoints, setFailingEndpoints ] = useState<EndpointTestResult[]>([]);
     const [ skippedEndpoints, setSkippedEndpoints ] = useState<EndpointTestResult[]>([]);
     const [ images, setImages ] = useState<ImagesList>(imagesList);
+    const [ visregSummary, setVisregSummary ] = useState<SummaryPayload>();
+    const [ terminalOutput, setTerminalOutput ] = useState<(string | React.ReactElement)[]>([]);
+    const [ history, setHistory ] = useState<History>(() => {
+        const history = localStorage.getItem('visreg-history');
+        return history ? JSON.parse(history) : [];
+    });
 
+    useEffect(() => {
+        // Only if a test has been run this session do we want to load the most recent one into the state.
+        if (!testHasBeenRunThisSession) return;
+
+        const history = localStorage.getItem('visreg-history');
+        const parsedHistory = history ? JSON.parse(history) : [];
+        setHistory(parsedHistory);
+
+        const mostRecentTestOfSuite: undefined | OldTestResults = parsedHistory
+            .find((test: OldTestResults) => test.visregSummary.programChoices.suite === suiteConfig.suiteSlug);
+
+        if (!mostRecentTestOfSuite) {
+            return;
+        }
+
+        setVisregSummary(mostRecentTestOfSuite.visregSummary);
+        setTerminalOutput(convertStringToElements(mostRecentTestOfSuite.terminalOutput));
+
+        return () => {
+            ws.close();
+        };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const startTest = async (testType: TestTypeSlug) => {
         setTerminalOutput([]);
@@ -154,14 +223,24 @@ export function TestContextWrapper(props: { children: React.ReactNode; }) {
         window.scrollTo({ top: pageHeight, behavior: 'smooth' });
     }
 
-    const updateTerminalOutput = (output: string | React.ReactNode, color?: string) => {
+    const updateTerminalOutput = (output: string | React.ReactElement, color?: string) => {
         let outputElement = output;
 
         if (color) {
             outputElement = <span style={{ color }}>{output}</span>;
         }
-        setTerminalOutput(prev => [ ...prev, outputElement ]);
+        
+        setTerminalOutput(prev => {
+            return [ ...prev, outputElement ]
+        });
     }
+
+    useEffect(() => {
+        if (testStatus === 'terminated' || testStatus === 'done' && visregSummary) {
+            updateHistory(visregSummary!);
+        }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, [terminalOutput, testStatus, visregSummary]);
 
     const toggleTerminalOpen = () => setTerminalViewOpen(prev => !prev);
 
@@ -182,7 +261,7 @@ export function TestContextWrapper(props: { children: React.ReactNode; }) {
         });
     };
 
-    const initiateTerminationOfTest = () => {        
+    const initiateTerminationOfTest = () => {
         setTestStatus('terminating');
         updateTerminalOutput(
             <pre>
@@ -203,10 +282,29 @@ export function TestContextWrapper(props: { children: React.ReactNode; }) {
         ws.send(JSON.stringify(data))
     }
 
+    const updateHistory = (visregSummary: SummaryPayload) => {
+        const history: History = JSON.parse(localStorage.getItem('visreg-history') || '[]');
+
+        if (history.length >= 100) {
+            history.shift(); // Remove the oldest item
+        }
+
+        history.push({
+            createdAt: visregSummary.createdAt,
+            visregSummary,
+            terminalOutput,
+            index: history.length,
+        });
+
+        localStorage.setItem('visreg-history', JSON.stringify(history));
+        setHistory(history);
+    };
+
+
     const onFinished = (visregSummary: SummaryPayload) => {
         setSelectedTargetEndpoints([]);
         setSelectedViewport([]);
-        setCypressSummaryState(visregSummary.cypressSummary);
+        setTestHasBeenRunThisSession(true);
 
         setImages({
             ...images,
@@ -217,7 +315,10 @@ export function TestContextWrapper(props: { children: React.ReactNode; }) {
         setFailingEndpoints(visregSummary.endpointTestResults.failing);
         setSkippedEndpoints(visregSummary.endpointTestResults.skipped);
 
-        setVisregSummary({...visregSummary, testType: runningTest!});
+        const visregSummaryUpdated: SummaryPayload = { ...visregSummary, testType: runningTest! };
+
+        setVisregSummary(visregSummaryUpdated);
+
         setTestStatus(prev => prev === 'terminating' ? 'terminated' : 'done');
 
         setTerminalViewOpen(false);
@@ -236,7 +337,6 @@ export function TestContextWrapper(props: { children: React.ReactNode; }) {
             visregSummary,
             runningTest,
             terminalViewOpen,
-            cypressSummaryState,
             passingEndpoints,
             failingEndpoints,
             skippedEndpoints,
@@ -250,8 +350,10 @@ export function TestContextWrapper(props: { children: React.ReactNode; }) {
             terminalOutput,
             updateTerminalOutput,
             initiateTerminationOfTest,
+            history,
         }),
-        [failingEndpoints, passingEndpoints, skippedEndpoints, runningTest, selectedTargetEndpoints, selectedTargetViewports, suiteConfig, visregSummary, cypressSummaryState, terminalViewOpen, testStatus, terminalOutput, imagesList],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [failingEndpoints, passingEndpoints, skippedEndpoints, runningTest, selectedTargetEndpoints, selectedTargetViewports, suiteConfig, visregSummary, /* cypressSummaryState, */ terminalViewOpen, testStatus, terminalOutput, imagesList, history],
     );
 
     return (

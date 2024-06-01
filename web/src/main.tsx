@@ -18,10 +18,10 @@ import PreviewPage from './pages/view-image-page/preview-page.tsx';
 import ImageList from './pages/suite-page/image-list.tsx';
 import SuiteHome from './pages/suite-page/suite-home/suite-home.tsx';
 import ImagesOverview from './pages/suite-page/images-overview.tsx';
-// import { AssessmentData } from './pages/assessment-page/types';
 import TestPage from './pages/test-page/test-page.tsx';
 import { TestContextWrapper } from './contexts/test-context.tsx';
 import DocsPage from './pages/docs-page/docs-page.tsx';
+import HistoryPage from './pages/history/history-page.tsx';
 
 const router = createBrowserRouter([
 	{
@@ -196,6 +196,30 @@ const router = createBrowserRouter([
 									{
 										path: `/suite/${suiteSlug}/run-test`,
 										slug: 'Run test',
+									}
+								];
+							}
+						},
+					},
+					{
+						path: "/suite/:suiteSlug/history",
+						element: (
+							<TestContextWrapper>
+								<HistoryPage />
+							</TestContextWrapper>
+						),
+						loader: async ({ params }) => {
+							const suiteConfig = await getSuiteConfig(params.suiteSlug);
+							const projectInformation = await getProjectInformation();
+
+							return {suiteConfig, projectInformation };
+						},
+						handle: {
+							crumb: ({ suiteSlug }: { suiteSlug: string; }) => {
+								return [
+									{
+										path: `/suite/${suiteSlug}/history`,
+										slug: 'History',
 									}
 								];
 							}
