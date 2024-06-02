@@ -14,6 +14,13 @@ const imageStyles = stylex.create({
             maxHeight: '40vh',
         },
     },
+    xray: {
+        maxHeight: 'auto',
+        cursor: 'default',
+        '@media (max-width: 1100px)': {
+            maxHeight: 'unset'
+        },
+    },
     zoomedIn: {
         maxHeight: 'auto',
         maxWidth: 'auto',
@@ -53,9 +60,11 @@ type ImagePreviewProps = {
     zoomedIn: boolean;
     image: Image;
     hovering: boolean;
+    xray?: boolean;
 };
 
-const ImageComponent = ({ zoomedIn, image, hovering }: ImagePreviewProps) => {
+const ImageComponent = ({ zoomedIn, image, hovering, xray }: ImagePreviewProps) => {
+
     return (
         <Paper
             elevation={hovering ? 16 : 6}
@@ -69,6 +78,7 @@ const ImageComponent = ({ zoomedIn, image, hovering }: ImagePreviewProps) => {
                 {...stylex.props(
                     imageStyles.shared,
                     imageStyles.regular,
+                    xray && imageStyles.xray,
                     zoomedIn && imageStyles.zoomedIn,
                 )}
                 src={`${image.fileUrl}`}

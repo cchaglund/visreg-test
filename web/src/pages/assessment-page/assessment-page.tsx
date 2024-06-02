@@ -150,7 +150,7 @@ const AssessmentPage = () => {
 				)}>
 			
 					{fetchedImagesDetails[ currentDiffIndex ] && (
-						<PreviewComponent image={fetchedImagesDetails[ currentDiffIndex ]}>
+						<PreviewComponent image={fetchedImagesDetails[ currentDiffIndex ]} isAssessment={true}>
 							<div {...x.props(s.controlsContainer)}>
 
 								<div {...x.props(s.prevNextContainer)}>

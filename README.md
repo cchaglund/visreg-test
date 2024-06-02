@@ -654,9 +654,7 @@ npm visreg-test --lab-mode test-suite:Start@iphone-6 --no-snap
 
 # Web interface
 
-New in v4.0.0, `visreg-test` now has a web interface for assessing diffs and viewing snapshots.
-
-This is especially useful if you're running tests in a CI/CD pipeline, as it allows you to view the snapshots and diffs by visiting a URL.
+New in v4.0.0, `visreg-test` now has a web interface with full feature-parity of the CLI and much more.
 
 To start the web interface, run:
 
@@ -666,9 +664,7 @@ npx visreg-test --server-start # or -ss
 
 The interface will be available at `localhost:3000`.
 
-When running the tests, at the start of assessment you will get the choice to continue in the terminal or open the web interface. If you choose the latter, the interface will open in your default browser.
-
-Coming soon: the ability to run tests from the web interface.
+Also, when running the tests in the CLI, now you will get the choice to continue in the terminal or open the web interface at the start of assessment. If you choose the latter, the web interface will open in your default browser.
 
 
 
@@ -689,7 +685,6 @@ Features:
 Limitations:
 
 - Only Electron browser is (currently) supported in the container.
-- Assessment with image previews will (currently) not work in the container - this must be triggered locally with `npx visreg-test -a` manually after the container has exited (web app coming soon).
 - Cannot run lab mode in the container.
 - Currently you have to install the container via the npm package, so you need to have it installed. In the future, potentially the container could be hosted on Docker Hub, and you could run it with a single command, e.g. `docker run visreg-test`. However, there are benefits to having a local install of the package, such as lab mode and typescript support in your IDE.
 - You may need to pull the cypress image manually before running the container, e.g. `docker pull cypress/browsers:latest`. Unsure if this is necessary (might just be on Windows), but you'll know to try it if you get an error like `ERROR [internal] load metadata for docker.io/cypress/browsers:latest`.

@@ -1,3 +1,6 @@
+6.1.0
+- xray mode!
+
 6.0.0
 - Added history page to show previous test run results.
 - Endpoint hooks renamed from onBefore/onEndpointVisit/onCleanup to onBeforeVisit/onVisit/onAfterVisit to be more clear when they run.
