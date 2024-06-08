@@ -67,3 +67,4 @@ elif [[ $* == *--build-container* || $* == *-b* ]]; then
     set -- "${@/-b/}" # Remove the -b argument from the arguments
     "$SCRIPTS_DIR/build-visreg-test.sh" "$@"
 fi
+

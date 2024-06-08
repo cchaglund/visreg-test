@@ -1,12 +1,15 @@
+6.1.1
+- Regression fix: Broke docker container for mac/linux users in 6.0.0. Fixed. Windows users must now pass in a flag to run the containerized version of the test runner.
+
 6.1.0
-- xray mode!
+- Xray mode!
 
 6.0.0
+- Breaking changes: The naming of the endpoint visit hooks have been renamed to `onBeforeVisit`, `onVisit`, and `onAfterVisit`. You can also define these globally in the `snaps.js/ts` file, and they will be called during each endpoint visit. Setting them on the endpoint object will replace the global ones, but the global ones will be passed as an argument to the endpoint functions, so you can call them if you want to run both.
 - Added history page to show previous test run results.
-- Endpoint hooks renamed from onBefore/onEndpointVisit/onCleanup to onBeforeVisit/onVisit/onAfterVisit to be more clear when they run.
-- Endpoint hooks now replace the global, similarly named hooks if present on the endpoint object (first parameter passed is the global function in case the user wants to run it also).
-- User correctly set inside the container (no longer root).
+- We don't remove the test results when you leave the "Run test" page anymore.
 - When going to the Gallery from the results page, the endpoints and viewports relevant to the test are preselected.
+- User correctly set inside the container (no longer root).
 - Added various tooltips.
 
 5.1.1
@@ -23,12 +26,12 @@
 - Targetted test on dimmentions like "1920,1080" now works
 
 5.0.0
+- Breaking changes: Changes to a couple of flags: `--endpoint-title` is now `--endpoint-titles`, and `--viewport` is now `--viewports`, because you can now specify multiple endpoints and viewports in a single flag.
 - Can now run tests in the web gui
 - Ability to terminate assessments early
 - Ability to resume assessments
 - Ability to assess diffs individually
-- You can now specify multiple endpoints and viewports in a single flag or shorthand.
-- Added documentation to the web interface
+- Added the documentation to the web interface
 
 4.0.8
 - Web interfece: all files in suite config can now be opened as files

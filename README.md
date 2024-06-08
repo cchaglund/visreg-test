@@ -7,21 +7,15 @@
 ## Release notes
 
 >❗<u>Breaking change updating to 6.0.0</u>:
-> - The naming of the endpoint visit hooks have been renamed to `onBeforeVisit`, `onVisit`, and `onAfterVisit`. You can also define these globally in the `snaps.js/ts` file, and they will be called during each endpoint visit. Setting them on the endpoint object will replace the global ones, but the global ones will be passed as an argument to the endpoint functions, so you can call them if you want to run both. Read more in the [full exampl](#full-example) section.
+> - The naming of the endpoint visit hooks have been renamed to `onBeforeVisit`, `onVisit`, and `onAfterVisit`. You can also define these globally in the `snaps.js/ts` file, and they will be called during each endpoint visit. Setting them on the endpoint object will replace the global ones, but the global ones will be passed as an argument to the endpoint functions, so you can call them if you want to run both. Read more in the [full example](#full-example) section.
+
+**History of previously run tests are stored in local storage, and introducing X-ray mode in 6.1.0!**
 
 **Can now run tests in the [web interface](#web-interface) in v5.0.0!**
-
->❗<u>Breaking change updating to 5.0.0</u>:
-> - Changes to a couple of flags: `--endpoint-title` is now `--endpoint-titles`, and `--viewport` is now `--viewports`, because you can now specify multiple endpoints and viewports in a single flag (read more in the [flags](#flags) section).
 
 **Added a [web interface](#web-interface) in v4.0.0**
 
 **Added [docker support](#docker) in v3.0.0**
-
->❗<u>Breaking change updating to 3.0.0</u>:
-> - Your suites directories will need to be moved into a [directory called "suites"](#folder-structure) in the root of your project (this is to make it easier to find the tests when running the containerized version of the test runner).
-> - [Flags](#flags) have been updated to be more consistent and user-friendly.
-
 
 ## Features
 - Create baseline snapshots or compare to existing ones
@@ -711,7 +705,17 @@ If the container doesn't exist, it will be built automatically. If you want to f
 npx visreg-test --build-container # or -b
 ```
 
+> Any change to the package.json will also trigger a rebuild of the container.
+
 A container directory will be added to the root of your project, which contains things needed for the container (primarily mounted volumes, enabling you to persist data between runs).
+
+> Windows users: you will likely get access errors as the snapshots created from the container are owned by root. You can try running the container with the `--use-local-user # or -ulu` flag, as this will set the user inside the container to your local user.
+
+The container is now running, but you need to pass arguments to it for it to *do* something. Why not try out the web interface?
+
+```bash
+npx visreg-test --run-container --server-start # or -r -ss
+```
 
 You can use the same flags as you would normally, e.g. to run a specific test:
 

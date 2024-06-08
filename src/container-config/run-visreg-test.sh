@@ -38,7 +38,8 @@ run_visreg_test() {
     fi
 
     local env=$1
-    local ARGS=$2
+    local use_local_user=$2
+    local VISREG_ARGS=$3
 
     # "Mirror" the project's
     #     - suites directory
@@ -65,9 +66,8 @@ run_visreg_test() {
         pretty_log "Running container (with mounted local dist folder)..."
 
         docker run --name visreg-test -it \
-        -u $(id -u):$(id -g) \
         -e ENV=dev \
-        -e ARGS=$ARGS \
+        -e ARGS=$VISREG_ARGS \
         -v "$PROJECT_ROOT"/suites:/app/suites \
         -v "$PROJECT_ROOT"/package.json:/app/package.json \
         -v "$PROJECT_ROOT"/tsconfig.json:/app/tsconfig.json \
@@ -81,25 +81,44 @@ run_visreg_test() {
     else
         pretty_log "Running container..."
 
-        docker run --name visreg-test -it \
-        -u $(id -u):$(id -g) \
-        -e ENV=prod \
-        -e ARGS=$ARGS \
-        -v "$PROJECT_ROOT"/suites:/app/suites \
-        -v "$PROJECT_ROOT"/package.json:/app/package.json \
-        -v "$PROJECT_ROOT"/tsconfig.json:/app/tsconfig.json \
-        -v "$PROJECT_ROOT"/visreg.config.json:/app/visreg.config.json \
-        -v "$PROJECT_ROOT"/container/volumes/app:/app \
-        -v "$PROJECT_ROOT"/container/volumes/cypress-cache:/root/.cache/Cypress \
-        -p 3000:3000 \
-        -p 8080:8080 \
-        visreg-test
+        if [ $use_local_user = true ]; then
+            # For Windows users
+            pretty_log "Using the local user's UID and GID in the container..."
+
+            docker run --name visreg-test -it \
+            -u $(id -u):$(id -g) \
+            -e ENV=prod \
+            -e ARGS=$VISREG_ARGS \
+            -v "$PROJECT_ROOT"/suites:/app/suites \
+            -v "$PROJECT_ROOT"/package.json:/app/package.json \
+            -v "$PROJECT_ROOT"/tsconfig.json:/app/tsconfig.json \
+            -v "$PROJECT_ROOT"/visreg.config.json:/app/visreg.config.json \
+            -v "$PROJECT_ROOT"/container/volumes/app:/app \
+            -v "$PROJECT_ROOT"/container/volumes/cypress-cache:/root/.cache/Cypress \
+            -p 3000:3000 \
+            -p 8080:8080 \
+            visreg-test
+        else
+            docker run --name visreg-test -it \
+            -e ENV=prod \
+            -e ARGS=$VISREG_ARGS \
+            -v "$PROJECT_ROOT"/suites:/app/suites \
+            -v "$PROJECT_ROOT"/package.json:/app/package.json \
+            -v "$PROJECT_ROOT"/tsconfig.json:/app/tsconfig.json \
+            -v "$PROJECT_ROOT"/visreg.config.json:/app/visreg.config.json \
+            -v "$PROJECT_ROOT"/container/volumes/app:/app \
+            -v "$PROJECT_ROOT"/container/volumes/cypress-cache:/root/.cache/Cypress \
+            -p 3000:3000 \
+            -p 8080:8080 \
+            visreg-test
+        fi
     fi
 }
 
 # Parse the arguments
 container_args=()
 env="prod"
+use_local_user=false
 
 for arg in "$@"
 do
@@ -113,15 +132,20 @@ do
             container_args+=("$arg")
         fi
     else
-        container_args+=("$arg")
+        if [ "$arg" = "--use-local-user" ] || [ "$arg" = "-ulu" ]; then
+            set -- "${@/--use-local-user/}" # Remove the --use-local-user argument from the arguments
+            set -- "${@/-ulu/}" # Remove the -ulu argument from the arguments
+            use_local_user=true
+        else 
+            container_args+=("$arg")
+        fi
     fi
 done
 
 
 # Join all container-args with a "=" (equals sign) - the plus sign is already 
 # used as a separator for visreg-test arguments (e.g. --viewports=desktop+tablet+mobile)
-RUNARGS=$(printf "=%s" "${container_args[@]}")
+VISREG_ARGS=$(printf "=%s" "${container_args[@]}")
 
-run_visreg_test $env $RUNARGS
-
+run_visreg_test $env $use_local_user $VISREG_ARGS
 
