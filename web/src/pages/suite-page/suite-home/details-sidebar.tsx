@@ -76,7 +76,7 @@ const SuiteDetailsSidebar = () => {
             <div {...x.props(style.mb2)}>
                 <CollapsibleSection heading={'Page visit code'}>
                     <Typography variant="body2"  color='text.primary'>
-                        {suiteConfig?.onPageVisit}
+                        {suiteConfig?.onVisit}
                     </Typography>
                 </CollapsibleSection>
             </div>

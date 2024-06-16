@@ -25,7 +25,7 @@ export type TestConfig = {
     directory: string;
     viewports?: string[] | number[][];
     formatUrl?: string;
-    onPageVisit?: string;
+    onVisit?: string;
 };
 
 

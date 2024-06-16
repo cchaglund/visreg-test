@@ -1,3 +1,9 @@
+6.1.2
+- Dependencies are now thoroughly audited, fixed, and shrinkwrapped before publishing. This process ensures that all dependencies are up-to-date, secure, and stable at the time of publishing.
+- When containers are installed, an automatic audit and fix process is triggered.
+- The Cypress testing framework version is now locked to a specific version to avoid any compatibility surprises. Newer versions of Cypress will be tested and integrated into the test runner before being released.
+- Function name renamed in some places it had been missed.
+
 6.1.1
 - Regression fix: Broke docker container for mac/linux users in 6.0.0. Fixed. Windows users must now pass in a flag to run the containerized version of the test runner.
 
