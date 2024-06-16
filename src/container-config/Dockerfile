@@ -4,8 +4,8 @@ FROM cypress/browsers
 # Set the working directory in the container to /app
 WORKDIR /app
 
-# Install curl
-RUN apt-get update && apt-get install -y curl
+# Install curl and jq
+RUN apt-get update && apt-get install -y curl jq
 
 # Make port 3000 available outside the container (express server)
 EXPOSE 3000

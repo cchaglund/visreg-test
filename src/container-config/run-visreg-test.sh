@@ -11,12 +11,20 @@ run_visreg_test() {
 
     image_stale=false
     PREV_PACKAGEJSON="$PROJECT_ROOT/container/volumes/app/prev-package.json"
+    # PREV_VISREG_CONFIG="$PROJECT_ROOT/container/volumes/app/prev-visreg.config.json"
 
     # If package.json has changed, we will need to rebuild the image
     if [[ ! -f $PREV_PACKAGEJSON ]] || [[ -f $PREV_PACKAGEJSON && ! -z "$(diff -q $PROJECT_ROOT/package.json $PREV_PACKAGEJSON 2>/dev/null)" ]]; then
-        pretty_log "Package.json has changed - image will be rebuilt"
+        pretty_log "Package.json has changed (image will be rebuilt)"
         image_stale=true
     fi
+
+    # Is this true? The config is mounted in the container, so shouldn't be needed:
+    # # If visreg.config.json has changed, we will need to rebuild the image
+    # if [[ ! -f $PREV_VISREG_CONFIG ]] || [[ -f $PREV_VISREG_CONFIG && ! -z "$(diff -q $PROJECT_ROOT/visreg.config.json $PREV_VISREG_CONFIG 2>/dev/null)" ]]; then
+    #     pretty_log "Visreg.config.json has changed (image will be rebuilt)"
+    #     image_stale=true
+    # fi
 
     # If the visreg-test image doesn't exist, or if it's outdated, build it
     if [ -z "$exists" ] || [ "$image_stale" == "true" ]; then
