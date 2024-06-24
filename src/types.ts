@@ -60,22 +60,93 @@ export type RequestSettings = {
 	};
 };
 
+/**
+ * Represents an endpoint for visual regression testing.
+ */
 export type Endpoint = CypressScreenshotOptions & JestMatchImageSnapshotOptions & {
+	/**
+	 * The title of the endpoint.
+	 * @example 'Home Page'
+	 */
 	title: string;
+	/**
+	 * The path of the endpoint.
+	 * @example '/home'
+	 */
 	path: string;
+	/**
+	 * An array of CSS selectors to blackout in the screenshot.
+	 * @example ['.cookie-banner', '.modal']
+	 */
 	blackout?: string[];
+	/**
+	 * The CSS selector of the element to match in the screenshot.
+	 * @example '.header'
+	 */
 	elementToMatch?: string;
+	/**
+	 * The padding around the element to match in the screenshot.
+	 */
 	padding?: Cypress.Padding;
+	/**
+	 * The type of capture to perform: 'viewport' or 'fullPage'.
+	 * @default 'fullPage'
+	 */
 	capture?: 'viewport' | 'fullPage';
+	/**
+	 * A function to exclude the endpoint from testing based on custom logic.
+	 * @param {Cypress} cy - The Cypress object.
+	 * @param {TestContext} context - The context of the test.
+	 * @returns {boolean} Whether to exclude the endpoint from testing.
+	 * @example (cy, context) => context.viewport === 'samsung-s10'
+	 */
 	excludeFromTest?: ExcludeFromTestFunction;
+	/**
+	 * A function to execute before visiting the endpoint.
+	 * @param {Cypress} cy - The Cypress object.
+	 * @param {TestContext} context - The context of the test.
+	 * @param {EndpointHookFunction} globalParentHook - The global parent hook with the same signature.
+	 * @example (cy, context, globalParentHook) => cy.get('.cookie-banner').click()
+	 */
 	onBeforeVisit?: EndpointHookFunction;
+	/**
+	 * A function to execute when visiting the endpoint.
+	 * @param {Cypress} cy - The Cypress object.
+	 * @param {TestContext} context - The context of the test.
+	 * @param {EndpointHookFunction} globalParentHook - The global parent hook with the same signature.
+	 * @example (cy, context, globalParentHook) => cy.get('.modal').should('be.visible')
+	 */
 	onVisit?: EndpointHookFunction;
+	/**
+	 * A function to execute after visiting the endpoint.
+	 * @param {Cypress} cy - The Cypress object.
+	 * @param {TestContext} context - The context of the test.
+	 * @param {EndpointHookFunction} globalParentHook - The global parent hook with the same signature.
+	 * @example (cy, context, globalParentHook) => cy.get('.modal').should('not.be.visible')
+	 */
 	onAfterVisit?: EndpointHookFunction;
+	/**
+	 * Additional data associated with the endpoint.
+	 * @example { user: 'admin' }
+	 */
 	data?: any;
+	/**
+	 * The visit options for the endpoint.
+	 * @example { waitForNetworkIdle: true }
+	 */
 	visitOptions?: VisitSettings;
+	/**
+	 * The request options for the endpoint.
+	 * @example { headers: { 'Authorization
+	 * : 'Bearer token
+	 * ' } }
+	 */
 	requestOptions?: RequestSettings;
 };
 
+/**
+ * Represents a viewport for visual regression testing.
+ */
 export type VisregViewport = Cypress.ViewportPreset | number[];
 
 export type VisitSettings = {
@@ -117,20 +188,89 @@ export type VisitSettings = {
 	failOnStatusCode?: boolean;
 };
 
+/**
+ * Represents the settings for preparing a capture.
+ */
 export type PrepareForCaptureSettings = {
-	onVisit?: (EndpointHookFunction) | undefined;
-	globalOnVisit: (EndpointHookFunction);
+	/**
+	 * A function that will be called before visiting each endpoint.
+	 * @param {Cypress} cy - The Cypress object.
+	 * @param {TestContext} context - The context of the test.
+	 * @param {EndpointHookFunction} globalParentHook - The global parent hook with the same signature.
+	 * @example (cy, context, globalParentHook) => cy.get('.cookie-banner').click()
+	 */
+	onVisit?: EndpointHookFunction;
+
+	/**
+	 * A function that will be called before visiting any endpoint.
+	 * @param {Cypress} cy - The Cypress object.
+	 * @param {TestContext} context - The context of the test.
+	 * @param {EndpointHookFunction} globalParentHook - The global parent hook with the same signature.
+	 * @example (cy, context, globalParentHook) => cy.get('.cookie-banner').click()
+	 */
+	globalOnVisit: EndpointHookFunction;
+
+	/**
+	 * The test context.
+	 */
 	context: TestContext;
 };
 
+/**
+ * Represents the configuration for a test.
+ */
 export type TestConfig = {
+	/**
+	 * The name of the test suite.
+	 */
 	suiteName?: string;
+	
+	/**
+	 * The base URL for the test.
+	 * @example 'https://developer.mozilla.org'
+	 */
 	baseUrl: string;
+	
+	/**
+	 * The list of endpoints to visit during the test.
+	 */
 	endpoints: Endpoint[];
+	
+	/**
+	 * The list of viewports to use during the test.
+	 */
 	viewports?: VisregViewport[];
+	
+	/**
+	 * A function to format the URL for each endpoint.
+	 * @param {string} path - The path of the endpoint.
+	 * @returns {string} The formatted URL.
+	 * @example (path) => `https://developer.mozilla.org${path}?utm_source=visreg-test`
+	 */
 	formatUrl?: (path: string) => string;
+	
+	/**
+	 * A function to execute before visiting each endpoint.
+	 * Gets overridden by the onBeforeVisit attribute of an endpoint object.
+	 * @param {Cypress} cy - The Cypress object.
+	 * @param {TestContext} context - The context of the test.
+	 */
 	onBeforeVisit?: EndpointHookFunction;
+	
+	/**
+	 * A function to execute when visiting each endpoint.
+	 * Gets overridden by the onVisit attribute of an endpoint object.
+	 * @param {Cypress} cy - The Cypress object.
+	 * @param {TestContext} context - The context of the test.
+	 */
 	onVisit?: EndpointHookFunction;
+	
+	/**
+	 * A function to execute after visiting each endpoint.
+	 * Gets overridden by the onAfterVisit attribute of an endpoint object.
+	 * @param {Cypress} cy - The Cypress object.
+	 * @param {TestContext} context - The context of the test.
+	 */
 	onAfterVisit?: EndpointHookFunction;
 };
 
