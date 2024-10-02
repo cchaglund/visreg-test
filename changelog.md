@@ -1,3 +1,6 @@
+6.1.4
+- Updated doc to specify that "tsx" must be installed
+
 6.1.2
 - Dependencies are now thoroughly audited, fixed, and shrinkwrapped before publishing. This process ensures that all dependencies are up-to-date, secure, and stable at the time of publishing.
 - When containers are installed, an automatic audit and fix process is triggered.
