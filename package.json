@@ -1,6 +1,6 @@
 {
 	"name": "visreg-test",
-	"version": "6.1.4",
+	"version": "6.2.0",
 	"description": "A visual regression testing solution that offers an easy setup with simple yet powerful customisation options, wrapped up in a convenient CLI runner to make assessing and accepting/rejecting diffs a breeze.",
 	"main": "dist/run-test.js",
 	"types": "dist/types.d.ts",
