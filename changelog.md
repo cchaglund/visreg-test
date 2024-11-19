@@ -1,5 +1,6 @@
-6.2.0
-- Docker images will now be named based on the root directory of the project, to avoid conflicts when running multiple projects in parallel. Can also be configured manually in the config file (see readme).
+6.2.1
+- Specified cypress/browsers image to: "cypress/browsers:node-20.18.0-chrome-130.0.6723.69-1-ff-131.0.3-edge-130.0.2849.52-1"
+- To avoid conflicts when running multiple projects in parallel, the docker image name will now be determined in the following order: configurable in the [module configuration](#optional-configuration) ("dockerImageName"), else the name attribute of the package.json file in the project, else finally the directory name.
 
 6.1.4
 - Updated doc to specify that "tsx" must be installed

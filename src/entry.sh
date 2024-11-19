@@ -9,15 +9,23 @@ pretty_log() {
 # where they've installed the visreg-test npm package
 PROJECT_ROOT="$(pwd)"
 CONFIG_FILE="$PROJECT_ROOT/visreg.config.json"
+PACKAGE_FILE="$PROJECT_ROOT/package.json"
 
-# Check if the visreg.config.json file exists and read the container-name attribute if it does
+# Check if the visreg.config.json file exists and read the dockerImageName attribute if it does
 if [ -f "$CONFIG_FILE" ]; then
     custom_image_name=$(jq -r '.["dockerImageName"] // empty' "$CONFIG_FILE")
 fi
 
-# Set the image name based on the container-name attribute or default to visreg-image-<project-name>
+# If dockerImageName is not found, check for the name property in package.json
+if [ -z "$custom_image_name" ] && [ -f "$PACKAGE_FILE" ]; then
+    package_name=$(jq -r '.name // empty' "$PACKAGE_FILE")
+fi
+
+# Set the image name based on the custom name, package name, or default to visreg-image-<project-name>
 if [ -n "$custom_image_name" ]; then
     image_name="$custom_image_name"
+elif [ -n "$package_name" ]; then
+    image_name="$package_name"
 else
     image_name="visreg-image-$(basename "$PROJECT_ROOT")"
 fi

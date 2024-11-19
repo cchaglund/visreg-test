@@ -6,7 +6,7 @@
 
 ## Release notes
 
-**Docker image name is now based on the root directory name of the project, and can also be configured in the [module configuration](#optional-configuration) (to avoid conflicts when running multiple projects in parallel) in v6.2.0**
+**v6.2.1: To avoid conflicts when running multiple projects in parallel, the docker image name will now be determined in the following order: configurable in the [module configuration](#optional-configuration) ("dockerImageName"), else the name attribute of the package.json file in the project, else finally the directory name.**
 
 **History of previously run tests are stored in local storage, and introducing X-ray mode in 6.1.0!**
 
@@ -41,6 +41,10 @@
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
+- [visreg-test](#visreg-test)
+  - [Release notes](#release-notes)
+  - [Features](#features)
+- [Table of contents](#table-of-contents)
 - [About](#about)
 - [Setup](#setup)
   - [Quick start](#quick-start)

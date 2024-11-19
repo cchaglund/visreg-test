@@ -1,5 +1,5 @@
 # Use an official Node.js runtime as the base image
-FROM cypress/browsers
+FROM cypress/browsers:node-20.18.0-chrome-130.0.6723.69-1-ff-131.0.3-edge-130.0.2849.52-1
 
 # Set the working directory in the container to /app
 WORKDIR /app
