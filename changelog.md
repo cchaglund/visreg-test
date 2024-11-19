@@ -1,3 +1,6 @@
+6.2.0
+- Docker images will now be named based on the root directory of the project, to avoid conflicts when running multiple projects in parallel. Can also be configured manually in the config file (see readme).
+
 6.1.4
 - Updated doc to specify that "tsx" must be installed
 

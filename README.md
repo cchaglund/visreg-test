@@ -6,8 +6,7 @@
 
 ## Release notes
 
->❗<u>Breaking change updating to 6.0.0</u>:
-> - The naming of the endpoint visit hooks have been renamed to `onBeforeVisit`, `onVisit`, and `onAfterVisit`. You can also define these globally in the `snaps.js/ts` file, and they will be called during each endpoint visit. Setting them on the endpoint object will replace the global ones, but the global ones will be passed as an argument to the endpoint functions, so you can call them if you want to run both. Read more in the [full example](#full-example) section.
+**Docker image name is now based on the root directory name of the project, and can also be configured in the [module configuration](#optional-configuration) (to avoid conflicts when running multiple projects in parallel) in v6.2.0**
 
 **History of previously run tests are stored in local storage, and introducing X-ray mode in 6.1.0!**
 
@@ -967,6 +966,7 @@ You can configure certain settings with a `visreg.config.json` file placed in th
 | visitOptions  | Options for when the url is visited | `VisitSettings`, *optional* |
 | screenshotOptions | Options to pass to Cypress when taking screenshots. | `CypressScreenshotOptions` |
 | comparisonOptions | Options to pass to the Jest comparison engine when comparing screenshots. | `JestMatchImageSnapshotOptions` |
+| dockerImageName | The name of the docker image to build/use. Default is `visreg-image-[root directory name]` | `string` |
 
 <br>
 <br>

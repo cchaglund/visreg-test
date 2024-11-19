@@ -6,15 +6,18 @@ pretty_log() {
 
 SCRIPT_DIR="$(dirname "$0")"
 
+image_name=$1
+shift # Remove the first argument (image_name) from the list of arguments
+
 pretty_log "Stopping and removing the previous container..."
 
-docker stop visreg-test >/dev/null 2>&1 || true # Stop the previous container
-docker rm visreg-test >/dev/null 2>&1 || true # Remove the previous container
-docker rmi visreg-test >/dev/null 2>&1 || true # Remove the old image
+docker stop $image_name >/dev/null 2>&1 || true # Stop the previous container
+docker rm $image_name >/dev/null 2>&1 || true # Remove the previous container
+docker rmi $image_name >/dev/null 2>&1 || true # Remove the old image
 
 pretty_log "Building the new image..."
 echo ""
-docker build -t visreg-test "$SCRIPT_DIR"
+docker build -t $image_name "$SCRIPT_DIR"
 echo ""
 
 

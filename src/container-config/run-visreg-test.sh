@@ -6,8 +6,11 @@ pretty_log() {
 
 PROJECT_ROOT="$(pwd)"
 
+image_name=$1
+shift # Remove the first argument (image_name) from the list of arguments
+
 run_visreg_test() {
-    exists=$(docker images -q visreg-test 2> /dev/null)
+    exists=$(docker images -q $image_name 2> /dev/null)
 
     image_stale=false
     PREV_PACKAGEJSON="$PROJECT_ROOT/container/volumes/app/prev-package.json"
@@ -26,23 +29,23 @@ run_visreg_test() {
     #     image_stale=true
     # fi
 
-    # If the visreg-test image doesn't exist, or if it's outdated, build it
+    # If the image doesn't exist, or if it's outdated, build it
     if [ -z "$exists" ] || [ "$image_stale" == "true" ]; then
-        pretty_log "Building the visreg-test image..."
+        pretty_log "Building the $image_name image..."
         SCRIPT_DIR="$(dirname "$0")"
-        "$SCRIPT_DIR/build-visreg-test.sh" "$@"
+        "$SCRIPT_DIR/build-visreg-test.sh" "$image_name" "$@"
     fi
 
     # Check if the container is running, and if so, stop it
-    if [ "$(docker ps -q -f name=visreg-test)" ]; then
+    if [ "$(docker ps -q -f name=$image_name)" ]; then
         pretty_log "Stopping the previous container..."
-        docker stop visreg-test >/dev/null 2>&1
+        docker stop $image_name >/dev/null 2>&1
     fi
 
     # Remove the old container, if it exists
-    if [ "$(docker ps -aq -f status=exited -f name=visreg-test)" ]; then
+    if [ "$(docker ps -aq -f status=exited -f name=$image_name)" ]; then
         pretty_log "Removing the previous container..."
-        docker rm visreg-test >/dev/null 2>&1
+        docker rm $image_name >/dev/null 2>&1
     fi
 
     local env=$1
@@ -54,7 +57,7 @@ run_visreg_test() {
     #     - package.json
     #     - visreg.config.json
     # These will be shared by both the npm package and the Docker container, enabling the user to run
-    # visreg-test from the Docker container with the same configuration as they would from the npm package
+    # the image from the Docker container with the same configuration as they would from the npm package
 
     # Mount for persistence - things only used by the container (stored in the "container" dir):
     #     - Cypress cache
@@ -69,11 +72,11 @@ run_visreg_test() {
         touch "$PROJECT_ROOT/visreg.config.json"
     fi
 
-    # Run the visreg-test container
+    # Run the container
     if [ $env = "dev" ]; then
         pretty_log "Running container (with mounted local dist folder)..."
 
-        docker run --name visreg-test -it \
+        docker run --name $image_name -it \
         -e ENV=dev \
         -e ARGS=$VISREG_ARGS \
         -v "$PROJECT_ROOT"/suites:/app/suites \
@@ -85,7 +88,7 @@ run_visreg_test() {
         -v "$PROJECT_ROOT"/../dist:/temp \
         -p 3000:3000 \
         -p 8080:8080 \
-        visreg-test
+        $image_name
     else
         pretty_log "Running container..."
 
@@ -93,7 +96,7 @@ run_visreg_test() {
             # For Windows users
             pretty_log "Using the local user's UID and GID in the container..."
 
-            docker run --name visreg-test -it \
+            docker run --name $image_name -it \
             -u $(id -u):$(id -g) \
             -e ENV=prod \
             -e ARGS=$VISREG_ARGS \
@@ -105,9 +108,9 @@ run_visreg_test() {
             -v "$PROJECT_ROOT"/container/volumes/cypress-cache:/root/.cache/Cypress \
             -p 3000:3000 \
             -p 8080:8080 \
-            visreg-test
+            $image_name
         else
-            docker run --name visreg-test -it \
+            docker run --name $image_name -it \
             -e ENV=prod \
             -e ARGS=$VISREG_ARGS \
             -v "$PROJECT_ROOT"/suites:/app/suites \
@@ -118,7 +121,7 @@ run_visreg_test() {
             -v "$PROJECT_ROOT"/container/volumes/cypress-cache:/root/.cache/Cypress \
             -p 3000:3000 \
             -p 8080:8080 \
-            visreg-test
+            $image_name
         fi
     fi
 }

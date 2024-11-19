@@ -1,0 +1,1 @@
+When creating a new version (e.g. running `npm run minor`), the module will not be published if there are npm packages with vulnerabilities. Run `npm audit fix` to fix them, and then try again. It still might not publish in case the git repository is not clean - in that case, commit your changes and try again.
