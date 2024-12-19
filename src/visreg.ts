@@ -43,6 +43,7 @@ export type EndpointTestResultsGroup = {
 	unchanged: EndpointTestResult[],
 };
 
+const defaultBrowser = 'electron';
 const configPath = path.join(projectRoot, 'visreg.config.json');
 let visregConfig: ConfigurationSettings = {};
 
@@ -372,11 +373,8 @@ const getInitMessage = (labModeOn: boolean, browser?: string) => {
 	if (labModeOn) {
 		return `Starting Cypress ${labModeText}`;
 	}
-	
-	// Only electron currently supported in docker
-	return programChoices.containerized
-		? `Starting Cypress (electron)`
-		: `Starting Cypress (${browser || 'electron'})`;
+
+	return `Starting Cypress (${browser || defaultBrowser})`;
 }
 
 const runCypressTest = async (diffList?: string[]): Promise<string[] | void> => new Promise((resolve) => {
@@ -392,12 +390,7 @@ const runCypressTest = async (diffList?: string[]): Promise<string[] | void> => 
 	if (labModeOn && programChoices.gui) {
 		cypressCommand = 'npx cypress open --env HEADED=true';
 	} else {
-		if (programChoices.containerized) {
-			// Only electron is currently supported in docker
-			cypressCommand = `npx cypress run --env CLI=true --spec "${conf.specPath}"`;
-		} else {
-			cypressCommand = `npx cypress run --env CLI=true --spec "${conf.specPath}" ${conf.browser ? `--browser ${conf.browser}` : ''}`;
-		}
+		cypressCommand = `npx cypress run --env CLI=true --spec "${conf.specPath}" ${conf.browser ? `--browser ${conf.browser}` : defaultBrowser}`;
 	}
 
 	const parts = cypressCommand.split(' ');
@@ -637,9 +630,7 @@ const runWebCypressTest = async (ws: WebSocket, diffList?: string[]): Promise<vo
 	const conf = prepareConfig(diffList);
 	process.chdir(__dirname);
 
-	const initMessage = programChoices.containerized 
-		? 'Starting Cypress (electron) in container'
-		: `Starting Cypress (${conf.browser || 'electron'})`;
+	const initMessage = `Starting Cypress (${conf.browser || defaultBrowser})`;
 
 	printColorText(`\n${initMessage}\n`, '2');
 	
@@ -653,13 +644,7 @@ const runWebCypressTest = async (ws: WebSocket, diffList?: string[]): Promise<vo
 	ws.send(JSON.stringify(initMessagePackage));
 
 	let cypressCommand: string;
-
-	if (programChoices.containerized) {
-		// Only electron is currently supported in docker
-		cypressCommand = `npx cypress run --spec "${conf.specPath}"`;
-	} else {
-		cypressCommand = `npx cypress run --spec "${conf.specPath}" ${conf.browser ? `--browser ${conf.browser}` : ''}`;
-	}
+	cypressCommand = `npx cypress run --spec "${conf.specPath}" ${conf.browser ? `--browser ${conf.browser}` : defaultBrowser}`;	
 
 	const parts = cypressCommand.split(' ');
 	const command = parts[ 0 ];
