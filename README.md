@@ -678,10 +678,10 @@ Features:
 
 Limitations:
 
-- Only Electron browser is (currently) supported in the container.
+<!-- - Only Electron browser is (currently) supported in the container. -->
 - Cannot run lab mode in the container.
 - Currently you have to install the container via the npm package, so you need to have it installed. In the future, potentially the container could be hosted on Docker Hub, and you could run it with a single command, e.g. `docker run visreg-test`. However, there are benefits to having a local install of the package, such as lab mode and typescript support in your IDE.
-- You may need to pull the cypress image manually before running the container, e.g. `docker pull cypress/browsers:latest`. Unsure if this is necessary (might just be on Windows), but you'll know to try it if you get an error like `ERROR [internal] load metadata for docker.io/cypress/browsers:latest`.
+- You may need to pull the cypress image manually before running the container, e.g. `docker pull cypress/browsers:node-20.18.0-chrome-130.0.6723.69-1-ff-131.0.3-edge-130.0.2849.52-1`. Unsure if this is necessary (might just be on Windows), but you'll know to try it if you get an error like `ERROR [internal] load metadata for docker.io/cypress/browsers:node-20.18.0-chrome-130.0.6723.69-1-ff-131.0.3-edge-130.0.2849.52-1`.
 
 
 ## Pre-requisites
@@ -957,7 +957,7 @@ You can configure certain settings with a `visreg.config.json` file placed in th
 
 | Property | Description | Type |
 |---|---|---|
-| browser | Which browser to run in headless mode. Default is Electron (Electron also currently the only supported browser when running in the container). | `'electron'` | 'chrome' | 'firefox' | 'edge'` |
+| browser | Which browser to run in headless mode. Default is Electron. | `'electron'` | 'chrome' | 'firefox' | 'edge'` |
 | ignoreDirectories | Paths which will not be included in the selection of test. | `string[]` |
 | maxViewport | Should have a higher value than the viewport you want to test. Default is `1920x1080` | `{ width?: number, height?: number }` |
 | imagePreviewProcess | This is for Linux users to specify the image preview program they are using and is used to automatically close the previewer at the end of diff assessment with a `pkill` command. By default visreg-test will attempt to close Gnome (i.e. 'pkill eog'). | `string` |
