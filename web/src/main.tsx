@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './app.tsx';
+import App from './App.tsx';
 import './styles/index.css';
 import '@fontsource/roboto/300.css';
 import '@fontsource/roboto/400.css';
@@ -177,19 +177,20 @@ const router = createBrowserRouter([
 							},
 						},
 					},
-					{
-						path: "/suite/:suiteSlug/run-test",
-						element: (
-							<TestContextWrapper>
-								<TestPage />
-							</TestContextWrapper>
-						),
-						loader: async ({ params }) => {
-							const imagesList = await getSuiteImagesList(params.suiteSlug);
-							const suiteConfig = await getSuiteConfig(params.suiteSlug);
+				{
+					path: "/suite/:suiteSlug/run-test",
+					element: (
+						<TestContextWrapper>
+							<TestPage />
+						</TestContextWrapper>
+					),
+					loader: async ({ params }) => {
+						const imagesList = await getSuiteImagesList(params.suiteSlug);
+						const suiteConfig = await getSuiteConfig(params.suiteSlug);
+						const projectInformation = await getProjectInformation();
 
-							return {imagesList, suiteConfig };
-						},
+						return {imagesList, suiteConfig, projectInformation };
+					},
 						handle: {
 							crumb: ({ suiteSlug }: { suiteSlug: string; }) => {
 								return [

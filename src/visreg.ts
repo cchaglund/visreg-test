@@ -4,13 +4,13 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { spawn } from 'child_process';
 import * as readline from 'readline';
-import { ConfigurationSettings, CypressScreenshotOptions, JestMatchImageSnapshotOptions, NonOverridableSettings, ProgramChoices, RequestSettings, TestSettings, TestType, VisitSettings, VisregViewport } from './types';
+import { ConfigurationSettings, CypressScreenshotOptions, JestMatchImageSnapshotOptions, NonOverridableSettings, ProgramChoices, RequestSettings, SuiteRunResult, TestSettings, TestType, VisitSettings, VisregViewport } from './types';
 import { programChoices } from './cli';
 import { startServer } from './server';
-import { assessInWeb, processImageViaWeb } from './diff-assessment-web';
+import { assessInWeb, processImageViaWeb, resetWebAssessmentState } from './diff-assessment-web';
 import { BACKUP_DIFF_DIR, BACKUP_RECEIVED_DIR, DIFF_DIR, RECEIVED_DIR, cleanUp, createFailingEndpointTestResult, createPassingEndpointTestResult, getAllDiffingFiles, getDiffingFilesFromTestResult, getSkippedEndpoints, getSuiteDirOrFail, getSuites, getUnchangedEndpoints, hasFiles, includedInTarget, isTargettedTest, parseAgenda, parseCypressSummary, parseViewport, pathExists, printColorText, projectRoot, removeBackups, suitesDirectory } from './utils';
-import { assessInCLI } from './diff-assessment-terminal';
-import { summarizeResultsAndQuit } from './summarize';
+import { assessInCLI, resetTerminalAssessmentState } from './diff-assessment-terminal';
+import { summarizeResultsAndQuit, summarizeResults, summarizeSuiteQueue, resetSummaryState } from './summarize';
 
 type DataPackage = {
 	name: string;
@@ -45,14 +45,19 @@ export type EndpointTestResultsGroup = {
 
 const defaultBrowser = 'electron';
 const configPath = path.join(projectRoot, 'visreg.config.json');
-let visregConfig: ConfigurationSettings = {};
+
+// Store the project-level config immutably so it can be cloned for each suite run
+let projectLevelConfig: ConfigurationSettings = {};
 
 if (pathExists(configPath)) {
 	const fileContent = fs.readFileSync(configPath, 'utf-8');
 	try {
-		visregConfig = JSON.parse(fileContent);
+		projectLevelConfig = JSON.parse(fileContent);
 	} catch (e) { }
 }
+
+// Working config that gets merged with suite-level config per run. Reset from projectLevelConfig between suite runs.
+let visregConfig: ConfigurationSettings = { ...projectLevelConfig };
 
 let failed = false;
 let userTerminatedTest = false;
@@ -180,7 +185,7 @@ const startLabMode = async (programChoices: ProgramChoices) => {
 }
 
 const main = async (): Promise<void> => {
-	await selectSuite();
+	await selectSuites();
 	await selectType();
 
 	const { testType } = programChoices;
@@ -195,6 +200,13 @@ const main = async (): Promise<void> => {
 		return;
 	}
 
+	// Queue mode: run multiple suites sequentially
+	if (isQueueMode()) {
+		await runSuiteQueue();
+		return;
+	}
+
+	// Single-suite mode (original behavior)
 	if (testType === 'diffs-only') {
 		exitIfNoDIffs();
 	}
@@ -249,6 +261,106 @@ const selectSuite = async () => {
 	rl.close();
 };
 
+const isQueueMode = () => {
+	return !!(programChoices.allSuites || (programChoices.suites && programChoices.suites.length > 1));
+};
+
+/**
+ * Resolve the suite queue. Populates programChoices.suites with the list of suites to run.
+ * In single-suite mode, wraps the selected suite in an array for uniform handling.
+ */
+const selectSuites = async () => {
+	const allSuites: string[] = getSuites();
+
+	if (allSuites.length === 0) {
+		printColorText('No test suites found - see README', '31');
+		process.exit(1);
+	}
+
+	// --all-suites flag: run all discovered suites
+	if (programChoices.allSuites) {
+		programChoices.suites = allSuites;
+		return;
+	}
+
+	// --suites flag: validate provided suite names
+	if (programChoices.suites && programChoices.suites.length > 0) {
+		const invalid = programChoices.suites.filter(s => !allSuites.includes(s));
+		if (invalid.length > 0) {
+			printColorText(`Unknown suite(s): ${invalid.join(', ')}`, '31');
+			printColorText(`Available suites: ${allSuites.join(', ')}`, '2');
+			process.exit(1);
+		}
+		return;
+	}
+
+	// Fall back to single-suite selection (existing behavior)
+	await selectSuite();
+	programChoices.suites = programChoices.suite ? [programChoices.suite] : [];
+};
+
+/**
+ * Run multiple suites sequentially, accumulating diffs for assessment at the end.
+ */
+const runSuiteQueue = async (): Promise<void> => {
+	const suites = programChoices.suites || [];
+	const suiteResults: SuiteRunResult[] = [];
+
+	printColorText(`\nQueue: running ${suites.length} suite(s) sequentially\n`, '36');
+
+	for (let i = 0; i < suites.length; i++) {
+		const suite = suites[i];
+		resetForNextSuite();
+		programChoices.suite = suite;
+
+		printColorText(`\n${'─'.repeat(60)}`, '36');
+		printColorText(`Suite ${i + 1}/${suites.length}: ${suite}`, '36');
+		printColorText(`${'─'.repeat(60)}\n`, '36');
+
+		if (programChoices.testType === 'diffs-only') {
+			if (!pathExists(DIFF_DIR()) || !hasFiles(DIFF_DIR())) {
+				printColorText(`No diffs found for suite "${suite}", skipping`, '2');
+				suiteResults.push({ suite, diffs: [], failed: false });
+				continue;
+			}
+		}
+
+		const allCurrentDiffs = createTemporaryDiffList();
+		backupDiffs();
+		backupReceived();
+
+		try {
+			const testResultDiffs = await runCypressTest(allCurrentDiffs);
+			suiteResults.push({
+				suite,
+				diffs: testResultDiffs || [],
+				failed,
+			});
+		} catch (error) {
+			printColorText(`Error running suite "${suite}": ${error}`, '31');
+			suiteResults.push({ suite, diffs: [], failed: true });
+		}
+	}
+
+	// Print combined queue summary
+	summarizeSuiteQueue(suiteResults);
+
+	// Collect all diffs across suites for assessment
+	const allDiffs = suiteResults.flatMap(r => r.diffs);
+	const anyFailed = suiteResults.some(r => r.failed);
+
+	if (allDiffs.length > 0) {
+		// Set suite to the first suite with diffs for the assessment UI context
+		const firstSuiteWithDiffs = suiteResults.find(r => r.diffs.length > 0);
+		if (firstSuiteWithDiffs) {
+			programChoices.suite = firstSuiteWithDiffs.suite;
+		}
+		assessExistingDiffImages(allDiffs);
+	} else {
+		summarizeResultsAndQuit([], [], anyFailed);
+	}
+};
+
 const selectType = async () => {
 	const specifiedType = typesList.find(type => type.slug === programChoices.testType);
 	if (specifiedType) {
@@ -295,7 +407,8 @@ const prepareConfig = (diffList?: string[]) => {
 
 	pathExists(suiteConfigPath) && printColorText(`\nSuite config: ${suiteConfigPath}`, '2');
 
-	Object.assign(visregConfig, suiteConfig);
+	// Merge project config with suite config without mutating the project-level config
+	visregConfig = { ...projectLevelConfig, ...suiteConfig };
 
 	const {
 		screenshotOptions,
@@ -721,7 +834,7 @@ export const getDiffsForWeb = (suiteSlug: string, conf?: ConfigurationSettings) 
 	programChoices.testType = 'assess-existing-diffs';
 	programChoices.webTesting = true;
 
-	visregConfig = conf || visregConfig;
+	visregConfig = conf || { ...projectLevelConfig };
 
 	let files = getDiffingFilesFromTestResult();
 
@@ -747,6 +860,90 @@ const resetPreviousTest = () => {
 	endpointTestResults.unchanged = [];
 }
 
+/**
+ * More thorough reset for multi-suite queue runs.
+ * Resets all module-level state that could bleed between suite runs.
+ */
+const resetForNextSuite = () => {
+	resetPreviousTest();
+
+	// Reset working config to project-level defaults
+	visregConfig = { ...projectLevelConfig };
+
+	// Reset state in other modules
+	resetWebAssessmentState();
+	resetTerminalAssessmentState();
+	resetSummaryState();
+};
+
+/**
+ * Run a queue of suites via the web UI, streaming progress over WebSocket.
+ */
+export const startWebSuiteQueue = async (ws: WebSocket, suites: string[], testType: string, progChoices: Partial<ProgramChoices>, conf?: ConfigurationSettings) => {
+	const suiteResults: SuiteRunResult[] = [];
+
+	for (let i = 0; i < suites.length; i++) {
+		const suite = suites[i];
+		resetForNextSuite();
+
+		programChoices.suite = suite;
+		programChoices.testType = testType as any;
+		programChoices.webTesting = true;
+
+		visregConfig = conf || { ...projectLevelConfig };
+
+		if (progChoices.testType === 'targetted') {
+			const parsedViewports = progChoices.targetViewports
+				? progChoices.targetViewports?.map(vp => parseViewport(vp as VisregViewport))
+				: [];
+
+			programChoices.targetViewports = parsedViewports || [];
+			programChoices.targetEndpointTitles = progChoices.targetEndpointTitles || [];
+		}
+
+		// Notify frontend of queue progress
+		ws.send(JSON.stringify({
+			type: 'queue-progress',
+			payload: { suite, index: i, total: suites.length, status: 'running' },
+		}));
+
+		if (programChoices.testType === 'diffs-only') {
+			if (!pathExists(DIFF_DIR()) || !hasFiles(DIFF_DIR())) {
+				ws.send(JSON.stringify({
+					type: 'queue-progress',
+					payload: { suite, index: i, total: suites.length, status: 'skipped' },
+				}));
+				suiteResults.push({ suite, diffs: [], failed: false });
+				continue;
+			}
+		}
+
+		const diffList = createTemporaryDiffList();
+		backupDiffs();
+		backupReceived();
+
+		try {
+			await runWebCypressTest(ws, diffList);
+			const diffs = getDiffingFilesFromTestResult();
+			suiteResults.push({ suite, diffs, failed });
+		} catch (error) {
+			suiteResults.push({ suite, diffs: [], failed: true });
+		}
+
+		ws.send(JSON.stringify({
+			type: 'queue-progress',
+			payload: { suite, index: i, total: suites.length, status: 'complete', diffs: suiteResults[suiteResults.length - 1].diffs },
+		}));
+	}
+
+	// Send final queue summary
+	const allDiffs = suiteResults.flatMap(r => r.diffs);
+	ws.send(JSON.stringify({
+		type: 'queue-complete',
+		payload: { suiteResults, allDiffs },
+	}));
+};
+
 export const startWebTest = async (ws: WebSocket, progChoices: Partial<ProgramChoices>, conf?: ConfigurationSettings) => {
 	if (!progChoices.suite || !progChoices.testType) {
 		return;
@@ -758,7 +955,7 @@ export const startWebTest = async (ws: WebSocket, progChoices: Partial<ProgramCh
 	programChoices.testType = progChoices.testType;
 	programChoices.webTesting = true;
 
-	visregConfig = conf || visregConfig;
+	visregConfig = conf || { ...projectLevelConfig };
 
 	if (programChoices.testType === 'targetted') {
 		const parsedViewports = progChoices.targetViewports

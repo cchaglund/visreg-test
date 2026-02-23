@@ -2,12 +2,19 @@ import { Command } from 'commander';
 import { CliProgramChoices, ProgramChoices, TestTypeSlug, VisregViewport } from './types';
 import { createScaffold, parseViewport } from './utils';
 
+export type CliProgramChoicesExtended = CliProgramChoices & {
+	suites?: string;
+	allSuites?: boolean;
+};
+
 export const initialCwd = process.cwd();
 
 export const program = new Command();
 
 program
 	.option('-s, --suite <char>')
+	.option('-S, --suites <char>', 'Comma-separated list of suites to run sequentially')
+	.option('-A, --all-suites', 'Run all discovered suites sequentially')
 	.option('-e, --endpoint-titles <char>')
 	.option('-v, --viewports <char>')
 	.option('-f, --full-test [specs]')
@@ -25,7 +32,7 @@ program
 program.parse();
 
 const extractProgramChoices = () => {
-	const opts: CliProgramChoices = program.opts();
+	const opts: CliProgramChoicesExtended = program.opts();
 
 	if (opts.scaffold || opts.scaffoldTs) {
 		createScaffold();
@@ -68,10 +75,17 @@ const extractProgramChoices = () => {
 	
 	const targetEndpointTitles = opts.endpointTitles
 		? opts.endpointTitles.split('+')
-		: [];	
+		: [];
+
+	// Parse multi-suite options
+	const suites = opts.suites
+		? opts.suites.split(',').map(s => s.trim()).filter(s => s.length > 0)
+		: undefined;
 		
     const args: ProgramChoices = {
 		suite: opts?.suite,
+		suites,
+		allSuites: opts?.allSuites,
 		targetEndpointTitles,
         targetViewports,
 		testType: (testType as TestTypeSlug),

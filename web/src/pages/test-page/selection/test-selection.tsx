@@ -3,6 +3,8 @@ import x from '@stylexjs/stylex';
 import { TargettedTestSettings } from './targetted-test-settings/targetted-test-settings';
 import { useContext } from 'react';
 import { TestContext } from '../../../contexts/test-context';
+import { SuiteQueueSelector } from './suite-queue-selector';
+import { Typography } from '@mui/material';
 
 const s = x.create({
     cardsContainer: {
@@ -12,12 +14,18 @@ const s = x.create({
         justifyContent: 'center',
         minWidth: '320px',
     },
+    sectionLabel: {
+        width: '100%',
+        textAlign: 'center',
+        marginTop: '1.5rem',
+    },
 });
 
 export const TestSelection = () => {
-    const { images } = useContext(TestContext);
+    const { images, allSuites } = useContext(TestContext);
 
     const diffsCount = images.diffList.length;
+    const hasMultipleSuites = allSuites.length > 1;
 
     return (
         <div {...x.props(s.cardsContainer)}>
@@ -42,6 +50,18 @@ export const TestSelection = () => {
             >
                 <TargettedTestSettings />
             </TestOption>
+
+            {hasMultipleSuites && (
+                <>
+                    <div {...x.props(s.sectionLabel)}>
+                        <Typography variant='h6' color='text.secondary'>
+                            Multi-suite queue
+                        </Typography>
+                    </div>
+                    <SuiteQueueSelector testType='full-test' />
+                    <SuiteQueueSelector testType='diffs-only' />
+                </>
+            )}
         </div>   
     )
 }

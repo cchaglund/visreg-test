@@ -121,6 +121,13 @@ export const getSummary = () => {
 	return summary;
 }
 
+export const resetWebAssessmentState = () => {
+	diffFilesForWeb = [];
+	approvedFiles = [];
+	rejectedFiles = [];
+	failed = false;
+};
+
 export const processImageViaWeb = (diffImageFile: string, index: number, total: number, suiteSlug?: string) => {
 	programChoices.suite = suiteSlug;
 	
