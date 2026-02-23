@@ -6,6 +6,8 @@
 
 ## Release notes
 
+**v6.5.0 (Beta): Multi-suite support - run multiple suites sequentially with `-S suite1,suite2` or all discovered suites with `-A`/`--all-suites`.**
+
 **v6.2.1: To avoid conflicts when running multiple projects in parallel, the docker image name will now be determined in the following order: configurable in the [module configuration](#optional-configuration) ("dockerImageName"), else the name attribute of the package.json file in the project, else finally the directory name.**
 
 **History of previously run tests are stored in local storage, and introducing X-ray mode in 6.1.0!**
@@ -545,6 +547,12 @@ Flags just allow you to skip the UI and run specific tests. The complete list is
 
 # <suite name> is the directory name of the suite to run
 -s, --suite <suite name>
+
+# (Beta) run multiple suites sequentially (comma-separated list of suite names)
+-S, --suites <suite1,suite2,...>
+
+# (Beta) run all discovered suites sequentially
+-A, --all-suites
 
 # <endpoint titles> is string of titles but where any spaces must be replaced by dashes, e.g. "Getting Started" becomes "Getting-Started" (or "getting-started" as it's case insensitive). To test multiple endpoints, separate them with a "+", e.g. "Home+Getting-Started"
 -e, --endpoint-titles <endpoint titles> 

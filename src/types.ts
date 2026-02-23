@@ -293,6 +293,16 @@ export type TestSettings = {
 
 export type ProgramChoices = {
 	suite?: string,
+	/**
+	 * An ordered list of suites to run sequentially in queue mode.
+	 * When set, the runner iterates through each suite and collects diffs for assessment at the end.
+	 * @example ['homepage', 'dashboard', 'settings']
+	 */
+	suites?: string[],
+	/**
+	 * When true, all discovered suites are queued for sequential execution.
+	 */
+	allSuites?: boolean,
 	targetEndpointTitles: string[] | [],
 	targetViewports: (VisregViewport | [])[],
 	fullTest?: boolean | string,
@@ -307,6 +317,18 @@ export type ProgramChoices = {
 	containerized?: boolean,
 	serverStart?: boolean,
 	webTesting?: boolean,
+}
+
+/**
+ * Represents the result of running a single suite in a multi-suite queue.
+ */
+export type SuiteRunResult = {
+	/** The suite name */
+	suite: string;
+	/** Diff files produced by this suite's test run */
+	diffs: string[];
+	/** Whether the Cypress run had failures (not just visual diffs) */
+	failed: boolean;
 }
 
 export type CliProgramChoices = ProgramChoices & {

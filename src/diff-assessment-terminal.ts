@@ -17,6 +17,11 @@ type CliAssessmentArgs = {
 	visregConfig: ConfigurationSettings;
 }
 
+export const resetTerminalAssessmentState = () => {
+	approvedFiles = [];
+	rejectedFiles = [];
+};
+
 export const assessInCLI = async (args: CliAssessmentArgs) => {
 	const { files, failed, visregConfig: config } = args;
 

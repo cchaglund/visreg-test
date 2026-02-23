@@ -4,21 +4,31 @@ import { TestTypeSlug, TestContext } from '../../../../contexts/test-context';
 import { terminalStyles } from '../../../../styles/terminal-style';
 
 export type WebSocketData = {
-    type: 'command' | 'data' | 'error' | 'text';
-    name: 'start-test' | 'summary' | 'terminate';
+    type: 'command' | 'data' | 'error' | 'text' | 'queue-progress' | 'queue-complete';
+    name: 'start-test' | 'start-queue' | 'summary' | 'terminate';
     payload: string | object;
 };
 
 
 export type WebSocketCommand = WebSocketData & {
     type: 'command';
-    name: 'start-test' | 'terminate';
+    name: 'start-test' | 'start-queue' | 'terminate';
 };
 
 type WebSocketStartTest = WebSocketCommand & {
     name: 'start-test';
     payload: {
         suiteSlug: string;
+        testType: TestTypeSlug;
+        targetEndpointTitles?: string[];
+        targetViewports?: (string | number[])[];
+    };
+};
+
+type WebSocketStartQueue = WebSocketCommand & {
+    name: 'start-queue';
+    payload: {
+        suites: string[];
         testType: TestTypeSlug;
         targetEndpointTitles?: string[];
         targetViewports?: (string | number[])[];
@@ -36,6 +46,8 @@ const Terminal = () => {
         selectedTargetViewports,
         terminalOutput,
         updateTerminalOutput,
+        isQueueMode,
+        queueSuites,
     } = useContext(TestContext);
 
     
@@ -52,20 +64,39 @@ const Terminal = () => {
         const ws = new WebSocket('ws://localhost:8080');
 
         if (testStatus === 'running') {
-            const data: WebSocketStartTest = {
-                type: 'command',
-                name: 'start-test',
-                payload: {
-                    suiteSlug: suiteConfig.suiteSlug,
-                    testType: runningTest!,
-                    targetEndpointTitles: selectedTargetEndpoints,
-                    targetViewports: selectedTargetViewports,
-                },
-            };
-            
-            ws.onopen = () => {
-                ws.send(JSON.stringify(data));
-            };
+            if (isQueueMode && queueSuites.length > 0) {
+                // Queue mode: send start-queue command with all suite names
+                const data: WebSocketStartQueue = {
+                    type: 'command',
+                    name: 'start-queue',
+                    payload: {
+                        suites: queueSuites.map(s => s.suite),
+                        testType: runningTest!,
+                        targetEndpointTitles: selectedTargetEndpoints,
+                        targetViewports: selectedTargetViewports,
+                    },
+                };
+
+                ws.onopen = () => {
+                    ws.send(JSON.stringify(data));
+                };
+            } else {
+                // Single suite mode
+                const data: WebSocketStartTest = {
+                    type: 'command',
+                    name: 'start-test',
+                    payload: {
+                        suiteSlug: suiteConfig.suiteSlug,
+                        testType: runningTest!,
+                        targetEndpointTitles: selectedTargetEndpoints,
+                        targetViewports: selectedTargetViewports,
+                    },
+                };
+                
+                ws.onopen = () => {
+                    ws.send(JSON.stringify(data));
+                };
+            }
         }
 
         ws.onmessage = (event) => {
@@ -73,10 +104,31 @@ const Terminal = () => {
 
             if (data.type === 'data') {
                 if (data.payload.name === 'visreg-summary') {
-                    ws.close();
+                    if (!isQueueMode) {
+                        ws.close();
+                    }
                     onFinished(data.payload);
                     return;
                 }
+                return;
+            }
+
+            if (data.type === 'queue-progress') {
+                const { suite, index, total, status } = data.payload;
+                updateTerminalOutput(
+                    `\n--- Suite ${index + 1}/${total}: ${suite} [${status}] ---\n`,
+                    '#4FC3F7'
+                );
+                return;
+            }
+
+            if (data.type === 'queue-complete') {
+                const { suiteResults, allDiffs } = data.payload;
+                updateTerminalOutput(
+                    `\n--- Queue complete: ${suiteResults.length} suite(s), ${allDiffs.length} total diff(s) ---\n`,
+                    '#81C784'
+                );
+                ws.close();
                 return;
             }
 

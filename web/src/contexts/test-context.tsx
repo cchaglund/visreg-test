@@ -10,6 +10,10 @@ import { AppContext } from './app-context';
 export type TestPageData = {
     suiteConfig: TestConfig;
     imagesList: ImagesList;
+    projectInformation?: {
+        suites: string[];
+        version: string;
+    };
 };
 
 export type ProgramChoices = {
@@ -88,10 +92,17 @@ export type SummaryObject = {
 export type TestTypeSlug = 'full-test' | 'diffs-only' | 'targetted';
 export type TestStatusType = 'terminated' | 'terminating' | 'running' | 'idle' | 'done';
 
+export type QueueSuiteStatus = {
+    suite: string;
+    status: 'pending' | 'running' | 'complete' | 'skipped';
+    diffs: string[];
+};
+
 type TestContextType = {
     testStatus: TestStatusType;
     selectedTargetEndpoints: string[];
     startTest: (testType: TestTypeSlug) => Promise<void>;
+    startQueueTest: (testType: TestTypeSlug, suites: string[]) => Promise<void>;
     suiteConfig: TestConfig;
     images: ImagesList;
     addTargetEndpoint: (name: string) => void;
@@ -111,6 +122,10 @@ type TestContextType = {
     updateTerminalOutput: (output: string | React.ReactElement, color?: string) => void;
     initiateTerminationOfTest: () => void;
     history?: History;
+    isQueueMode: boolean;
+    queueSuites: QueueSuiteStatus[];
+    queueProgress: string;
+    allSuites: string[];
 };
 
 const defaultValue: TestContextType = {
@@ -131,6 +146,7 @@ const defaultValue: TestContextType = {
     selectedTargetEndpoints: [],
     selectedTargetViewports: [],
     startTest: async () => {},
+    startQueueTest: async () => {},
     addTargetEndpoint: () => {},
     addTargetViewport: () => {},
     resultsRef: { current: null },
@@ -147,6 +163,10 @@ const defaultValue: TestContextType = {
     updateTerminalOutput: () => {},
     initiateTerminationOfTest: () => {},
     history: [],
+    isQueueMode: false,
+    queueSuites: [],
+    queueProgress: '',
+    allSuites: [],
 };
 
 export const TestContext = React.createContext(defaultValue);
@@ -156,7 +176,8 @@ const ws = new WebSocket('ws://localhost:8080');
 export function TestContextWrapper(props: { children: React.ReactNode; }) {
     const { testHasBeenRunThisSession, setTestHasBeenRunThisSession } = useContext(AppContext);
     
-    const { suiteConfig, imagesList } = useLoaderData() as TestPageData;
+    const { suiteConfig, imagesList, projectInformation } = useLoaderData() as TestPageData;
+    const allSuites = projectInformation?.suites || [];
 
     const resultsRef = useRef<HTMLDivElement>(null);
     const terminalRef = useRef<HTMLDivElement>(null);
@@ -176,6 +197,9 @@ export function TestContextWrapper(props: { children: React.ReactNode; }) {
         const history = localStorage.getItem('visreg-history');
         return history ? JSON.parse(history) : [];
     });
+    const [ isQueueMode, setIsQueueMode ] = useState(false);
+    const [ queueSuites, setQueueSuites ] = useState<QueueSuiteStatus[]>([]);
+    const [ queueProgress, setQueueProgress ] = useState('');
 
     useEffect(() => {
         // Only if a test has been run this session do we want to load the most recent one into the state.
@@ -207,6 +231,28 @@ export function TestContextWrapper(props: { children: React.ReactNode; }) {
         setFailingEndpoints([]);
         setVisregSummary(undefined);        
         setTerminalViewOpen(true);
+        setIsQueueMode(false);
+        setQueueSuites([]);
+        setQueueProgress('');
+
+        const res = await fetch(`${api}/test/start-ws`, { method: 'GET' });
+
+        if (res.ok) {
+            scrollDown();
+            setRunningTest(testType);
+            setTestStatus('running');
+        }
+    };
+
+    const startQueueTest = async (testType: TestTypeSlug, suites: string[]) => {
+        setTerminalOutput([]);
+        setPassingEndpoints([]);
+        setFailingEndpoints([]);
+        setVisregSummary(undefined);
+        setTerminalViewOpen(true);
+        setIsQueueMode(true);
+        setQueueSuites(suites.map(s => ({ suite: s, status: 'pending', diffs: [] })));
+        setQueueProgress(`Queued ${suites.length} suite(s)`);
 
         const res = await fetch(`${api}/test/start-ws`, { method: 'GET' });
 
@@ -341,6 +387,7 @@ export function TestContextWrapper(props: { children: React.ReactNode; }) {
             failingEndpoints,
             skippedEndpoints,
             startTest,
+            startQueueTest,
             toggleTerminalOpen,
             onFinished,
             addTargetEndpoint,
@@ -351,9 +398,13 @@ export function TestContextWrapper(props: { children: React.ReactNode; }) {
             updateTerminalOutput,
             initiateTerminationOfTest,
             history,
+            isQueueMode,
+            queueSuites,
+            queueProgress,
+            allSuites,
         }),
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [failingEndpoints, passingEndpoints, skippedEndpoints, runningTest, selectedTargetEndpoints, selectedTargetViewports, suiteConfig, visregSummary, /* cypressSummaryState, */ terminalViewOpen, testStatus, terminalOutput, imagesList, history],
+        [failingEndpoints, passingEndpoints, skippedEndpoints, runningTest, selectedTargetEndpoints, selectedTargetViewports, suiteConfig, visregSummary, /* cypressSummaryState, */ terminalViewOpen, testStatus, terminalOutput, imagesList, history, isQueueMode, queueSuites, queueProgress, allSuites],
     );
 
     return (

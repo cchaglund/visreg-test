@@ -1,5 +1,5 @@
 import { ProgramChoices } from '../../../types';
-import { startWebTest} from '../../../visreg';
+import { startWebTest, startWebSuiteQueue } from '../../../visreg';
 import { WebSocketServer } from 'ws';
 // import { getServer } from 'src/server';
 
@@ -32,6 +32,19 @@ wss.on('connection', (websocket: WebSocket) => {
 			};			
 
 			startWebTest(ws, progChoices);
+		}
+
+		if (data.type === 'command' && data.name === 'start-queue') {
+			terminate = false;
+			const suites: string[] = data.payload.suites;
+			const testType: string = data.payload.testType;
+			const progChoices: Partial<ProgramChoices> = {
+				testType: data.payload.testType,
+				targetEndpointTitles: data.payload.targetEndpointTitles,
+				targetViewports: data.payload.targetViewports,
+			};
+
+			startWebSuiteQueue(ws, suites, testType, progChoices);
 		}
 	};
 });
