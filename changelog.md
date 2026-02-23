@@ -1,3 +1,6 @@
+6.4.0
+- Added support for running multiple suites sequentially with the `-S`/`--suites` flag, and for running all discovered suites with the `-A`/`--all-suites` flag. This is currently in beta, so please let us know if you encounter any issues with it!
+
 6.3.0
 - Enabled more than Electron browser in the containerized version of the test runner.
 

@@ -965,7 +965,7 @@ You can configure certain settings with a `visreg.config.json` file placed in th
 
 | Property | Description | Type |
 |---|---|---|
-| browser | Which browser to run in headless mode. Default is Electron. | `'electron'` | 'chrome' | 'firefox' | 'edge'` |
+| browser | Which browser to run in headless mode. Default is Electron (on arm-64 devices only Electron is supported in containerized mode, see notes). | `'electron', 'chrome', 'firefox', 'edge'` |
 | ignoreDirectories | Paths which will not be included in the selection of test. | `string[]` |
 | maxViewport | Should have a higher value than the viewport you want to test. Default is `1920x1080` | `{ width?: number, height?: number }` |
 | imagePreviewProcess | This is for Linux users to specify the image preview program they are using and is used to automatically close the previewer at the end of diff assessment with a `pkill` command. By default visreg-test will attempt to close Gnome (i.e. 'pkill eog'). | `string` |
@@ -1067,6 +1067,7 @@ Reference:
 - Errors:
   - `"The 'files' list in config file 'tsconfig.json' is empty"` means you're attempting to run tests written in typescript but haven't followed the instructions above to set up typescript support.
   - `RangeError: The value of "targetStart" is out of range. It must be >= 0.` means you're attempting to diff very large images, e.g. very long, full page screenshots. Try the above suggestions for reducing the size of the screenshots.
+- Only Electron is supported in containerized mode on arm-64 devices, because there are no other browser images available for arm-64: https://github.com/cypress-io/cypress-docker-images/issues/1188.
 
 # Credits
 
