@@ -1,4 +1,4 @@
-import { Command } from 'commander';
+import { Command, Option } from 'commander';
 import { CliProgramChoices, ProgramChoices, TestTypeSlug, VisregViewport } from './types';
 import { createScaffold, parseViewport } from './utils';
 
@@ -13,8 +13,8 @@ export const program = new Command();
 
 program
 	.option('-s, --suite <char>')
-	.option('-S, --suites <char>', 'Comma-separated list of suites to run sequentially')
-	.option('-A, --all-suites', 'Run all discovered suites sequentially')
+	.option('-S, --suites <char>', '(Beta) Comma-separated list of suites to run sequentially')
+	.option('-A, --all-suites', '(Beta) Run all discovered suites sequentially')
 	.option('-e, --endpoint-titles <char>')
 	.option('-v, --viewports <char>')
 	.option('-f, --full-test [specs]')
@@ -27,7 +27,9 @@ program
 	.option('-sc, --scaffold')
 	.option('-sct, --scaffold-ts')
 	.option('-ss, --server-start')
-	.option('-c, --containerized') // This one is used internally, not exposed to the user
+	.option('-r, --run-container', 'Run tests in a Docker container')
+	.option('-b, --build-container', 'Force-(re)build the Docker container')
+	.addOption(new Option('-c, --containerized').hideHelp())
 
 program.parse();
 
