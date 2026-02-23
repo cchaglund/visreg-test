@@ -4,10 +4,8 @@ FROM cypress/browsers:node-20.18.0-chrome-130.0.6723.69-1-ff-131.0.3-edge-130.0.
 # Set the working directory in the container to /app
 WORKDIR /app
 
-# Remove stale Chrome/Edge repo sources (browsers are already in the base image)
-# to prevent GPG key errors during apt-get update, then install curl and jq
-RUN rm -f /etc/apt/sources.list.d/google-chrome.list /etc/apt/sources.list.d/microsoft-edge*.list \
-    && apt-get update && apt-get install -y curl jq
+# Install curl and jq
+RUN apt-get update && apt-get install -y curl jq
 
 # Make port 3000 available outside the container (express server)
 EXPOSE 3000
